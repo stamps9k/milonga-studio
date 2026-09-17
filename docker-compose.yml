@@ -1,0 +1,12 @@
+services:
+  milonga-studio:
+    build: .
+    container_name: milonga-studio
+    restart: unless-stopped
+    ports:
+      - '58735:58735'
+    volumes:
+      # Bind-mounts the repo's own db/ folder, so the database survives
+      # image rebuilds and stays the same file you can inspect or seed
+      # locally with `npx tsx db/seed.mts`.
+      - ./db:/app/db

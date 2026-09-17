@@ -1,0 +1,12 @@
+node_modules
+dist
+db/milonga.sqlite
+db/*.sqlite
+db/*.sqlite3
+.git
+.husky
+tests
+*.log
+.env
+.env.*
+!.env.example

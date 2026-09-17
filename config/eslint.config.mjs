@@ -18,5 +18,14 @@ export default [
       },
     },
   },
+  {
+    files: ['api/**/*.mts'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+  },
   prettier,
 ];

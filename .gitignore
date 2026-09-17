@@ -141,3 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Generated SQLite database (schema.sql is the source of truth)
+db/*.sqlite
+db/*.sqlite3
