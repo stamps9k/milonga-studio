@@ -145,3 +145,6 @@ vite.config.ts.timestamp-*
 # Generated SQLite database (schema.sql is the source of truth)
 db/*.sqlite
 db/*.sqlite3
+
+# Macos indeing file
+.DS_Store

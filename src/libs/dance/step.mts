@@ -98,6 +98,15 @@ export interface TimeSignature {
   beatUnit: number;
 }
 
+/** Minimal projection of a Figure for browsing/catalog UIs (e.g. the
+ *  step library) -- deliberately excludes steps/poses, which are only
+ *  worth fetching once a specific figure is actually selected. */
+export interface FigureSummary {
+  id: string;
+  name: string;
+  style: string;
+}
+
 export interface Figure {
   id: string;
   name: string;
