@@ -62,7 +62,7 @@ const Canvas3D = () => {
   const { x, y } = useContinuousRotation();
 
   return (
-    <div id="view3d" className="position-relative" style={{ minHeight: 320 }}>
+    <div id="view3d" className="position-relative" style={{ minHeight: "50vh" }}>
       <span className="badge bg-amber-dim text-amber border position-absolute top-0 start-0 m-3 font-mono fw-bold">
         PREVIEW &mdash; RENDERER IN DEVELOPMENT
       </span>
@@ -87,7 +87,7 @@ const Canvas3D = () => {
 
       <div
         className="d-flex align-items-center justify-content-center"
-        style={{ height: 320, perspective: 700 }}
+        style={{ height: "50vh", perspective: 700 }}
       >
         <div
           style={{

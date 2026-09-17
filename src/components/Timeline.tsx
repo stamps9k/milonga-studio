@@ -24,45 +24,45 @@ const Timeline = ({
   return (
     <div className="d-flex align-items-center gap-3">
       <button
-        className="btn btn-outline-light transport-btn p-2"
+        className="btn btn-outline-light transport-btn p-2 d-flex align-items-center justify-content-center"
         type="button"
         disabled={disabled}
         title="Back 1 beat"
         onClick={() => onStepBy(-1)}
       >
         <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-          <rect x="3" y="5" width="2" height="14" />
-          <polygon points="16,5 16,19 4,12" />
+          <rect x="3" y="3" width="2" height="14" />
+          <polygon points="16,3 16,17 4,10" />
         </svg>
       </button>
       <button
-        className="btn btn-amber transport-play p-0 d-flex align-items-center justify-content-center"
+        className="btn btn-accent transport-play p-2 d-flex align-items-center justify-content-center"
         type="button"
         disabled={disabled}
         title={playing ? "Pause" : "Play"}
         onClick={onToggle}
       >
         {playing ? (
-          <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
-            <rect x="5" y="4" width="4" height="16" />
-            <rect x="11" y="4" width="4" height="16" />
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <rect x="5" y="2" width="4" height="16" />
+            <rect x="11" y="2" width="4" height="16" />
           </svg>
         ) : (
-          <svg width="17" height="17" viewBox="0 0 20 20" fill="currentColor">
-            <polygon points="6,4 6,20 19,12" />
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+            <polygon points="6,2 6,18 19,10" />
           </svg>
         )}
       </button>
       <button
-        className="btn btn-outline-light transport-btn p-2"
+        className="btn btn-outline-light transport-btn p-2 d-flex align-items-center justify-content-center"
         type="button"
         disabled={disabled}
         title="Forward 1 beat"
         onClick={() => onStepBy(1)}
       >
         <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-          <rect x="15" y="5" width="2" height="14" />
-          <polygon points="4,5 4,19 16,12" />
+          <rect x="15" y="3" width="2" height="14" />
+          <polygon points="4,3 4,17 16,10" />
         </svg>
       </button>
       <input
@@ -75,7 +75,7 @@ const Timeline = ({
         disabled={disabled}
         onChange={(event) => onSeek(Number(event.target.value))}
       />
-      <span className="font-mono text-body-secondary flex-shrink-0">
+      <span className="font-monospace text-body-secondary flex-shrink-0">
         {formatBeats(beat)} / {formatBeats(totalBeats)} beats
       </span>
     </div>

@@ -101,7 +101,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
   }, [entries, currentBeat]);
 
   return (
-    <div id="view2d" className="canvas-grid position-relative">
+    <div id="view2d" className="canvas-grid position-relative" style={{ height: "50vh" }}>
       {view === null ? (
         <div className="d-flex align-items-center justify-content-center h-100 text-body-secondary small">
           Select figures from the library to see them here.

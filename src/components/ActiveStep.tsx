@@ -19,6 +19,11 @@ const PARTNER_LABEL: Record<Partner, string> = {
   follow: "FOLLOW",
 };
 
+const PARTNER_WIDTH: Record<Partner, string> = {
+  lead: "30%",
+  follow: "30%",
+};
+
 const PARTNER_COLOR: Record<Partner, string> = {
   lead: "var(--amber)",
   follow: "var(--teal)",
@@ -57,47 +62,58 @@ const ActiveStep = ({ entries, currentBeat }: ActiveStepProps) => {
   }, [entries, currentBeat]);
 
   return (
-    <div className="d-flex align-items-center justify-content-between px-4 py-3 border-top font-mono">
-      <span className="text-body-secondary">
+    <div className="d-flex align-items-center px-4 py-3 border-top font-monospace">
+      <span
+        className="text-body-secondary text-truncate d-inline-block flex-shrink-0 border-end pe-3"
+        style={{ width: "17%" }}
+      >
         BEAT{" "}
         <span className="text-body fw-bold">{currentBeat.toFixed(1)}</span>
         {" "}/ {totalBeats.toFixed(1)}
       </span>
 
-      <span className="text-body-secondary">
+      <span
+        className="text-body-secondary text-truncate d-inline-block flex-shrink-0 border-end ps-3 pe-3"
+        style={{ width: "23%" }}
+      >
         FIGURE{" "}
         <span className="fw-bold" style={{ color: "var(--amber)" }}>
           {info ? info.figureName : "—"}
         </span>
       </span>
 
-      <div className="d-flex align-items-center gap-4">
-        {PARTNERS.map((partner) => {
-          const step = info ? info.steps[partner] : null;
-          return (
-            <span key={partner} className="text-body-secondary">
-              <span className="fw-bold" style={{ color: PARTNER_COLOR[partner] }}>
-                {PARTNER_LABEL[partner]}
-              </span>{" "}
-              {step ? (
-                <span className="text-body">
-                  {describeStep(step)}
-                  {step.contact === "air" && (
-                    <span
-                      className="ms-1 small"
-                      style={{ color: PARTNER_COLOR[partner] }}
-                    >
-                      (air)
-                    </span>
-                  )}
-                </span>
-              ) : (
-                <span className="text-body-secondary">resting</span>
-              )}
-            </span>
-          );
-        })}
-      </div>
+      {PARTNERS.map((partner) => {
+        const step = info ? info.steps[partner] : null;
+        return (
+          <span
+            key={partner}
+            className={
+              "text-body-secondary text-truncate d-inline-block flex-shrink-0 ps-3" +
+              (partner === "lead" ? " border-end pe-3" : "")
+            }
+            style={{ width: PARTNER_WIDTH[partner] }}
+          >
+            <span className="fw-bold" style={{ color: PARTNER_COLOR[partner] }}>
+              {PARTNER_LABEL[partner]}
+            </span>{" "}
+            {step ? (
+              <span className="text-body">
+                {describeStep(step)}
+                {step.contact === "air" && (
+                  <span
+                    className="ms-1 small"
+                    style={{ color: PARTNER_COLOR[partner] }}
+                  >
+                    (air)
+                  </span>
+                )}
+              </span>
+            ) : (
+              <span className="text-body-secondary">resting</span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 };

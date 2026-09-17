@@ -39,7 +39,13 @@ const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => 
 
   return (
     <div className="col-3">
-      <h1>Step Library</h1>
+      <style>{`
+        .step-item:hover {
+          background-color: var(--amber-dim);
+          border-color: var(--amber);
+          color: var(--amber);
+        }
+      `}</style>
       <div className="card h-100 p-3">
         <div className="eyebrow mb-2">Figure library</div>
         <div className="input-group input-group-sm mb-3">
@@ -91,10 +97,7 @@ const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => 
                   <button
                     key={figure.id}
                     type="button"
-                    className={
-                      "list-group-item d-flex align-items-center gap-2" +
-                      (figure.id === selectedFigureId ? " active" : "")
-                    }
+                    className="list-group-item d-flex align-items-center gap-2 rounded-3 mb-1 border-0 step-item"
                     onClick={() => onSelectFigure?.(figure.id)}
                   >
                     <span className="dot"></span>
