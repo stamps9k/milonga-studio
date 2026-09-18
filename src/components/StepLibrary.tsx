@@ -4,7 +4,6 @@ import { useFigures } from "../hooks/useFigures.mts";
 import type { FigureSummary } from "../libs/dance/step.mts";
 
 interface StepLibraryProps {
-  selectedFigureId?: string | null;
   onSelectFigure?: (figureId: string) => void;
 }
 
@@ -12,7 +11,7 @@ function capitalize(value: string): string {
   return value.length === 0 ? value : value[0].toUpperCase() + value.slice(1);
 }
 
-const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => {
+const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
   const { figures, loading, error } = useFigures();
   const [query, setQuery] = useState("");
 
@@ -56,8 +55,7 @@ const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => 
               viewBox="0 0 20 20"
               fill="none"
               stroke="currentColor"
-              stroke-width="1.6"
-            >
+              strokeWidth="1.6">
               <circle cx="9" cy="9" r="6" />
               <line x1="13.5" y1="13.5" x2="18" y2="18" />
             </svg>
@@ -67,8 +65,7 @@ const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => 
             className="form-control bg-transparent border-secondary-subtle text-body"
             placeholder="Search figures…"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          ></input>
+            onChange={(event) => setQuery(event.target.value)}></input>
         </div>
 
         {loading && (
@@ -77,7 +74,7 @@ const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => 
 
         {!loading && error && (
           <div className="text-danger small">
-            Couldn't load figures: {error}
+            Couldn’t load figures: {error}
           </div>
         )}
 
@@ -98,8 +95,7 @@ const StepLibrary = ({ selectedFigureId, onSelectFigure }: StepLibraryProps) => 
                     key={figure.id}
                     type="button"
                     className="list-group-item d-flex align-items-center gap-2 rounded-3 mb-1 border-0 step-item"
-                    onClick={() => onSelectFigure?.(figure.id)}
-                  >
+                    onClick={() => onSelectFigure?.(figure.id)}>
                     <span className="dot"></span>
                     {figure.name}
                   </button>

@@ -9,7 +9,12 @@ interface SequenceProps {
   error?: string | null;
 }
 
-const Sequence = ({ entries, activeFigureId, loading, error }: SequenceProps) => {
+const Sequence = ({
+  entries,
+  activeFigureId,
+  loading,
+  error,
+}: SequenceProps) => {
   return (
     <div className="card p-3">
       <div className="d-flex align-items-center justify-content-between mb-2">
@@ -18,18 +23,16 @@ const Sequence = ({ entries, activeFigureId, loading, error }: SequenceProps) =>
           className="btn btn-outline-light btn-sm p-1"
           type="button"
           data-bs-toggle="modal"
-          data-bs-target="#sequenceModal"
-        >
+          data-bs-target="#sequenceModal">
           <svg
             width="13"
             height="13"
             viewBox="0 0 20 20"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round">
             <path d="M7 3H3v4" />
             <path d="M13 3h4v4" />
             <path d="M3 13v4h4" />
@@ -40,7 +43,7 @@ const Sequence = ({ entries, activeFigureId, loading, error }: SequenceProps) =>
 
       {error && (
         <div className="text-danger small mb-2">
-          Couldn't add figure: {error}
+          Couldn’t add figure: {error}
         </div>
       )}
 
@@ -59,8 +62,7 @@ const Sequence = ({ entries, activeFigureId, loading, error }: SequenceProps) =>
                 (entry.figure.id === activeFigureId
                   ? " bg-amber-dim text-amber fw-bold"
                   : "")
-              }
-            >
+              }>
               {entry.figure.name}
             </span>
             <span className="mx-2 flex-shrink-0"></span>
@@ -77,17 +79,15 @@ const Sequence = ({ entries, activeFigureId, loading, error }: SequenceProps) =>
           className="btn btn-outline-light p-2 flex-shrink-0"
           type="button"
           disabled
-          title="Add figures from the Step Library on the left"
-        >
+          title="Add figures from the Step Library on the left">
           <svg
             width="14"
             height="14"
             viewBox="0 0 20 20"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-          >
+            strokeWidth="1.7"
+            strokeLinecap="round">
             <line x1="10" y1="3" x2="10" y2="17" />
             <line x1="3" y1="10" x2="17" y2="10" />
           </svg>
