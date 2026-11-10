@@ -27,7 +27,9 @@
     "prepare": "husky",
     "api:dev": "tsx watch api/server.mts",
     "api": "tsx api/server.mts",
-    "audit:ci": "npx --yes audit-ci@7.1.0 --config audit-ci.jsonc"
+    "audit:ci": "npx --yes audit-ci@7.1.0 --config audit-ci.jsonc",
+    "format:check": "prettier --check . --config config/.prettierrc",
+    "format:fix": "prettier --write . --config config/.prettierrc"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
@@ -51,10 +53,8 @@
     "vite": "^8.3.6"
   },
   "lint-staged": {
-    "**/*.{mts,tsx}": [
-      "eslint --fix --config config/eslint.config.mjs",
-      "prettier --write --config config/.prettierrc"
-    ]
+    "**/*.{mts,tsx}": "eslint --fix --config config/eslint.config.mjs",
+    "*": "prettier --write --ignore-unknown --config config/.prettierrc"
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",

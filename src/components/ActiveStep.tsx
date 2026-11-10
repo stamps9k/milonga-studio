@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 
-import { sequenceCurrentStepsAtBeat, sequenceDurationBeats } from "../libs/dance/fold.mts";
+import {
+  sequenceCurrentStepsAtBeat,
+  sequenceDurationBeats,
+} from "../libs/dance/fold.mts";
 import type { DanceStep, Partner } from "../libs/dance/step.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
 
@@ -65,17 +68,14 @@ const ActiveStep = ({ entries, currentBeat }: ActiveStepProps) => {
     <div className="d-flex align-items-center px-4 py-3 border-top font-monospace">
       <span
         className="text-body-secondary text-truncate d-inline-block flex-shrink-0 border-end pe-3"
-        style={{ width: "17%" }}
-      >
-        BEAT{" "}
-        <span className="text-body fw-bold">{currentBeat.toFixed(1)}</span>
-        {" "}/ {totalBeats.toFixed(1)}
+        style={{ width: "17%" }}>
+        BEAT <span className="text-body fw-bold">{currentBeat.toFixed(1)}</span>{" "}
+        / {totalBeats.toFixed(1)}
       </span>
 
       <span
         className="text-body-secondary text-truncate d-inline-block flex-shrink-0 border-end ps-3 pe-3"
-        style={{ width: "23%" }}
-      >
+        style={{ width: "23%" }}>
         FIGURE{" "}
         <span className="fw-bold" style={{ color: "var(--amber)" }}>
           {info ? info.figureName : "—"}
@@ -91,8 +91,7 @@ const ActiveStep = ({ entries, currentBeat }: ActiveStepProps) => {
               "text-body-secondary text-truncate d-inline-block flex-shrink-0 ps-3" +
               (partner === "lead" ? " border-end pe-3" : "")
             }
-            style={{ width: PARTNER_WIDTH[partner] }}
-          >
+            style={{ width: PARTNER_WIDTH[partner] }}>
             <span className="fw-bold" style={{ color: PARTNER_COLOR[partner] }}>
               {PARTNER_LABEL[partner]}
             </span>{" "}
@@ -102,8 +101,7 @@ const ActiveStep = ({ entries, currentBeat }: ActiveStepProps) => {
                 {step.contact === "air" && (
                   <span
                     className="ms-1 small"
-                    style={{ color: PARTNER_COLOR[partner] }}
-                  >
+                    style={{ color: PARTNER_COLOR[partner] }}>
                     (air)
                   </span>
                 )}

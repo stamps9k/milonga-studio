@@ -38,8 +38,7 @@ function pathFrom(points: Point2D[]): string {
   if (points.length === 0) return "";
   const [first, ...rest] = points.map(toScreen);
   return (
-    `M ${first.x} ${first.y} ` +
-    rest.map((p) => `L ${p.x} ${p.y}`).join(" ")
+    `M ${first.x} ${first.y} ` + rest.map((p) => `L ${p.x} ${p.y}`).join(" ")
   );
 }
 
@@ -97,11 +96,21 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     const strokeWidth = extent * 0.015 + 0.004;
     const facingLength = extent * 0.14 + 0.03;
 
-    return { trails, currentPose, viewBox, footRadius, strokeWidth, facingLength };
+    return {
+      trails,
+      currentPose,
+      viewBox,
+      footRadius,
+      strokeWidth,
+      facingLength,
+    };
   }, [entries, currentBeat]);
 
   return (
-    <div id="view2d" className="canvas-grid position-relative" style={{ height: "50vh" }}>
+    <div
+      id="view2d"
+      className="canvas-grid position-relative"
+      style={{ height: "50vh" }}>
       {view === null ? (
         <div className="d-flex align-items-center justify-content-center h-100 text-body-secondary small">
           Select figures from the library to see them here.
@@ -183,8 +192,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                   fontFamily="JetBrains Mono"
                   fontSize={view.footRadius * 1.6}
                   fontWeight="700"
-                  fill="#14161c"
-                >
+                  fill="#14161c">
                   {PARTNER_LABEL[partner]}
                 </text>
               </g>

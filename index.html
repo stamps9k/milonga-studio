@@ -1,68 +1,139 @@
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=1440">
-	<title>Milonga Studio — prototype</title>
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1440" />
+    <title>Milonga Studio — prototype</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" />
 
-	<link rel="stylesheet" href="https://www.stampatron.com/css/new/base.css" />
-	<link rel="stylesheet" href="https://www.stampatron.com/css/new/particles.css" />
+    <link rel="stylesheet" href="https://www.stampatron.com/css/new/base.css" />
+    <link
+      rel="stylesheet"
+      href="https://www.stampatron.com/css/new/particles.css" />
 
-	<link rel="preconnect" href="https://fonts.googleapis.com" />
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-	<link
-		href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
-		rel="stylesheet"
-	/>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet" />
+  </head>
 
-</head>
+  <body>
+    <nav class="navbar navbar-expand-md sticky-top border-bottom bg-body">
+      <div class="container">
+        <a
+          class="navbar-brand fw-bold font-monospace d-flex align-items-center gap-2"
+          href="https://www.stampatron.com/">
+          <span class="dot-accent" aria-hidden="true"></span
+          ><span class="text-body">STAMPATRON.COM</span>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav"
+          aria-controls="mainNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav ms-auto mb-2 mb-md-0 font-monospace">
+            <li class="nav-item">
+              <a class="nav-link" href="https://www.stampatron.com/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="https://www.stampatron.com/projects.html"
+                >Projects</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://www.stampatron.com/cv.html"
+                >CV</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://www.stampatron.com/contact.html"
+                >Contact</a
+              >
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <main>
+      <div id="root"></div>
+    </main>
+    <footer class="border-top py-4">
+      <div
+        class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <div class="fw-bold font-monospace d-flex align-items-center gap-2">
+            <span class="dot-accent" aria-hidden="true"></span>STAMPATRON
+          </div>
+          <p class="text-body-secondary small mb-0">
+            Fukuoka, Japan &mdash; built one frame at a time.
+          </p>
+        </div>
+        <div class="d-flex gap-2">
+          <a
+            class="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center"
+            style="width: 36px; height: 36px"
+            target="_blank"
+            href="https://github.com/stamps9k?tab=repositories"
+            aria-label="GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .5C5.73.5.5 5.73.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.79-.25.79-.55v-2.15c-3.2.7-3.88-1.36-3.88-1.36-.52-1.34-1.28-1.7-1.28-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.27 5.67.41.36.78 1.07.78 2.16v3.2c0 .3.21.66.8.55C20.21 21.39 23.5 17.09 23.5 12 23.5 5.73 18.27.5 12 .5z"></path>
+            </svg>
+          </a>
+          <a
+            class="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center"
+            style="width: 36px; height: 36px"
+            href="mailto:stampatron1@gmail.com"
+            aria-label="Email">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7">
+              <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+              <path d="M3 7l9 6 9-6"></path>
+            </svg>
+          </a>
+          <a
+            class="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center"
+            style="width: 36px; height: 36px"
+            target="_blank"
+            href="https://www.stampatron.com/docs/cv.pdf"
+            aria-label="CV">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.7">
+              <path d="M7 3h7l5 5v13H7z"></path>
+              <path d="M14 3v5h5"></path>
+              <line x1="9" y1="13" x2="15" y2="13"></line>
+              <line x1="9" y1="17" x2="13" y2="17"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </footer>
 
-<body>
-	<nav class="navbar navbar-expand-md sticky-top border-bottom bg-body">
-		<div class="container">
-			<a class="navbar-brand fw-bold font-monospace d-flex align-items-center gap-2" href="https://www.stampatron.com/">
-				<span class="dot-accent" aria-hidden="true"></span><span class="text-body">STAMPATRON.COM</span>
-			</a>
-			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-			<div class="collapse navbar-collapse" id="mainNav">
-				<ul class="navbar-nav ms-auto mb-2 mb-md-0 font-monospace">
-					<li class="nav-item"><a class="nav-link" href="https://www.stampatron.com/">Home</a></li>
-					<li class="nav-item"><a class="nav-link" href="https://www.stampatron.com/projects.html">Projects</a></li>
-					<li class="nav-item"><a class="nav-link" href="https://www.stampatron.com/cv.html">CV</a></li>
-					<li class="nav-item"><a class="nav-link" href="https://www.stampatron.com/contact.html">Contact</a></li>
-				</ul>
-			</div>
-		</div>
-	</nav>
-	<main>
-		<div id="root"></div>
-	</main>
-	<footer class="border-top py-4">
-		<div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
-			<div>
-				<div class="fw-bold font-monospace d-flex align-items-center gap-2">
-					<span class="dot-accent" aria-hidden="true"></span>STAMPATRON
-				</div>
-				<p class="text-body-secondary small mb-0">Fukuoka, Japan &mdash; built one frame at a time.</p>
-			</div>
-			<div class="d-flex gap-2">
-				<a class="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;" target="_blank" href="https://github.com/stamps9k?tab=repositories" aria-label="GitHub">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.09 3.29 9.4 7.86 10.93.57.1.79-.25.79-.55v-2.15c-3.2.7-3.88-1.36-3.88-1.36-.52-1.34-1.28-1.7-1.28-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.79 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.8 1.19 1.83 1.19 3.08 0 4.41-2.7 5.38-5.27 5.67.41.36.78 1.07.78 2.16v3.2c0 .3.21.66.8.55C20.21 21.39 23.5 17.09 23.5 12 23.5 5.73 18.27.5 12 .5z"></path></svg>
-				</a>
-				<a class="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;" href="mailto:stampatron1@gmail.com" aria-label="Email">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
-				</a>
-				<a class="btn btn-outline-secondary btn-sm rounded-circle d-inline-flex align-items-center justify-content-center" style="width:36px;height:36px;" target="_blank" href="https://www.stampatron.com/docs/cv.pdf" aria-label="CV">
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 3h7l5 5v13H7z"></path><path d="M14 3v5h5"></path><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg>
-				</a>
-			</div>
-		</div>
-	</footer>
-
-<script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

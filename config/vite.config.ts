@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
+import { defineConfig } from "vite";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 
 const config_dir = path.dirname(fileURLToPath(import.meta.url));
-const repo_root = path.resolve(config_dir, '..');
+const repo_root = path.resolve(config_dir, "..");
 
 export default defineConfig({
   root: repo_root,
@@ -11,14 +11,14 @@ export default defineConfig({
     host: true,
     port: 58734,
     proxy: {
-      '/api': {
-        target: 'http://localhost:58735',
+      "/api": {
+        target: "http://localhost:58735",
         changeOrigin: true,
       },
     },
   },
   build: {
-    target: 'es2022',
-    outDir: path.resolve(repo_root, 'dist'),
+    target: "es2022",
+    outDir: path.resolve(repo_root, "dist"),
   },
 });

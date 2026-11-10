@@ -28,8 +28,7 @@ const Timeline = ({
         type="button"
         disabled={disabled}
         title="Back 1 beat"
-        onClick={() => onStepBy(-1)}
-      >
+        onClick={() => onStepBy(-1)}>
         <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
           <rect x="3" y="3" width="2" height="14" />
           <polygon points="16,3 16,17 4,10" />
@@ -40,8 +39,7 @@ const Timeline = ({
         type="button"
         disabled={disabled}
         title={playing ? "Pause" : "Play"}
-        onClick={onToggle}
-      >
+        onClick={onToggle}>
         {playing ? (
           <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
             <rect x="5" y="2" width="4" height="16" />
@@ -58,8 +56,7 @@ const Timeline = ({
         type="button"
         disabled={disabled}
         title="Forward 1 beat"
-        onClick={() => onStepBy(1)}
-      >
+        onClick={() => onStepBy(1)}>
         <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
           <rect x="15" y="3" width="2" height="14" />
           <polygon points="4,3 4,17 16,10" />
