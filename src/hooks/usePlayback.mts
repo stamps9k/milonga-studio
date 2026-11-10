@@ -32,14 +32,6 @@ export function usePlayback(totalBeats: number): UsePlaybackResult {
     [totalBeats],
   );
 
-  // Keep the scrub position valid if the sequence's length changes
-  // (e.g. it's shorter than where we currently are, which can't happen
-  // today since sequence-building only appends, but costs nothing to
-  // guard against).
-  useEffect(() => {
-    setBeat((current) => clamp(current));
-  }, [clamp]);
-
   useEffect(() => {
     if (!playing) {
       lastTimeRef.current = null;
@@ -84,9 +76,12 @@ export function usePlayback(totalBeats: number): UsePlaybackResult {
   const seek = useCallback((value: number) => setBeat(clamp(value)), [clamp]);
 
   const stepBy = useCallback(
-    (delta: number) => setBeat((current) => clamp(current + delta)),
+    (delta: number) => setBeat((current) => clamp(clamp(current) + delta)),
     [clamp],
   );
 
-  return { beat, playing, play, pause, toggle, seek, stepBy };
+  // Clamp on read rather than in an effect, so the position stays valid
+  // if the sequence's length changes (e.g. it becomes shorter than where
+  // we currently are) without an extra render.
+  return { beat: clamp(beat), playing, play, pause, toggle, seek, stepBy };
 }

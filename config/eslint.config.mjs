@@ -5,6 +5,13 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import prettier from "eslint-config-prettier";
+import { createRequire } from "node:module";
+
+// eslint-plugin-react's "detect" setting calls context.getFilename(), which
+// ESLint 10 removed, so read the installed React version here instead.
+const react_version = createRequire(import.meta.url)(
+  "react/package.json",
+).version;
 
 export default [
   { ignores: ["dist/**"] },
@@ -46,7 +53,7 @@ export default [
       "react-refresh": reactRefresh,
     },
     settings: {
-      react: { version: "detect" },
+      react: { version: react_version },
     },
     rules: {
       ...react.configs.flat.recommended.rules,
