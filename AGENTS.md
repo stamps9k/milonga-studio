@@ -39,6 +39,9 @@ These instructions apply throughout this repository.
 - Write the PR title and description around the final change. Explain the
   problem, the resulting behavior, the implementation, and why that approach
   was chosen. Identify affected files or modules when that helps review.
+- Ensure the git commit messages also clearly document the problem, the change
+  and why the approach was taken. This should be done in a similar manner to the
+  PR guidelines.
 - Describe validation performed and its results, including relevant tests and
   any remaining risks or limitations. Do not claim checks passed unless verified.
 - Run the existing test suite with `npm test` for code changes, along with
