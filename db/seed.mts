@@ -1,9 +1,9 @@
 /**
  * Seed data so the API and schema can be exercised end-to-end before a
  * real step-editor UI exists to populate the database. This is
- * plausible-looking tango test data, not a technically accurate
- * transcription of real technique -- numbers are chosen to look
- * reasonable, not to match a syllabus.
+ * plausible-looking test data, not a technically accurate transcription
+ * of real technique -- numbers are chosen to look reasonable, not to
+ * match a syllabus.
  *
  * All figures use straight-line movements only (including zero-distance
  * "pivot" steps). Arc movements are deliberately left out of this seed:
@@ -13,16 +13,22 @@
  * making yet.
  *
  * Figures:
- *   - Walking Step (1 beat)   -- a single forward/back step
- *   - Side Step    (1 beat)   -- both partners step sideways together
- *   - Cruzada      (2 beats)  -- forward/back step, then follow crosses
- *   - Ocho         (4 beats)  -- follow pivots and zigzags, lead holds
- *                                mostly still with two small adjusting steps
+ *   - Walking Step   (1 beat, tango)    -- a single forward/back step
+ *   - Side Step      (1 beat, tango)    -- both partners step sideways together
+ *   - Cruzada        (2 beats, tango)   -- forward/back step, then follow crosses
+ *   - Ocho           (4 beats, tango)   -- follow pivots and zigzags, lead holds
+ *                                          mostly still with two small adjusting steps
+ *   - Forward Waltz  (3 beats, waltz)   -- forward, side, close (rise on the side step)
+ *   - Balance Step   (3 beats, waltz)   -- side, close, side (a waltz balance/chasse)
+ *   - Cha-Cha Basic  (4 beats, cha-cha) -- forward break, recover, cha-cha-cha in place
+ *   - Side Basic     (4 beats, cha-cha) -- side break, recover, cha-cha-cha in place
  *
  * Sequences:
  *   - Practice: single walk   -- Walking Step
  *   - Basic Combination       -- Walking Step, Side Step, Cruzada
  *   - Ocho Combination        -- Walking Step, Ocho
+ *   - Waltz Basics            -- Forward Waltz, Balance Step
+ *   - Cha-Cha Basics          -- Cha-Cha Basic, Side Basic
  *
  * All sequence entries use an identity floor transform (0, 0, 0), so
  * each figure's resolved poses are numerically identical to its own
@@ -490,6 +496,506 @@ const seedAll = db.transaction(() => {
   );
 
   // -----------------------------------------------------------------
+  // Forward Waltz -- forward, side, close. Three beats, one measure.
+  // The side step carries a small rise (the characteristic waltz
+  // rise-and-fall), settling flat again on the close.
+  // -----------------------------------------------------------------
+  const forwardWaltz = seedFigure(
+    "Forward Waltz",
+    "waltz",
+    3,
+    4,
+    NEUTRAL_STANCE,
+    {
+      lead: {
+        orientation: 0,
+        rise: 0,
+        left: [0.05, 0.6, 1],
+        right: [0.05, 0.6, 0],
+      },
+      follow: {
+        orientation: 180,
+        rise: 0,
+        left: [0.05, 1.0, 0],
+        right: [0.05, 1.0, 1],
+      },
+    },
+    [
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 0,
+        distance: 0.4,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        label: "step forward",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 180,
+        distance: 0.4,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        label: "step back",
+      },
+      {
+        partner: "lead",
+        foot: "right",
+        direction: 90,
+        distance: 0.2,
+        weight: 1,
+        orientation: 0,
+        rise: 0.05,
+        beat: 2,
+        duration: 1,
+        label: "side, rising",
+      },
+      {
+        partner: "follow",
+        foot: "left",
+        direction: 90,
+        distance: 0.2,
+        weight: 1,
+        orientation: 180,
+        rise: 0.05,
+        beat: 2,
+        duration: 1,
+        label: "side, rising",
+      },
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 270,
+        distance: 0.15,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "close left to right",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 270,
+        distance: 0.15,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "close right to left",
+      },
+    ],
+  );
+
+  // -----------------------------------------------------------------
+  // Balance Step -- side, close, side. A waltz balance/chasse in place,
+  // rising on the first side step like Forward Waltz.
+  // -----------------------------------------------------------------
+  const balanceStep = seedFigure(
+    "Balance Step",
+    "waltz",
+    3,
+    4,
+    NEUTRAL_STANCE,
+    {
+      lead: {
+        orientation: 0,
+        rise: 0,
+        left: [0.5, 0, 1],
+        right: [0.35, 0, 0],
+      },
+      follow: {
+        orientation: 180,
+        rise: 0,
+        left: [0.35, 0.4, 0],
+        right: [0.5, 0.4, 1],
+      },
+    },
+    [
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 90,
+        distance: 0.35,
+        weight: 1,
+        orientation: 0,
+        rise: 0.05,
+        beat: 1,
+        duration: 1,
+        label: "side, rising",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 90,
+        distance: 0.35,
+        weight: 1,
+        orientation: 180,
+        rise: 0.05,
+        beat: 1,
+        duration: 1,
+        label: "side, rising",
+      },
+      {
+        partner: "lead",
+        foot: "right",
+        direction: 90,
+        distance: 0.15,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 2,
+        duration: 1,
+        label: "close right to left",
+      },
+      {
+        partner: "follow",
+        foot: "left",
+        direction: 90,
+        distance: 0.15,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 2,
+        duration: 1,
+        label: "close left to right",
+      },
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 90,
+        distance: 0.15,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "side again",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 90,
+        distance: 0.15,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "side again",
+      },
+    ],
+  );
+
+  // -----------------------------------------------------------------
+  // Cha-Cha Basic -- forward break, recover, then the cha-cha-cha
+  // triple back in place. The triple is written as three quick steps
+  // (beats 3, 3.5, 4) kept inside one measure, rather than the
+  // classic "2,3,4&1" count that spans the barline -- easier to
+  // represent here since a figure in this schema is one measure long.
+  // -----------------------------------------------------------------
+  const chaChaBasic = seedFigure(
+    "Cha-Cha Basic",
+    "cha-cha",
+    4,
+    4,
+    NEUTRAL_STANCE,
+    {
+      lead: {
+        orientation: 0,
+        rise: 0,
+        left: [-0.1, 0.05, 1],
+        right: [0.1, 0.05, 0],
+      },
+      follow: {
+        orientation: 180,
+        rise: 0,
+        left: [0.1, 0.35, 0],
+        right: [-0.1, 0.35, 1],
+      },
+    },
+    [
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 0,
+        distance: 0.3,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        label: "rock forward",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 180,
+        distance: 0.3,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        label: "rock back",
+      },
+      {
+        partner: "lead",
+        foot: "right",
+        direction: 180,
+        distance: 0.3,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 2,
+        duration: 1,
+        label: "recover weight back",
+      },
+      {
+        partner: "follow",
+        foot: "left",
+        direction: 0,
+        distance: 0.3,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 2,
+        duration: 1,
+        label: "recover weight forward",
+      },
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 180,
+        distance: 0.15,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "cha: step back",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 0,
+        distance: 0.15,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "cha: step forward",
+      },
+      {
+        partner: "lead",
+        foot: "right",
+        direction: 0,
+        distance: 0.1,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 3.5,
+        duration: 0.5,
+        label: "cha: close",
+      },
+      {
+        partner: "follow",
+        foot: "left",
+        direction: 180,
+        distance: 0.1,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 3.5,
+        duration: 0.5,
+        label: "cha: close",
+      },
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 180,
+        distance: 0.1,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 4,
+        duration: 0.5,
+        label: "cha: step back",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 0,
+        distance: 0.1,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 4,
+        duration: 0.5,
+        label: "cha: step forward",
+      },
+    ],
+  );
+
+  // -----------------------------------------------------------------
+  // Side Basic -- same break/recover/cha-cha-cha shape as Cha-Cha
+  // Basic, but sideways instead of forward/back.
+  // -----------------------------------------------------------------
+  const sideBasic = seedFigure(
+    "Side Basic",
+    "cha-cha",
+    4,
+    4,
+    NEUTRAL_STANCE,
+    {
+      lead: {
+        orientation: 0,
+        rise: 0,
+        left: [-0.05, 0, 1],
+        right: [0.05, 0, 0],
+      },
+      follow: {
+        orientation: 180,
+        rise: 0,
+        left: [0.05, 0.4, 0],
+        right: [-0.05, 0.4, 1],
+      },
+    },
+    [
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 90,
+        distance: 0.3,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        label: "side break",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 90,
+        distance: 0.3,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        label: "side break",
+      },
+      {
+        partner: "lead",
+        foot: "right",
+        direction: 270,
+        distance: 0.3,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 2,
+        duration: 1,
+        label: "recover weight",
+      },
+      {
+        partner: "follow",
+        foot: "left",
+        direction: 270,
+        distance: 0.3,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 2,
+        duration: 1,
+        label: "recover weight",
+      },
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 270,
+        distance: 0.15,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "cha: side",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 270,
+        distance: 0.15,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 3,
+        duration: 1,
+        label: "cha: side",
+      },
+      {
+        partner: "lead",
+        foot: "right",
+        direction: 90,
+        distance: 0.1,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 3.5,
+        duration: 0.5,
+        label: "cha: close",
+      },
+      {
+        partner: "follow",
+        foot: "left",
+        direction: 90,
+        distance: 0.1,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 3.5,
+        duration: 0.5,
+        label: "cha: close",
+      },
+      {
+        partner: "lead",
+        foot: "left",
+        direction: 270,
+        distance: 0.1,
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 4,
+        duration: 0.5,
+        label: "cha: side",
+      },
+      {
+        partner: "follow",
+        foot: "right",
+        direction: 270,
+        distance: 0.1,
+        weight: 1,
+        orientation: 180,
+        rise: 0,
+        beat: 4,
+        duration: 0.5,
+        label: "cha: side",
+      },
+    ],
+  );
+
+  // -----------------------------------------------------------------
   // Sequences and dances
   // -----------------------------------------------------------------
   const singleWalkSequence = seedSequence("Practice: single walk", [
@@ -511,8 +1017,24 @@ const seedAll = db.transaction(() => {
 
   const ochoCombination = seedSequence("Ocho Combination", [walkingStep, ocho]);
   seedDance("Ocho practice", 66, "Working on back ochos", ochoCombination);
+
+  const waltzBasics = seedSequence("Waltz Basics", [forwardWaltz, balanceStep]);
+  seedDance(
+    "Waltz box practice",
+    90,
+    "Forward waltz into a balance step",
+    waltzBasics,
+  );
+
+  const chaChaBasics = seedSequence("Cha-Cha Basics", [chaChaBasic, sideBasic]);
+  seedDance(
+    "Cha-cha basics practice",
+    120,
+    "Forward basic into side basic",
+    chaChaBasics,
+  );
 });
 
 seedAll();
-console.info("Seed complete: 4 figures, 3 sequences, 3 dances.");
+console.info("Seed complete: 8 figures, 5 sequences, 5 dances.");
 db.close();
