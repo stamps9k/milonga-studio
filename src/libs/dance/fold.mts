@@ -216,9 +216,61 @@ export function figureFootTrails(
   return placed;
 }
 
+/** One foot's discontinuity between two consecutive sequence entries:
+ *  where the previous entry's trail ends and the next entry's begins. */
+export interface TrailGap {
+  /** Index of the later entry -- the gap sits just before it. */
+  entryIndex: number;
+  partner: Partner;
+  foot: Foot;
+  from: Point2D;
+  to: Point2D;
+  /** Distance in floor units. */
+  distance: number;
+}
+
+/**
+ * The floor-space trails of a whole Sequence kept as one segment per
+ * entry, plus every place where a foot's trail doesn't continue from one
+ * entry into the next by more than `gapTolerance`.
+ *
+ * Unlike sequenceFootTrails, nothing is joined up or dropped at the
+ * boundaries, so a renderer can draw each figure's trail as it really
+ * is and draw the gaps differently (for example dashed), instead of a
+ * straight line across the gap that looks like a step nobody takes.
+ * Gaps appear when two figures' stances don't match; see assessJoin in
+ * join.mts. The caller passes the tolerance so this module doesn't
+ * depend on join.mts.
+ */
+export function sequenceTrailSegments(
+  entries: { figure: Figure; transform: FloorTransform }[],
+  gapTolerance: number,
+): { segments: FootTrails[]; gaps: TrailGap[] } {
+  const segments = entries.map((entry) =>
+    figureFootTrails(entry.figure, entry.transform),
+  );
+  const gaps: TrailGap[] = [];
+  for (let entryIndex = 1; entryIndex < segments.length; entryIndex++) {
+    for (const partner of PARTNERS) {
+      for (const foot of FEET) {
+        const previous = segments[entryIndex - 1][partner][foot];
+        const from = previous[previous.length - 1];
+        const to = segments[entryIndex][partner][foot][0];
+        const distance = Math.hypot(to.x - from.x, to.y - from.y);
+        if (distance > gapTolerance) {
+          gaps.push({ entryIndex, partner, foot, from, to, distance });
+        }
+      }
+    }
+  }
+  return { segments, gaps };
+}
+
 /** Concatenates the floor-space trails of a whole Sequence's entries,
  *  one figureFootTrails call per entry using that entry's own
- *  transform, joined end to end in order. */
+ *  transform, joined end to end in order. This assumes every join is
+ *  exact; where it isn't, the joined trail draws a straight line across
+ *  the gap. sequenceTrailSegments keeps the gaps visible instead. */
 export function sequenceFootTrails(
   entries: { figure: Figure; transform: FloorTransform }[],
 ): FootTrails {

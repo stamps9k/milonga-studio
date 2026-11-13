@@ -1,6 +1,6 @@
 import type { Figure, Foot, Partner } from "./step.mts";
 import type { Pose } from "./pose.mts";
-import type { FloorTransform } from "./sequence.mts";
+import type { FloorTransform, SequenceEntry } from "./sequence.mts";
 import { applyTransform, fitTransform } from "./floor.mts";
 import { normalizeDegrees } from "./heading.mts";
 
@@ -151,4 +151,20 @@ export function assessJoin(previousEnd: Pose, next: Figure): JoinAssessment {
     issues,
     fits: issues.length === 0,
   };
+}
+
+/**
+ * Assesses every join in a sequence: element `i` describes how entry
+ * `i` follows entry `i - 1`, and element 0 is null because the first
+ * entry has nothing before it. Uses each previous entry's cached
+ * resolvedEndPose, i.e. where the couple actually is on the floor.
+ */
+export function assessSequenceJoins(
+  entries: SequenceEntry[],
+): (JoinAssessment | null)[] {
+  return entries.map((entry, index) =>
+    index === 0
+      ? null
+      : assessJoin(entries[index - 1].resolvedEndPose, entry.figure),
+  );
 }

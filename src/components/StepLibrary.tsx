@@ -1,27 +1,67 @@
 import { useMemo, useState } from "react";
 
 import { useFigures } from "../hooks/useFigures.mts";
+import { useFigureDetails } from "../hooks/useFigureDetails.mts";
+import { assessJoin } from "../libs/dance/join.mts";
+import type { Pose } from "../libs/dance/pose.mts";
 import type { FigureSummary } from "../libs/dance/step.mts";
+import { describeJoin } from "./joinIssues.mts";
 
 interface StepLibraryProps {
   onSelectFigure?: (figureId: string) => void;
+  /** Where the couple is at the end of the current sequence (the last
+   *  entry's resolvedEndPose), or null for an empty sequence. Each
+   *  figure is checked against it to show whether it would follow on
+   *  cleanly. */
+  sequenceEnd?: Pose | null;
 }
+
+/** How a figure would join onto the current sequence: "fits", or the
+ *  reasons it doesn't. Undefined while the figure's details are still
+ *  loading, or when the sequence is empty (anything can start it). */
+type FigureFit = { fits: true } | { fits: false; reasons: string[] };
 
 function capitalize(value: string): string {
   return value.length === 0 ? value : value[0].toUpperCase() + value.slice(1);
 }
 
-const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
+const StepLibrary = ({
+  onSelectFigure,
+  sequenceEnd = null,
+}: StepLibraryProps) => {
   const { figures, loading, error } = useFigures();
+  const details = useFigureDetails(figures);
   const [query, setQuery] = useState("");
+  const [hideMisfits, setHideMisfits] = useState(false);
+
+  // Figures that don't join cleanly are flagged, not removed: adding one
+  // anyway is still allowed (the sequence strip and canvas then show the
+  // gap), and hiding is an opt-in filter, so the library never seems to
+  // lose figures without explanation.
+  const fitById = useMemo(() => {
+    const fits = new Map<string, FigureFit>();
+    if (sequenceEnd === null) return fits;
+    for (const [id, figure] of details) {
+      const assessment = assessJoin(sequenceEnd, figure);
+      fits.set(
+        id,
+        assessment.fits
+          ? { fits: true }
+          : { fits: false, reasons: describeJoin(assessment) },
+      );
+    }
+    return fits;
+  }, [details, sequenceEnd]);
 
   // Grouped by style (tango/waltz/blues/...) -- the only categorical
   // field the data model actually has for figures.
   const groups = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    const filtered = needle
-      ? figures.filter((figure) => figure.name.toLowerCase().includes(needle))
-      : figures;
+    const filtered = figures.filter(
+      (figure) =>
+        (!needle || figure.name.toLowerCase().includes(needle)) &&
+        !(hideMisfits && fitById.get(figure.id)?.fits === false),
+    );
 
     const byStyle = new Map<string, FigureSummary[]>();
     for (const figure of filtered) {
@@ -34,7 +74,9 @@ const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
     }
 
     return [...byStyle.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [figures, query]);
+  }, [figures, query, hideMisfits, fitById]);
+
+  const misfitCount = [...fitById.values()].filter((fit) => !fit.fits).length;
 
   return (
     <div className="col-3">
@@ -43,6 +85,12 @@ const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
           background-color: var(--amber-dim);
           border-color: var(--amber);
           color: var(--amber);
+        }
+        .step-item.misfit {
+          opacity: 0.5;
+        }
+        .step-item.misfit:hover {
+          opacity: 1;
         }
       `}</style>
       <div className="card h-100 p-3">
@@ -68,6 +116,22 @@ const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
             onChange={(event) => setQuery(event.target.value)}></input>
         </div>
 
+        {sequenceEnd !== null && misfitCount > 0 && (
+          <div className="form-check form-switch small mb-2">
+            <input
+              className="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="hide-misfits"
+              checked={hideMisfits}
+              onChange={(event) => setHideMisfits(event.target.checked)}
+            />
+            <label className="form-check-label" htmlFor="hide-misfits">
+              Hide figures that don’t follow on ({misfitCount})
+            </label>
+          </div>
+        )}
+
         {loading && (
           <div className="text-body-secondary small">Loading figures…</div>
         )}
@@ -80,7 +144,11 @@ const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
 
         {!loading && !error && groups.length === 0 && (
           <div className="text-body-secondary small">
-            {query ? `No figures match "${query}".` : "No figures yet."}
+            {query
+              ? `No figures match "${query}".`
+              : hideMisfits
+                ? "No figures follow on cleanly from here."
+                : "No figures yet."}
           </div>
         )}
 
@@ -90,16 +158,35 @@ const StepLibrary = ({ onSelectFigure }: StepLibraryProps) => {
             <div key={style}>
               <div className="eyebrow mb-1">{capitalize(style)}</div>
               <div className="list-group list-group-flush mb-2">
-                {figuresInGroup.map((figure) => (
-                  <button
-                    key={figure.id}
-                    type="button"
-                    className="list-group-item d-flex align-items-center gap-2 rounded-3 mb-1 border-0 step-item"
-                    onClick={() => onSelectFigure?.(figure.id)}>
-                    <span className="dot"></span>
-                    {figure.name}
-                  </button>
-                ))}
+                {figuresInGroup.map((figure) => {
+                  const fit = fitById.get(figure.id);
+                  const misfit = fit !== undefined && !fit.fits;
+                  return (
+                    <button
+                      key={figure.id}
+                      type="button"
+                      className={
+                        "list-group-item d-flex align-items-center gap-2 rounded-3 mb-1 border-0 step-item" +
+                        (misfit ? " misfit" : "")
+                      }
+                      title={
+                        misfit
+                          ? `Doesn’t follow on cleanly:\n${fit.reasons.join("\n")}`
+                          : undefined
+                      }
+                      onClick={() => onSelectFigure?.(figure.id)}>
+                      <span className="dot"></span>
+                      {figure.name}
+                      {misfit && (
+                        <span
+                          className="ms-auto text-warning small"
+                          aria-label="Doesn’t follow on cleanly">
+                          ⚠
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}

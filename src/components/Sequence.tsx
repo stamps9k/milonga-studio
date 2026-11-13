@@ -1,6 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, useMemo } from "react";
 
+import { assessSequenceJoins } from "../libs/dance/join.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
+import { describeJoin } from "./joinIssues.mts";
 
 interface SequenceProps {
   entries: SequenceEntry[];
@@ -15,6 +17,10 @@ const Sequence = ({
   loading,
   error,
 }: SequenceProps) => {
+  // A warning sits before any figure that doesn't follow on cleanly from
+  // the one before it, with the reasons in its tooltip.
+  const joins = useMemo(() => assessSequenceJoins(entries), [entries]);
+
   return (
     <div className="card p-3">
       <div className="d-flex align-items-center justify-content-between mb-2">
@@ -54,20 +60,33 @@ const Sequence = ({
           </span>
         )}
 
-        {entries.map((entry, index) => (
-          <Fragment key={`${entry.figure.id}-${index}`}>
-            <span
-              className={
-                "btn btn-outline-light seq-chip disabled" +
-                (entry.figure.id === activeFigureId
-                  ? " bg-amber-dim text-amber fw-bold"
-                  : "")
-              }>
-              {entry.figure.name}
-            </span>
-            <span className="mx-2 flex-shrink-0"></span>
-          </Fragment>
-        ))}
+        {entries.map((entry, index) => {
+          const join = joins[index];
+          const reasons = join && !join.fits ? describeJoin(join) : [];
+          return (
+            <Fragment key={`${entry.figure.id}-${index}`}>
+              {reasons.length > 0 && (
+                <span
+                  className="text-warning small me-2 flex-shrink-0"
+                  role="img"
+                  aria-label={`Doesn’t follow on cleanly: ${reasons.join("; ")}`}
+                  title={`Doesn’t follow on cleanly:\n${reasons.join("\n")}`}>
+                  ⚠
+                </span>
+              )}
+              <span
+                className={
+                  "btn btn-outline-light seq-chip disabled" +
+                  (entry.figure.id === activeFigureId
+                    ? " bg-amber-dim text-amber fw-bold"
+                    : "")
+                }>
+                {entry.figure.name}
+              </span>
+              <span className="mx-2 flex-shrink-0"></span>
+            </Fragment>
+          );
+        })}
 
         {loading && (
           <span className="btn btn-outline-light seq-chip disabled">
