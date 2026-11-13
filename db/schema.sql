@@ -89,6 +89,40 @@ BEGIN
 	WHERE (SELECT type FROM movements WHERE id = NEW.movement_id) != 'arc';
 END;
 
+-- The two triggers above only run when a variant row is inserted. These
+-- cover the other ways the pairing could break afterwards: re-pointing a
+-- variant row at a different movement, or changing a movement's type
+-- while its variant row still exists. Without them, an UPDATE could leave
+-- a movement_straight row under an 'arc' movement, and assembleMovement
+-- (api/assemble.mts) would then look for an arc row that isn't there.
+-- Changing a movement's type is still possible: delete its old variant
+-- row first, update the type, then insert the new variant row.
+
+CREATE TRIGGER movement_straight_type_check_on_update
+AFTER UPDATE OF movement_id ON movement_straight
+BEGIN
+	SELECT RAISE(ABORT, 'movement_straight.movement_id must reference a movements row with type = straight')
+	WHERE (SELECT type FROM movements WHERE id = NEW.movement_id) != 'straight';
+END;
+
+CREATE TRIGGER movement_arc_type_check_on_update
+AFTER UPDATE OF movement_id ON movement_arc
+BEGIN
+	SELECT RAISE(ABORT, 'movement_arc.movement_id must reference a movements row with type = arc')
+	WHERE (SELECT type FROM movements WHERE id = NEW.movement_id) != 'arc';
+END;
+
+CREATE TRIGGER movement_type_change_check
+AFTER UPDATE OF type ON movements
+BEGIN
+	SELECT RAISE(ABORT, 'movements.type cannot change while a movement_straight row references this movement')
+	WHERE NEW.type != 'straight'
+		AND EXISTS (SELECT 1 FROM movement_straight WHERE movement_id = NEW.id);
+	SELECT RAISE(ABORT, 'movements.type cannot change while a movement_arc row references this movement')
+	WHERE NEW.type != 'arc'
+		AND EXISTS (SELECT 1 FROM movement_arc WHERE movement_id = NEW.id);
+END;
+
 -- ---------------------------------------------------------------------
 -- Figure: a named, reusable piece of choreography, defined in its own
 -- local floor frame (starts at the origin, facing 0 degrees).

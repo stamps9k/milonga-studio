@@ -6,6 +6,7 @@ import {
   assembleDance,
 } from "./assemble.mts";
 import type { FigureSummary } from "../src/libs/dance/step.mts";
+import type { DanceSummary } from "../src/libs/dance/dance.mts";
 
 const dance_routes = express.Router();
 
@@ -91,14 +92,28 @@ dance_routes.get("/api/sequences/:id", (req: Request, res: Response) => {
 // Dances
 // ---------------------------------------------------------------------
 
+interface DanceSummaryRow {
+  id: number;
+  name: string;
+  tempo: number;
+  updatedAt: string;
+}
+
 dance_routes.get("/api/dances", (_req: Request, res: Response) => {
   try {
     const rows = db
       .prepare(
         "SELECT id, name, tempo, updated_at AS updatedAt FROM dances ORDER BY updated_at DESC",
       )
-      .all();
-    res.json({ success: true, message: rows });
+      .all() as DanceSummaryRow[];
+    // Stringify ids for the same reason as /api/figures: Dance.id is a
+    // string everywhere else, so a client listing dances and then
+    // opening one shouldn't see the id change type between endpoints.
+    const dances: DanceSummary[] = rows.map((row) => ({
+      ...row,
+      id: String(row.id),
+    }));
+    res.json({ success: true, message: dances });
   } catch (err) {
     res.status(500).json({ success: false, error: (err as Error).message });
   }

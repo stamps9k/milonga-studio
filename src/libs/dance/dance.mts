@@ -29,3 +29,14 @@ export interface Dance {
 
   sequence: Sequence;
 }
+
+/** Minimal projection of a Dance for listing saved dances (what
+ *  GET /api/dances returns) -- excludes the sequence, which is only
+ *  worth fetching once a specific dance is opened. Like FigureSummary,
+ *  the id is a string, matching Dance.id. */
+export interface DanceSummary {
+  id: string;
+  name: string;
+  tempo: number;
+  updatedAt: string;
+}

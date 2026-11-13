@@ -14,27 +14,10 @@ import type { Sequence } from "../../src/libs/dance/sequence.mts";
 // assembly code the API uses.
 //
 // The seed is hand-typed: each figure stores both its steps and its
-// start/end poses, and nothing forces the two to agree. When they
-// don't, the 2D view (which draws the folded steps) and sequence
-// chaining (which fits the next figure onto the stored endPose)
-// disagree about where the couple is. Known mismatches are marked
-// `todo` with the reason, so the suite documents them without failing;
-// once the seed is corrected, remove the entry from the list below and
-// the test becomes a hard check.
-
-/** Seeded figures whose folded steps currently don't reproduce their
- *  stored endPose, and why. */
-const KNOWN_END_POSE_MISMATCHES: Record<string, string> = {
-  "Walking Step":
-    "the follow's step is stored with direction 180, which folds her right foot behind the lead (y = -0.2); the stored endPose has her stepping back to y = 1.0",
-  "Forward Waltz":
-    "the stored endPose closes both partners' feet together, but the steps fold to an open stance",
-  "Balance Step": "the stored endPose differs from the fold by 0.1",
-  "Cha-Cha Basic":
-    "the stored endPose differs from the fold by 0.25 (see also the beat-3 duration overlap)",
-  "Side Basic":
-    "the stored endPose differs from the fold by 0.15 (see also the beat-3 duration overlap)",
-};
+// start/end poses, and nothing but these tests forces the two to agree.
+// When they don't, the 2D view (which draws the folded steps) and
+// sequence chaining (which fits the next figure onto the stored
+// endPose) disagree about where the couple is.
 
 /** Figure lengths in beats, as documented in db/seed.mts's header. */
 const DOCUMENTED_DURATIONS: Record<string, number> = {
@@ -46,14 +29,6 @@ const DOCUMENTED_DURATIONS: Record<string, number> = {
   "Balance Step": 3,
   "Cha-Cha Basic": 4,
   "Side Basic": 4,
-};
-
-/** Seeded figures where one partner has two steps in progress at once. */
-const KNOWN_OVERLAPPING_STEPS: Record<string, string> = {
-  "Cha-Cha Basic":
-    "the beat-3 step has duration 1, so it overlaps the beat-3.5 half-beat step for the same partner",
-  "Side Basic":
-    "the beat-3 step has duration 1, so it overlaps the beat-3.5 half-beat step for the same partner",
 };
 
 /** Exact-match tolerance for values the code derives itself. */
@@ -163,53 +138,43 @@ test("seed: every figure starts in its local frame with the lead facing line of 
 });
 
 // One test per figure, generated after the database is ready, so each
-// figure's result (and any todo reason) is reported individually.
+// figure's result is reported individually.
 test("seed: folding each figure's steps reproduces its stored endPose", async (t) => {
   for (const figure of figures) {
-    const reason = KNOWN_END_POSE_MISMATCHES[figure.name];
-    await t.test(
-      figure.name,
-      reason === undefined ? {} : { todo: reason },
-      () => {
-        const folded = poseAtBeat(figure, figureDurationBeats(figure));
-        const distance = maxFootDistance(folded, figure.endPose);
+    await t.test(figure.name, () => {
+      const folded = poseAtBeat(figure, figureDurationBeats(figure));
+      const distance = maxFootDistance(folded, figure.endPose);
+      assert.ok(
+        distance < HAND_TYPED_EPSILON,
+        `folded feet are up to ${distance.toFixed(3)} away from the stored endPose`,
+      );
+      for (const partner of ["lead", "follow"] as const) {
         assert.ok(
-          distance < HAND_TYPED_EPSILON,
-          `folded feet are up to ${distance.toFixed(3)} away from the stored endPose`,
+          headingDifference(
+            folded[partner].orientation,
+            figure.endPose[partner].orientation,
+          ) < 1e-6,
+          `${partner} orientation differs`,
         );
-        for (const partner of ["lead", "follow"] as const) {
-          assert.ok(
-            headingDifference(
-              folded[partner].orientation,
-              figure.endPose[partner].orientation,
-            ) < 1e-6,
-            `${partner} orientation differs`,
-          );
-          assert.ok(
-            Math.abs(
-              folded[partner].left.weight - figure.endPose[partner].left.weight,
-            ) < 1e-9,
-            `${partner} weights differ`,
-          );
-        }
-      },
-    );
+        assert.ok(
+          Math.abs(
+            folded[partner].left.weight - figure.endPose[partner].left.weight,
+          ) < 1e-9,
+          `${partner} weights differ`,
+        );
+      }
+    });
   }
 });
 
 test("seed: each figure's length matches the beat count documented in db/seed.mts", async (t) => {
   for (const figure of figures) {
-    const reason = KNOWN_OVERLAPPING_STEPS[figure.name];
-    await t.test(
-      figure.name,
-      reason === undefined ? {} : { todo: reason },
-      () => {
-        assert.equal(
-          figureDurationBeats(figure),
-          DOCUMENTED_DURATIONS[figure.name],
-        );
-      },
-    );
+    await t.test(figure.name, () => {
+      assert.equal(
+        figureDurationBeats(figure),
+        DOCUMENTED_DURATIONS[figure.name],
+      );
+    });
   }
 });
 
@@ -219,25 +184,43 @@ test("seed: no partner has two steps in progress at the same time", async (t) =>
   // model doesn't represent yet. If the owner confirms such figures
   // should be allowed, narrow this check rather than deleting it.
   for (const figure of figures) {
-    const reason = KNOWN_OVERLAPPING_STEPS[figure.name];
-    await t.test(
-      figure.name,
-      reason === undefined ? {} : { todo: reason },
-      () => {
-        for (const partner of ["lead", "follow"] as const) {
-          const intervals = figure.steps
-            .filter((step) => step.partner === partner)
-            .map((step) => [step.beat - 1, step.beat - 1 + step.duration])
-            .sort((a, b) => a[0] - b[0]);
-          for (let i = 1; i < intervals.length; i++) {
-            assert.ok(
-              intervals[i][0] >= intervals[i - 1][1] - 1e-9,
-              `${partner} step at beat ${intervals[i][0] + 1} starts before the previous one ends at ${intervals[i - 1][1] + 1}`,
-            );
-          }
+    await t.test(figure.name, () => {
+      for (const partner of ["lead", "follow"] as const) {
+        const intervals = figure.steps
+          .filter((step) => step.partner === partner)
+          .map((step) => [step.beat - 1, step.beat - 1 + step.duration])
+          .sort((a, b) => a[0] - b[0]);
+        for (let i = 1; i < intervals.length; i++) {
+          assert.ok(
+            intervals[i][0] >= intervals[i - 1][1] - 1e-9,
+            `${partner} step at beat ${intervals[i][0] + 1} starts before the previous one ends at ${intervals[i - 1][1] + 1}`,
+          );
         }
-      },
-    );
+      }
+    });
+  }
+});
+
+test("seed: every step moves a foot the partner isn't standing on", async (t) => {
+  // Provisional check, not a confirmed dance rule: a travelling step
+  // has to be taken with the free foot, since the foot carrying all of
+  // a partner's weight can't leave the floor. Zero-distance steps
+  // (weight changes and pivots) are exempt, because they don't lift the
+  // foot. This is the rule db/seed.mts uses to choose which foot each
+  // figure starts with.
+  for (const figure of figures) {
+    await t.test(figure.name, () => {
+      for (const step of figure.steps) {
+        const travels =
+          step.movement.type === "arc" || step.movement.distance > 0;
+        if (!travels) continue;
+        const before = poseAtBeat(figure, step.beat - 1)[step.partner];
+        assert.ok(
+          before[step.foot].weight < 1 - 1e-9,
+          `${step.partner}'s ${step.foot} foot steps at beat ${step.beat} while carrying all the weight`,
+        );
+      }
+    });
   }
 });
 
@@ -276,27 +259,21 @@ test("seed: each sequence starts at its own start transform", () => {
   }
 });
 
-test(
-  "seed: consecutive sequence entries are placed so the couple continues from where the previous figure ended",
-  {
-    todo: "db/seed.mts gives every entry the identity transform and deliberately defers join compatibility, so seeded sequences restart each figure at the origin instead of chaining like useSequenceBuilder does",
-  },
-  () => {
-    for (const sequence of sequences) {
-      for (let i = 1; i < sequence.entries.length; i++) {
-        const previous = sequence.entries[i - 1];
-        const entry = sequence.entries[i];
-        const expected = fitTransform(
-          entry.figure.startPose,
-          previous.resolvedEndPose,
-        );
-        const placedStart = applyTransform(expected, entry.figure.startPose);
-        assert.ok(
-          maxFootDistance(entry.resolvedStartPose, placedStart) <
-            POSITION_EPSILON,
-          `${sequence.name}: entry ${i} (${entry.figure.name}) doesn't continue from entry ${i - 1}`,
-        );
-      }
+test("seed: consecutive sequence entries are placed so the couple continues from where the previous figure ended", () => {
+  for (const sequence of sequences) {
+    for (let i = 1; i < sequence.entries.length; i++) {
+      const previous = sequence.entries[i - 1];
+      const entry = sequence.entries[i];
+      const expected = fitTransform(
+        entry.figure.startPose,
+        previous.resolvedEndPose,
+      );
+      const placedStart = applyTransform(expected, entry.figure.startPose);
+      assert.ok(
+        maxFootDistance(entry.resolvedStartPose, placedStart) <
+          POSITION_EPSILON,
+        `${sequence.name}: entry ${i} (${entry.figure.name}) doesn't continue from entry ${i - 1}`,
+      );
     }
-  },
-);
+  }
+});

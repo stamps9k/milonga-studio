@@ -19,13 +19,10 @@ import {
  * starting Pose plus an ordered list of DanceSteps produces a Pose at
  * every beat" (see the design comment on Pose in pose.mts).
  *
- * This is the piece db/seed.mts and floor.mts both flag as not existing
- * yet ("there's no fold/simulation helper yet, so this is on the seed
- * author to keep consistent" / "join compatibility is a check we've
- * deliberately deferred to later"). A Figure's stored startPose/endPose
- * are currently authored by hand and aren't guaranteed to exactly equal
- * what folding its own steps produces -- this module doesn't assume
- * they do.
+ * A Figure's stored startPose/endPose are authored by hand and aren't
+ * guaranteed to exactly equal what folding its own steps produces --
+ * this module doesn't assume they do. (For the seeded figures,
+ * test/db/seed.test.mts checks that they agree.)
  */
 
 export type FootTrails = Record<Partner, Record<Foot, Point2D[]>>;
@@ -99,6 +96,32 @@ function movementPointAt(
       );
 }
 
+/**
+ * Where a foot is partway through an airborne (`contact: "air"`) step.
+ *
+ * Contact (step.mts) says an airborne action describes a path for
+ * rendering but doesn't change where the foot rests for the next step.
+ * The movement only describes one direction of travel, so the foot is
+ * modelled as going out along that path for the first half of the step
+ * and retracing it back to where it started for the second half. That
+ * keeps the animated foot continuous at both ends of the step (no jump
+ * back to the resting spot when the step finishes).
+ *
+ * Provisional modelling choice, not a confirmed technique rule: a real
+ * boleo or gancho doesn't necessarily return along the same line, and
+ * the out/back split need not be even. If air steps gain their own
+ * timing or return path data, this is the function to change.
+ */
+function airborneExcursionAt(
+  rest: Point2D,
+  headingBefore: number,
+  movement: Movement,
+  progress: number,
+): Point2D {
+  const outward = progress <= 0.5 ? progress * 2 : (1 - progress) * 2;
+  return movementPointAt(rest, headingBefore, movement, outward);
+}
+
 function emptyTrails(startPose: Pose): FootTrails {
   const trails = {} as FootTrails;
   for (const partner of PARTNERS) {
@@ -114,7 +137,13 @@ function emptyTrails(startPose: Pose): FootTrails {
  * Traces each foot's ordered LOCAL-frame trail (in the figure's own
  * coordinates, unplaced) by folding startPose forward through the
  * figure's steps in beat order. Each trail starts at that foot's
- * startPose position and gains one point per step that moves it.
+ * startPose position and gains one point per floor step that moves it.
+ *
+ * A trail records where the foot is placed on the floor, so airborne
+ * steps add no point: the foot comes back to where it started (see
+ * airborneExcursionAt), and drawing the excursion as part of the floor
+ * trail would show a step that never happened. The animated pose from
+ * poseAtBeat still shows the excursion while it's in progress.
  */
 function localFootTrails(figure: Figure): FootTrails {
   const positions: Record<Partner, Record<Foot, Point2D>> = {
@@ -139,6 +168,15 @@ function localFootTrails(figure: Figure): FootTrails {
   );
 
   for (const step of orderedSteps) {
+    // The step's `orientation` is the partner's frame heading as of the
+    // end of this step, regardless of which foot moved -- both feet of
+    // a partner share one orientation (see PartnerPose). That holds for
+    // airborne steps too, which can still turn the frame.
+    if (step.contact === "air") {
+      orientationBefore[step.partner] = step.orientation;
+      continue;
+    }
+
     const start = positions[step.partner][step.foot];
     const end = movementEndpoint(
       start,
@@ -147,9 +185,6 @@ function localFootTrails(figure: Figure): FootTrails {
     );
 
     positions[step.partner][step.foot] = end;
-    // The step's `orientation` is the partner's frame heading as of the
-    // end of this step, regardless of which foot moved -- both feet of
-    // a partner share one orientation (see PartnerPose).
     orientationBefore[step.partner] = step.orientation;
     trails[step.partner][step.foot].push(end);
   }
@@ -279,12 +314,17 @@ export function poseAtBeat(figure: Figure, localBeat: number): Pose {
 
     if (localBeat >= stepEnd) {
       // Fully complete by the queried time -- commit its result and
-      // move on to whatever comes next.
-      positions[step.partner][step.foot] = movementEndpoint(
-        positions[step.partner][step.foot],
-        orientations[step.partner],
-        step.movement,
-      );
+      // move on to whatever comes next. An airborne step has returned
+      // to where it started, so its position is left unchanged; its
+      // weight (normally 0, putting all weight on the standing foot),
+      // orientation and rise still apply.
+      if (step.contact !== "air") {
+        positions[step.partner][step.foot] = movementEndpoint(
+          positions[step.partner][step.foot],
+          orientations[step.partner],
+          step.movement,
+        );
+      }
       weights[step.partner][step.foot] = step.weight;
       weights[step.partner][otherFoot] = 1 - step.weight;
       orientations[step.partner] = step.orientation;
@@ -305,7 +345,9 @@ export function poseAtBeat(figure: Figure, localBeat: number): Pose {
     // simultaneous step for the other partner (or a foot's later step)
     // can still need processing at this same localBeat.
     const progress = (localBeat - stepStart) / step.duration;
-    positions[step.partner][step.foot] = movementPointAt(
+    positions[step.partner][step.foot] = (
+      step.contact === "air" ? airborneExcursionAt : movementPointAt
+    )(
       positions[step.partner][step.foot],
       orientations[step.partner],
       step.movement,

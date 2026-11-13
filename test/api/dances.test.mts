@@ -118,18 +118,12 @@ test("GET /api/dances: lists dances, most recently updated first", async () => {
   }
 });
 
-test(
-  "GET /api/dances: ids are strings, like every other endpoint",
-  {
-    todo: "/api/dances returns the raw numeric row id, while /api/figures and the assembled types stringify ids (see the comment in the /api/figures handler)",
-  },
-  async () => {
-    const { body } = await get("/api/dances");
-    for (const dance of body.message as { id: unknown }[]) {
-      assert.equal(typeof dance.id, "string");
-    }
-  },
-);
+test("GET /api/dances: ids are strings, like every other endpoint", async () => {
+  const { body } = await get("/api/dances");
+  for (const dance of body.message as { id: unknown }[]) {
+    assert.equal(typeof dance.id, "string");
+  }
+});
 
 test("GET /api/dances/:id: returns an assembled dance with its sequence, 404 when missing", async () => {
   const found = await get("/api/dances/1");
