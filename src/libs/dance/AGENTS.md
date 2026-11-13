@@ -27,6 +27,10 @@ implementation's choice, not a confirmed dance rule.
 - `serialize.mts`: converts builder state into a `Sequence` record.
 - `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
   and which foot is the standing foot.
+- `authoring.mts`: `defineFigure`, which turns a dancer-level description
+  (relative directions, mirrored steps, counts) into a figure's steps and
+  poses and checks it. Used by the seed figures in `db/figures/`; the
+  guide is `db/FIGURES.md`.
 
 Everything here is plain data and pure functions with no React, DOM or
 network dependencies. Keep it that way so it stays testable under `node:test`
@@ -99,9 +103,9 @@ and usable by any renderer.
 - `Figure.startPose` and `endPose` are currently hand-authored and are not
   guaranteed to equal the result of folding the figure's steps. Code in
   `fold.mts` does not assume they match, and new code should not either,
-  unless it adds an explicit consistency check. For the seeded figures,
-  `test/db/seed.test.mts` checks that they agree, so a seed change that
-  breaks that fails the tests.
+  unless it adds an explicit consistency check. Seeded figures are written
+  with `defineFigure`, which calculates `endPose` by folding the steps and
+  checks it against the figure's optional `expectEnd`.
 - Airborne (`contact: "air"`) steps describe a path for rendering but carry
   no weight and do not move the foot's resting position for the next step.
   `poseAtBeat` animates the foot out along the movement and back; the floor
@@ -139,6 +143,12 @@ the owner before building more on top of them.
 - The free-foot rule above, and the rule that one partner never has two
   steps in progress at once, are checked against the seed as provisional
   rules.
+- `defineFigure`'s closed stance (feet 20 cm apart, partners 40 cm apart,
+  follow directly in front of the lead), its mirroring (the follow uses the
+  other foot and travels the same floor direction), "close" (beside the
+  standing foot at stance width, across the facing after the turn) and its
+  default starting weight (lead on his right, follow on her left) are
+  agreed defaults, not technique.
 
 ## Terminology
 
