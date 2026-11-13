@@ -60,12 +60,26 @@ const schemaPath = join(__dirname, "schema.sql");
 
 if (!existsSync(dbPath)) {
   throw new Error(
-    `No database at ${dbPath}. Build it first, e.g.:\n  sqlite3 ${dbPath} < ${schemaPath}`,
+    `No database at ${dbPath}. Run \`npm run db:reset\` to create and seed it, or build it first with:\n  sqlite3 ${dbPath} < ${schemaPath}`,
   );
 }
 
 const db = new Database(dbPath);
 db.pragma("foreign_keys = ON");
+
+// The seed inserts rather than replaces, so running it on a database
+// that already has data would add a second copy of every figure,
+// sequence and dance. Refuse instead; `npm run db:reset` rebuilds the
+// database from empty when that's what's wanted.
+const existingFigures = (
+  db.prepare("SELECT COUNT(*) AS n FROM figures").get() as { n: number }
+).n;
+if (existingFigures > 0) {
+  db.close();
+  throw new Error(
+    `${dbPath} already has ${existingFigures} figures, so seeding again would duplicate them. Run \`npm run db:reset\` to rebuild it from empty instead.`,
+  );
+}
 
 type PartnerName = "lead" | "follow";
 

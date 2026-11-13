@@ -7,6 +7,7 @@ services:
       - "58735:58735"
     volumes:
       # Bind-mounts the repo's own db/ folder, so the database survives
-      # image rebuilds and stays the same file you can inspect or seed
-      # locally with `npx tsx db/seed.mts`.
+      # image rebuilds and stays the same file you can inspect locally.
+      # To rebuild and reseed it, stop the container and run
+      # `npm run db:reset` in the repo.
       - ./db:/app/db
