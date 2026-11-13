@@ -27,6 +27,7 @@
     "prepare": "husky",
     "api:dev": "tsx watch api/server.mts",
     "api": "tsx api/server.mts",
+    "db:reset": "tsx db/reset.mts",
     "audit:ci": "npx --yes audit-ci@7.1.0 --config audit-ci.jsonc",
     "format:check": "prettier --check . --config config/.prettierrc",
     "format:fix": "prettier --write . --config config/.prettierrc"

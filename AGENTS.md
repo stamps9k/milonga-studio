@@ -45,8 +45,12 @@ or renderer-specific fields to the domain types.
 - `npm run dev` starts the Vite dev server; `npm run api:dev` starts the API
   on port 58735 (override with `API_PORT`). Vite proxies `/api` to the API, so
   local development needs both running.
-- Create the database with `sqlite3 db/milonga.sqlite < db/schema.sql`, then
-  seed it with `npx tsx db/seed.mts` (`DB_PATH` overrides the location).
+- `npm run db:reset` deletes the database, recreates it from
+  `db/schema.sql` and seeds it with `db/seed.mts` (`DB_PATH` overrides the
+  location). Stop the API first. Run it after any change to the schema or
+  the seed, since an existing database never picks those up by itself. The
+  API also creates an empty database from the schema if none exists, and
+  `npx tsx db/seed.mts` refuses to seed a database that already has data.
 - `npm run build` type-checks and builds the frontend into `dist/`, which the
   API serves in production (see `Dockerfile` and `docker-compose.yml`).
 
