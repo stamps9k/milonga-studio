@@ -4,6 +4,7 @@ import type BetterSqlite3 from "better-sqlite3";
 
 import { openTestDatabase } from "../support/database.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
+import { assessJoin } from "../../src/libs/dance/join.mts";
 import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
@@ -273,6 +274,29 @@ test("seed: consecutive sequence entries are placed so the couple continues from
         maxFootDistance(entry.resolvedStartPose, placedStart) <
           POSITION_EPSILON,
         `${sequence.name}: entry ${i} (${entry.figure.name}) doesn't continue from entry ${i - 1}`,
+      );
+    }
+  }
+});
+
+test("seed: the waltz and cha-cha sequences join cleanly at every figure boundary", () => {
+  // These figures are authored to connect: each ends in the stance (and
+  // with the weight) the next one starts from. The tango sequences don't
+  // yet -- Walking Step ends mid-stride and the Ocho ends with the follow
+  // turned away -- which is a data decision still to be made, so they're
+  // deliberately not asserted here.
+  for (const name of ["Waltz Basics", "Cha-Cha Basics"]) {
+    const sequence = sequences.find((candidate) => candidate.name === name);
+    assert.ok(sequence, `no seeded sequence named ${name}`);
+    for (let i = 1; i < sequence.entries.length; i++) {
+      const join = assessJoin(
+        sequence.entries[i - 1].resolvedEndPose,
+        sequence.entries[i].figure,
+      );
+      assert.deepEqual(
+        join.issues,
+        [],
+        `${name}: ${sequence.entries[i - 1].figure.name} -> ${sequence.entries[i].figure.name}`,
       );
     }
   }
