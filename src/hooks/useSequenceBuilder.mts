@@ -1,13 +1,8 @@
 import { useCallback, useState } from "react";
 
 import { fetchFigure } from "../libs/api/figures.mts";
-import { applyTransform, fitTransform } from "../libs/dance/floor.mts";
-import type { FloorTransform, SequenceEntry } from "../libs/dance/sequence.mts";
-
-const ORIGIN_TRANSFORM: FloorTransform = {
-  position: { x: 0, y: 0 },
-  rotation: 0,
-};
+import { placeEntry, removeEntry } from "../libs/dance/chain.mts";
+import type { SequenceEntry } from "../libs/dance/sequence.mts";
 
 interface UseSequenceBuilderResult {
   entries: SequenceEntry[];
@@ -16,6 +11,9 @@ interface UseSequenceBuilderResult {
    *  the first figure is added. */
   activeFigureId: string | null;
   addFigure: (figureId: string) => Promise<void>;
+  /** Removes the entry at `index`; the entries after it are re-placed so
+   *  the sequence stays continuous (see removeEntry in chain.mts). */
+  removeFigure: (index: number) => void;
   loading: boolean;
   error: string | null;
 }
@@ -26,7 +24,8 @@ interface UseSequenceBuilderResult {
  * startPose up with the previous entry's resolvedEndPose (see
  * fitTransform in libs/dance/floor.mts), so the couple's position and
  * facing carry over between figures instead of jumping. The very first
- * entry has nothing before it, so it anchors at the floor origin.
+ * entry has nothing before it, so it anchors at the floor origin. The
+ * placement rules live in libs/dance/chain.mts.
  *
  * Nothing here is persisted -- there's no write API yet (see
  * api/dances.mts) -- this is purely in-memory sequence-building state
@@ -43,21 +42,10 @@ export function useSequenceBuilder(): UseSequenceBuilderResult {
     setError(null);
     try {
       const figure = await fetchFigure(figureId);
-      setEntries((previousEntries) => {
-        const previousEntry = previousEntries[previousEntries.length - 1];
-        const transform = previousEntry
-          ? fitTransform(figure.startPose, previousEntry.resolvedEndPose)
-          : ORIGIN_TRANSFORM;
-
-        const entry: SequenceEntry = {
-          figure,
-          transform,
-          resolvedStartPose: applyTransform(transform, figure.startPose),
-          resolvedEndPose: applyTransform(transform, figure.endPose),
-        };
-
-        return [...previousEntries, entry];
-      });
+      setEntries((previousEntries) => [
+        ...previousEntries,
+        placeEntry(figure, previousEntries[previousEntries.length - 1]),
+      ]);
       setActiveFigureId(figureId);
     } catch (err) {
       setError((err as Error).message);
@@ -66,5 +54,26 @@ export function useSequenceBuilder(): UseSequenceBuilderResult {
     }
   }, []);
 
-  return { entries, activeFigureId, addFigure, loading, error };
+  const removeFigure = useCallback((index: number) => {
+    setEntries((previousEntries) => removeEntry(previousEntries, index));
+  }, []);
+
+  // The highlight follows the most recently added figure. If that figure
+  // has since been removed from the sequence, highlight the last
+  // remaining entry instead (or nothing). Derived on read rather than
+  // stored, so removing a figure needs no second state update.
+  const highlightedFigureId =
+    activeFigureId !== null &&
+    entries.some((entry) => entry.figure.id === activeFigureId)
+      ? activeFigureId
+      : (entries[entries.length - 1]?.figure.id ?? null);
+
+  return {
+    entries,
+    activeFigureId: highlightedFigureId,
+    addFigure,
+    removeFigure,
+    loading,
+    error,
+  };
 }

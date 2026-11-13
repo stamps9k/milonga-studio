@@ -14,7 +14,7 @@ import { useSequenceExport } from "../hooks/useSequenceExport.mts";
 import { sequenceDurationBeats } from "../libs/dance/fold.mts";
 
 const App = () => {
-  const { entries, activeFigureId, addFigure, loading, error } =
+  const { entries, activeFigureId, addFigure, removeFigure, loading, error } =
     useSequenceBuilder();
   const totalBeats = sequenceDurationBeats(entries);
   const { beat, playing, toggle, seek, stepBy } = usePlayback(totalBeats);
@@ -60,6 +60,7 @@ const App = () => {
                       activeFigureId={activeFigureId}
                       loading={loading}
                       error={error}
+                      onRemove={removeFigure}
                     />
                     <Timeline
                       beat={beat}
