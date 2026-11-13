@@ -10,6 +10,7 @@ import {
   sequenceDurationBeats,
   sequenceFootTrails,
   sequencePoseAtBeat,
+  sequenceTrailSegments,
 } from "../../src/libs/dance/fold.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
@@ -761,4 +762,49 @@ test("sequenceFootTrails: an empty sequence yields empty trails", () => {
     assert.deepEqual(trails[partner].left, []);
     assert.deepEqual(trails[partner].right, []);
   }
+});
+
+test("sequenceTrailSegments: keeps one complete trail per entry, without dropping join points", () => {
+  const entries = [
+    { figure: sideStep, transform: IDENTITY },
+    { figure: sideStep, transform: { position: { x: 2, y: 0 }, rotation: 0 } },
+  ];
+  const { segments } = sequenceTrailSegments(entries, 0.05);
+  assert.equal(segments.length, 2);
+  // Each segment starts at its own figure's placed start, so the second
+  // one starts at x = 2 - 0.1, not where the first one ended.
+  pointClose(segments[0].lead.left[0], { x: -0.1, y: 0 });
+  pointClose(segments[1].lead.left[0], { x: 1.9, y: 0 });
+  pointClose(segments[1].lead.left[1], { x: 2.25, y: 0 });
+});
+
+test("sequenceTrailSegments: reports each foot that jumps at a join, with where it jumps from and to", () => {
+  // Side Step after itself, both at the origin: the lead's left and the
+  // follow's right end 0.35 east of where the second Side Step starts
+  // them, while the other two feet never moved.
+  const entries = [
+    { figure: sideStep, transform: IDENTITY },
+    { figure: sideStep, transform: IDENTITY },
+  ];
+  const { gaps } = sequenceTrailSegments(entries, 0.05);
+  assert.deepEqual(
+    gaps.map((gap) => [gap.entryIndex, gap.partner, gap.foot]),
+    [
+      [1, "lead", "left"],
+      [1, "follow", "right"],
+    ],
+  );
+  pointClose(gaps[0].from, { x: 0.25, y: 0 });
+  pointClose(gaps[0].to, { x: -0.1, y: 0 });
+  assert.ok(Math.abs(gaps[0].distance - 0.35) < 1e-9);
+});
+
+test("sequenceTrailSegments: jumps within the tolerance aren't gaps, and a single figure has none", () => {
+  const entries = [
+    { figure: sideStep, transform: IDENTITY },
+    { figure: sideStep, transform: IDENTITY },
+  ];
+  assert.deepEqual(sequenceTrailSegments(entries, 0.4).gaps, []);
+  assert.deepEqual(sequenceTrailSegments([entries[0]], 0).gaps, []);
+  assert.deepEqual(sequenceTrailSegments([], 0), { segments: [], gaps: [] });
 });

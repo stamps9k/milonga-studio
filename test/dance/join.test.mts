@@ -5,6 +5,7 @@ import {
   JOIN_FACING_TOLERANCE,
   JOIN_FOOT_GAP_TOLERANCE,
   assessJoin,
+  assessSequenceJoins,
 } from "../../src/libs/dance/join.mts";
 import { applyTransform } from "../../src/libs/dance/floor.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
@@ -206,4 +207,32 @@ test("assessJoin: a partner with no travelling steps can't fail the weight check
   const next = figureFrom(NEUTRAL, [step("lead", "left", 1, 0)]);
   const result = assessJoin(weightedLeft, next);
   assert.deepEqual(result.issues, []);
+});
+
+test("assessSequenceJoins: null for the first entry, then each entry assessed against the previous entry's resolved end", () => {
+  const first = figureFrom(NEUTRAL);
+  // Ends standing on lead's left / follow's right, so a second copy of
+  // the same figure (which starts by moving those feet) can't follow.
+  const weightShift: Figure = {
+    ...first,
+    id: "shift",
+    endPose: stance({ leadWeightOnLeft: true }),
+  };
+  const entries = [weightShift, first, first].map((figure) => ({
+    figure,
+    transform: { position: { x: 0, y: 0 }, rotation: 0 },
+    resolvedStartPose: figure.startPose,
+    resolvedEndPose: figure.endPose,
+  }));
+
+  const joins = assessSequenceJoins(entries);
+  assert.equal(joins.length, 3);
+  assert.equal(joins[0], null);
+  assert.equal(joins[1]?.fits, false);
+  assert.deepEqual(
+    joins[1]?.issues.map((issue) => issue.kind),
+    ["weighted-foot", "weighted-foot"],
+  );
+  assert.equal(joins[2]?.fits, true);
+  assert.deepEqual(assessSequenceJoins([]), []);
 });

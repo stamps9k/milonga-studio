@@ -1,7 +1,11 @@
 import { useMemo } from "react";
 
-import { sequenceFootTrails, sequencePoseAtBeat } from "../libs/dance/fold.mts";
+import {
+  sequencePoseAtBeat,
+  sequenceTrailSegments,
+} from "../libs/dance/fold.mts";
 import { headingToUnitVector } from "../libs/dance/heading.mts";
+import { JOIN_FOOT_GAP_TOLERANCE } from "../libs/dance/join.mts";
 import type { Foot, Partner } from "../libs/dance/step.mts";
 import type { Point2D } from "../libs/dance/pose.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
@@ -62,19 +66,34 @@ function boundsOf(points: Point2D[]): Bounds {
 }
 
 const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
-  const view = useMemo(() => {
-    if (entries.length === 0) return null;
+  const forFold = useMemo(
+    () =>
+      entries.map((entry) => ({
+        figure: entry.figure,
+        transform: entry.transform,
+      })),
+    [entries],
+  );
 
-    const forFold = entries.map((entry) => ({
-      figure: entry.figure,
-      transform: entry.transform,
-    }));
-    const trails = sequenceFootTrails(forFold);
-    const currentPose = sequencePoseAtBeat(forFold, currentBeat);
-    if (currentPose === null) return null;
+  // Everything that depends only on the sequence -- trails, gaps, framing
+  // and sizes -- is computed once per sequence change, not on every
+  // playback frame; only the current pose below changes with the beat.
+  const layout = useMemo(() => {
+    if (forFold.length === 0) return null;
 
-    const allScreenPoints = PARTNERS.flatMap((partner) =>
-      FEET.flatMap((foot) => trails[partner][foot].map(toScreen)),
+    // One trail segment per figure, with the joins where a foot's trail
+    // doesn't continue into the next figure listed separately, so they
+    // can be drawn as gaps rather than as steps (see
+    // sequenceTrailSegments in fold.mts).
+    const { segments, gaps } = sequenceTrailSegments(
+      forFold,
+      JOIN_FOOT_GAP_TOLERANCE,
+    );
+
+    const allScreenPoints = segments.flatMap((trails) =>
+      PARTNERS.flatMap((partner) =>
+        FEET.flatMap((foot) => trails[partner][foot].map(toScreen)),
+      ),
     );
     const bounds = boundsOf(allScreenPoints);
     const extentX = Math.max(bounds.maxX - bounds.minX, 1e-6);
@@ -97,14 +116,23 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     const facingLength = extent * 0.14 + 0.03;
 
     return {
-      trails,
-      currentPose,
+      segments,
+      gaps,
       viewBox,
       footRadius,
       strokeWidth,
       facingLength,
     };
-  }, [entries, currentBeat]);
+  }, [forFold]);
+
+  const currentPose = useMemo(
+    () =>
+      forFold.length === 0 ? null : sequencePoseAtBeat(forFold, currentBeat),
+    [forFold, currentBeat],
+  );
+
+  const view =
+    layout === null || currentPose === null ? null : { ...layout, currentPose };
 
   return (
     <div
@@ -137,18 +165,44 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
 
             return (
               <g key={partner}>
-                {FEET.map((foot) => (
-                  <path
-                    key={foot}
-                    d={pathFrom(view.trails[partner][foot])}
-                    fill="none"
-                    stroke={color}
-                    strokeWidth={view.strokeWidth}
-                    strokeOpacity={foot === "left" ? 0.8 : 0.45}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                ))}
+                {view.segments.flatMap((trails, entryIndex) =>
+                  FEET.map((foot) => (
+                    <path
+                      key={`${entryIndex}-${foot}`}
+                      d={pathFrom(trails[partner][foot])}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth={view.strokeWidth}
+                      strokeOpacity={foot === "left" ? 0.8 : 0.45}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )),
+                )}
+
+                {/* Where a figure doesn't start where the previous one
+                    left this foot: a thin dashed line marks the jump, so
+                    it isn't mistaken for a step. */}
+                {view.gaps
+                  .filter((gap) => gap.partner === partner)
+                  .map((gap) => {
+                    const from = toScreen(gap.from);
+                    const to = toScreen(gap.to);
+                    return (
+                      <line
+                        key={`gap-${gap.entryIndex}-${gap.foot}`}
+                        x1={from.x}
+                        y1={from.y}
+                        x2={to.x}
+                        y2={to.y}
+                        stroke={color}
+                        strokeWidth={view.strokeWidth * 0.6}
+                        strokeOpacity={0.6}
+                        strokeDasharray={`${view.strokeWidth * 2} ${view.strokeWidth * 2}`}
+                        strokeLinecap="round"
+                      />
+                    );
+                  })}
 
                 <line
                   x1={center.x}

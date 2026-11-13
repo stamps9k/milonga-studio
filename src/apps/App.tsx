@@ -38,7 +38,14 @@ const App = () => {
               />
               <div className="container-fluid px-4 py-4">
                 <div className="row g-4">
-                  <StepLibrary onSelectFigure={addFigure} />
+                  <StepLibrary
+                    onSelectFigure={addFigure}
+                    sequenceEnd={
+                      entries.length > 0
+                        ? entries[entries.length - 1].resolvedEndPose
+                        : null
+                    }
+                  />
                   <div className="col-9 d-flex flex-column gap-4">
                     <div className="card overflow-hidden">
                       {view === "2d" ? (
