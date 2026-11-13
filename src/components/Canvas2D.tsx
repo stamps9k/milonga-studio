@@ -10,6 +10,16 @@ import { centerOfWeight, isStandingFoot } from "../libs/dance/weight.mts";
 import type { Foot, Partner } from "../libs/dance/step.mts";
 import type { Point2D } from "../libs/dance/pose.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
+import CanvasLegend from "./CanvasLegend";
+import {
+  FREE_FOOT_FILL_OPACITY,
+  GAP_OPACITY,
+  MARKER_TEXT_COLOR,
+  PARTNER_COLOR,
+  PARTNER_LABEL,
+  TRAIL_OPACITY,
+} from "./canvasStyle.mts";
+import { formatScaleLength, niceScaleLength } from "./scaleBar.mts";
 
 interface Canvas2DProps {
   entries: SequenceEntry[];
@@ -21,16 +31,6 @@ interface Canvas2DProps {
 
 const PARTNERS: readonly Partner[] = ["lead", "follow"];
 const FEET: readonly Foot[] = ["left", "right"];
-
-const PARTNER_COLOR: Record<Partner, string> = {
-  lead: "var(--amber)",
-  follow: "var(--teal)",
-};
-
-const PARTNER_LABEL: Record<Partner, string> = {
-  lead: "L",
-  follow: "F",
-};
 
 /** Floor space has +Y = "north" / facing forward (see heading.mts).
  *  Screen space (SVG) has +Y pointing down, so this renders floor-north
@@ -100,26 +100,45 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     const extentX = Math.max(bounds.maxX - bounds.minX, 1e-6);
     const extentY = Math.max(bounds.maxY - bounds.minY, 1e-6);
     const extent = Math.max(extentX, extentY);
-    // Zoomed out well beyond the trail's own bounding box, so the
-    // whole sequence sits comfortably inside the frame with room to
-    // spare, rather than filling it edge to edge.
-    const padding = Math.max(extent * 1.4, 0.8);
+    // Padding around the trails' bounding box: half the sequence's size
+    // on each side (at least 0.5), so the whole sequence sits inside the
+    // frame with room for the markers, the legend in the top-left corner
+    // and the scale bar in the bottom-left, while still filling enough
+    // of the canvas to be readable. (Previously 1.4x the size, which
+    // left the dancers small in the middle of a mostly empty view.)
+    const padding = Math.max(extent * 0.5, 0.5);
 
-    const viewBox = [
-      bounds.minX - padding,
-      bounds.minY - padding,
-      extentX + padding * 2,
-      extentY + padding * 2,
-    ].join(" ");
+    const box = {
+      x: bounds.minX - padding,
+      y: bounds.minY - padding,
+      width: extentX + padding * 2,
+      height: extentY + padding * 2,
+    };
+    const viewBox = [box.x, box.y, box.width, box.height].join(" ");
 
     const footRadius = extent * 0.04 + 0.01;
     const strokeWidth = extent * 0.015 + 0.004;
     const facingLength = extent * 0.14 + 0.03;
 
+    // Scale bar in the bottom-left corner of the view, in floor units so
+    // it scales with the drawing: the largest round length up to a fifth
+    // of the view's width (see scaleBar.mts).
+    const scaleLength = niceScaleLength(box.width / 5);
+    const scaleBar = {
+      x: box.x + box.width * 0.04,
+      y: box.y + box.height * 0.95,
+      length: scaleLength,
+      label: formatScaleLength(scaleLength),
+      tick: box.height * 0.012,
+      fontSize: box.height * 0.028,
+      strokeWidth: box.height * 0.003,
+    };
+
     return {
       segments,
       gaps,
       viewBox,
+      scaleBar,
       footRadius,
       strokeWidth,
       facingLength,
@@ -146,6 +165,37 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
         </div>
       ) : (
         <svg viewBox={view.viewBox} width="100%" height="100%">
+          <g
+            aria-label={`Scale: ${view.scaleBar.label}`}
+            stroke="var(--bs-secondary-color, #999)"
+            strokeWidth={view.scaleBar.strokeWidth}
+            strokeLinecap="round">
+            <line
+              x1={view.scaleBar.x}
+              y1={view.scaleBar.y}
+              x2={view.scaleBar.x + view.scaleBar.length}
+              y2={view.scaleBar.y}
+            />
+            {[0, view.scaleBar.length].map((offset) => (
+              <line
+                key={offset}
+                x1={view.scaleBar.x + offset}
+                y1={view.scaleBar.y - view.scaleBar.tick}
+                x2={view.scaleBar.x + offset}
+                y2={view.scaleBar.y + view.scaleBar.tick}
+              />
+            ))}
+            <text
+              x={view.scaleBar.x + view.scaleBar.length / 2}
+              y={view.scaleBar.y - view.scaleBar.tick * 1.6}
+              textAnchor="middle"
+              fontSize={view.scaleBar.fontSize}
+              stroke="none"
+              fill="var(--bs-secondary-color, #999)">
+              {view.scaleBar.label}
+            </text>
+          </g>
+
           {PARTNERS.map((partner) => {
             const color = PARTNER_COLOR[partner];
             const partnerPose = view.currentPose[partner];
@@ -174,7 +224,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                       fill="none"
                       stroke={color}
                       strokeWidth={view.strokeWidth}
-                      strokeOpacity={foot === "left" ? 0.8 : 0.45}
+                      strokeOpacity={TRAIL_OPACITY[foot]}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
@@ -198,7 +248,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                         y2={to.y}
                         stroke={color}
                         strokeWidth={view.strokeWidth * 0.6}
-                        strokeOpacity={0.6}
+                        strokeOpacity={GAP_OPACITY}
                         strokeDasharray={`${view.strokeWidth * 2} ${view.strokeWidth * 2}`}
                         strokeLinecap="round"
                       />
@@ -236,7 +286,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                       cy={point.y}
                       r={view.footRadius}
                       fill={color}
-                      fillOpacity={standing ? 1 : 0.12}
+                      fillOpacity={standing ? 1 : FREE_FOOT_FILL_OPACITY}
                       stroke={color}
                       strokeWidth={view.strokeWidth * 0.6}
                     />
@@ -251,7 +301,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                   fontFamily="JetBrains Mono"
                   fontSize={view.footRadius * 1.6}
                   fontWeight="700"
-                  fill="#14161c">
+                  fill={MARKER_TEXT_COLOR}>
                   {PARTNER_LABEL[partner]}
                 </text>
               </g>
@@ -259,6 +309,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
           })}
         </svg>
       )}
+      {view !== null && <CanvasLegend />}
     </div>
   );
 };
