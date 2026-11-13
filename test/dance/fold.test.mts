@@ -487,3 +487,240 @@ test("sequenceCurrentStepsAtBeat: reports the right figure and delegates like se
 
   assert.equal(sequenceCurrentStepsAtBeat([], 0), null);
 });
+
+// ---------------------------------------------------------------------
+// Edge cases and invariants added alongside the code review. These use
+// small hand-built figures so every expected value can be checked by
+// hand from the heading convention in heading.mts.
+// ---------------------------------------------------------------------
+
+/** A one-step figure for lead's left foot only, starting at the origin
+ *  facing north, so the step's movement is the only thing that moves. */
+function singleLeadStepFigure(
+  step: Partial<Figure["steps"][number]> &
+    Pick<Figure["steps"][number], "movement">,
+): Figure {
+  return {
+    ...sideStep,
+    id: "single-step",
+    startPose: {
+      ...sideStep.startPose,
+      lead: {
+        ...sideStep.startPose.lead,
+        left: { position: { x: 0, y: 0 }, weight: 0 },
+        right: { position: { x: 0.2, y: 0 }, weight: 1 },
+        orientation: 0,
+        rise: 0,
+      },
+    },
+    steps: [
+      {
+        id: "1",
+        partner: "lead",
+        foot: "left",
+        contact: "floor",
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+        ...step,
+      },
+    ],
+  };
+}
+
+test("poseAtBeat: clamps -- before the start reads startPose, past the end reads the completed fold", () => {
+  const before = poseAtBeat(sideStep, -5);
+  pointClose(before.lead.left.position, sideStep.startPose.lead.left.position);
+
+  const end = poseAtBeat(sideStep, figureDurationBeats(sideStep));
+  const wayPast = poseAtBeat(sideStep, 100);
+  pointClose(wayPast.lead.left.position, end.lead.left.position);
+  pointClose(wayPast.follow.right.position, end.follow.right.position);
+  assert.equal(wayPast.lead.left.weight, end.lead.left.weight);
+});
+
+test("poseAtBeat: steps are applied in beat order regardless of the order they're stored in", () => {
+  const ordered = singleLeadStepFigure({
+    movement: { type: "straight", direction: 0, distance: 0.3 },
+  });
+  const secondStep = {
+    ...ordered.steps[0],
+    id: "2",
+    beat: 2,
+    movement: { type: "straight" as const, direction: 90, distance: 0.2 },
+  };
+  const inOrder: Figure = { ...ordered, steps: [ordered.steps[0], secondStep] };
+  const reversed: Figure = {
+    ...ordered,
+    steps: [secondStep, ordered.steps[0]],
+  };
+
+  // North 0.3 then east 0.2 from the origin ends at (0.2, 0.3).
+  pointClose(poseAtBeat(inOrder, 2).lead.left.position, { x: 0.2, y: 0.3 });
+  pointClose(poseAtBeat(reversed, 2).lead.left.position, { x: 0.2, y: 0.3 });
+  const trails = figureFootTrails(reversed, IDENTITY).lead.left;
+  pointClose(trails[1], { x: 0, y: 0.3 });
+  pointClose(trails[2], { x: 0.2, y: 0.3 });
+});
+
+test("poseAtBeat: a pivot (zero-distance step) turns the frame without moving the foot", () => {
+  const pivot = singleLeadStepFigure({
+    movement: { type: "straight", direction: 0, distance: 0 },
+    orientation: 90,
+  });
+  const mid = poseAtBeat(pivot, 0.5);
+  pointClose(mid.lead.left.position, { x: 0, y: 0 });
+  assert.ok(Math.abs(mid.lead.orientation - 45) < 1e-9);
+
+  const end = poseAtBeat(pivot, 1);
+  pointClose(end.lead.left.position, { x: 0, y: 0 });
+  assert.ok(Math.abs(end.lead.orientation - 90) < 1e-9);
+});
+
+test("figureFootTrails: negative curvature curves left (mirror of the positive quarter circle)", () => {
+  const leftArc = singleLeadStepFigure({
+    movement: { type: "arc", curvature: -1, arcLength: Math.PI / 2 },
+    orientation: 270,
+  });
+  const trail = figureFootTrails(leftArc, IDENTITY).lead.left;
+  // From (0, 0) facing north, a radius-1 quarter circle curving left
+  // ends at (-1, 1), now facing west.
+  pointClose(trail[trail.length - 1], { x: -1, y: 1 });
+});
+
+test("poseAtBeat: halfway through an arc the foot is on the curve, not on the straight chord", () => {
+  const arc = singleLeadStepFigure({
+    movement: { type: "arc", curvature: 1, arcLength: Math.PI / 2 },
+    orientation: 90,
+  });
+  // Curving right from (0, 0) facing north, the circle's centre is at
+  // (1, 0). Halfway along the quarter circle (45 degrees of sweep) the
+  // foot is at (1 - cos 45, sin 45). The chord midpoint would instead
+  // be (0.5, 0.5).
+  const mid = poseAtBeat(arc, 0.5).lead.left.position;
+  pointClose(mid, { x: 1 - Math.SQRT1_2, y: Math.SQRT1_2 });
+  assert.ok(Math.abs(Math.hypot(mid.x - 1, mid.y) - 1) < 1e-9);
+});
+
+test("poseAtBeat: rise is interpolated linearly across the step", () => {
+  const rising = singleLeadStepFigure({
+    movement: { type: "straight", direction: 0, distance: 0.4 },
+    rise: 0.08,
+  });
+  assert.ok(Math.abs(poseAtBeat(rising, 0.25).lead.rise - 0.02) < 1e-9);
+  assert.ok(Math.abs(poseAtBeat(rising, 1).lead.rise - 0.08) < 1e-9);
+  // The other partner's rise is untouched by the lead's step.
+  assert.equal(poseAtBeat(rising, 1).follow.rise, 0);
+});
+
+test("poseAtBeat: each partner's foot weights always sum to 1 throughout a step", () => {
+  for (let beat = 0; beat <= 1; beat += 0.125) {
+    const pose = poseAtBeat(sideStep, beat);
+    for (const partner of ["lead", "follow"] as const) {
+      const total = pose[partner].left.weight + pose[partner].right.weight;
+      assert.ok(
+        Math.abs(total - 1) < 1e-9,
+        `${partner} weights sum to ${total} at beat ${beat}`,
+      );
+    }
+  }
+});
+
+test("poseAtBeat and figureFootTrails agree on where every foot ends, including after an arc", () => {
+  // The fold is implemented twice (once for trails, once for poses).
+  // Both must land every foot in the same place, or the drawn trail and
+  // the drawn feet would visibly disagree.
+  const mixed: Figure = {
+    ...singleLeadStepFigure({
+      movement: { type: "straight", direction: 0, distance: 0.3 },
+      orientation: 30,
+    }),
+  };
+  mixed.steps = [
+    ...mixed.steps,
+    {
+      ...mixed.steps[0],
+      id: "2",
+      foot: "right",
+      beat: 2,
+      movement: { type: "arc", curvature: 2, arcLength: 0.5 },
+      orientation: 60,
+    },
+  ];
+  const trails = figureFootTrails(mixed, IDENTITY);
+  const pose = poseAtBeat(mixed, figureDurationBeats(mixed));
+  for (const partner of ["lead", "follow"] as const) {
+    for (const foot of ["left", "right"] as const) {
+      const trail = trails[partner][foot];
+      pointClose(pose[partner][foot].position, trail[trail.length - 1]);
+    }
+  }
+});
+
+test(
+  "poseAtBeat: an airborne step does not change where the foot rests afterwards",
+  {
+    todo: "step.mts documents that air steps don't affect the next step's starting position, but fold.mts ignores `contact` and moves the foot permanently",
+  },
+  () => {
+    const boleo = singleLeadStepFigure({
+      movement: { type: "straight", direction: 90, distance: 0.3 },
+      contact: "air",
+      weight: 0,
+    });
+    pointClose(poseAtBeat(boleo, 1).lead.left.position, { x: 0, y: 0 });
+  },
+);
+
+test("figureDurationBeats: an empty figure takes 0 beats, and fractional durations add up", () => {
+  assert.equal(figureDurationBeats({ ...sideStep, steps: [] }), 0);
+  const halfBeats = singleLeadStepFigure({
+    movement: { type: "straight", direction: 0, distance: 0.1 },
+    beat: 3.5,
+    duration: 0.5,
+  });
+  assert.equal(figureDurationBeats(halfBeats), 3);
+});
+
+test("sequencePoseAtBeat: clamps to the first entry's start and the last entry's end", () => {
+  const secondTransform = { position: { x: 2, y: 0 }, rotation: 0 };
+  const entries = [
+    { figure: sideStep, transform: IDENTITY },
+    { figure: sideStep, transform: secondTransform },
+  ];
+  const before = sequencePoseAtBeat(entries, -3);
+  pointClose(before!.lead.left.position, sideStep.startPose.lead.left.position);
+
+  const after = sequencePoseAtBeat(entries, 99);
+  const expectedEnd = applyTransform(
+    secondTransform,
+    poseAtBeat(sideStep, figureDurationBeats(sideStep)),
+  );
+  pointClose(after!.lead.left.position, expectedEnd.lead.left.position);
+});
+
+test("sequencePoseAtBeat: a zero-length figure in the middle is skipped, not stuck on", () => {
+  const empty: Figure = { ...sideStep, id: "empty", steps: [] };
+  const entries = [
+    { figure: sideStep, transform: IDENTITY },
+    { figure: empty, transform: IDENTITY },
+    { figure: sideStep, transform: { position: { x: 2, y: 0 }, rotation: 0 } },
+  ];
+  assert.equal(sequenceDurationBeats(entries), 2);
+  const atJoin = sequenceCurrentStepsAtBeat(entries, 1);
+  assert.equal(atJoin?.figureId, "side-step");
+  // Half a beat into the third entry, the lead's left foot is moving
+  // from x = 2 - 0.1 towards 2 + 0.25.
+  const mid = sequencePoseAtBeat(entries, 1.5);
+  pointClose(mid!.lead.left.position, { x: 2 + 0.075, y: 0 });
+});
+
+test("sequenceFootTrails: an empty sequence yields empty trails", () => {
+  const trails = sequenceFootTrails([]);
+  for (const partner of ["lead", "follow"] as const) {
+    assert.deepEqual(trails[partner].left, []);
+    assert.deepEqual(trails[partner].right, []);
+  }
+});

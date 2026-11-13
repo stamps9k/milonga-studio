@@ -166,3 +166,112 @@ test("chaining: fitting a figure's startPose onto the previous entry's resolvedE
       Math.abs(secondResolvedEnd.lead.left.position.y) > 1e-6,
   );
 });
+
+test("applyTransform: normalizes rotated orientations into [0, 360)", () => {
+  // Lead faces 350, follow 170; a further 20 degrees takes the lead
+  // past north, which must read as 10, not 370.
+  const pose = makePose({ leadOrientation: 350, followOrientation: 170 });
+  const placed = applyTransform(
+    { position: { x: 0, y: 0 }, rotation: 20 },
+    pose,
+  );
+  assert.ok(Math.abs(placed.lead.orientation - 10) < 1e-9);
+  assert.ok(Math.abs(placed.follow.orientation - 190) < 1e-9);
+});
+
+test("applyTransform: leaves weights untouched", () => {
+  const pose = makePose();
+  pose.lead.left.weight = 1;
+  pose.lead.right.weight = 0;
+  const placed = applyTransform(
+    { position: { x: 3, y: 4 }, rotation: 123 },
+    pose,
+  );
+  assert.equal(placed.lead.left.weight, 1);
+  assert.equal(placed.lead.right.weight, 0);
+  assert.equal(placed.follow.left.weight, 0.5);
+});
+
+test("fitTransform: a counterclockwise placement comes back as a normalized clockwise rotation", () => {
+  // -30 degrees (30 counterclockwise) is the same placement as 330;
+  // FloorTransform.rotation shares the [0, 360) heading convention, so
+  // the fit must report 330 rather than -30.
+  const source = makePose();
+  const target = applyTransform(
+    { position: { x: -2, y: 1.5 }, rotation: -30 },
+    source,
+  );
+  const fitted = fitTransform(source, target);
+  assert.ok(
+    Math.abs(fitted.rotation - 330) < 1e-6,
+    `expected 330, got ${fitted.rotation}`,
+  );
+  assertPoseClose(applyTransform(fitted, source), target);
+});
+
+test("fitTransform: a half-turn placement is recovered (rotation 180)", () => {
+  const source = makePose();
+  const target = applyTransform(
+    { position: { x: 1, y: 1 }, rotation: 180 },
+    source,
+  );
+  const fitted = fitTransform(source, target);
+  assert.ok(Math.abs(fitted.rotation - 180) < 1e-6);
+  assertPoseClose(applyTransform(fitted, source), target);
+});
+
+test("fitTransform: when poses don't match exactly, the best fit still lines up their foot centroids", () => {
+  // A least-squares rigid fit always maps the source feet's centroid
+  // exactly onto the target feet's centroid, even when the leftover
+  // shape mismatch means no transform can line up every foot. This is
+  // what keeps a sequence from drifting when two figures' stances don't
+  // quite connect.
+  const source = makePose();
+  const target = makePose({
+    leadLeft: [0.9, 2.1],
+    leadRight: [1.2, 2.0],
+    followLeft: [0.95, 2.5],
+    followRight: [1.3, 2.35],
+  });
+  const fitted = fitTransform(source, target);
+  const placed = applyTransform(fitted, source);
+
+  const centroid = (pose: Pose) => {
+    const feet = [
+      pose.lead.left,
+      pose.lead.right,
+      pose.follow.left,
+      pose.follow.right,
+    ].map((foot) => foot.position);
+    return {
+      x: feet.reduce((sum, p) => sum + p.x, 0) / 4,
+      y: feet.reduce((sum, p) => sum + p.y, 0) / 4,
+    };
+  };
+  const placedCentroid = centroid(placed);
+  const targetCentroid = centroid(target);
+  assert.ok(Math.abs(placedCentroid.x - targetCentroid.x) < 1e-9);
+  assert.ok(Math.abs(placedCentroid.y - targetCentroid.y) < 1e-9);
+});
+
+test("fitTransform: a degenerate pose (all feet at one point) falls back to no rotation", () => {
+  // With every foot at the same spot there is no shape to align, so the
+  // rotation is undefined; fitTransform reports 0 and translates the
+  // point onto the target instead of returning NaN.
+  const collapsed = makePose({
+    leadLeft: [0, 0],
+    leadRight: [0, 0],
+    followLeft: [0, 0],
+    followRight: [0, 0],
+  });
+  const target = makePose({
+    leadLeft: [2, 3],
+    leadRight: [2, 3],
+    followLeft: [2, 3],
+    followRight: [2, 3],
+  });
+  const fitted = fitTransform(collapsed, target);
+  assert.equal(fitted.rotation, 0);
+  assert.ok(Math.abs(fitted.position.x - 2) < 1e-9);
+  assert.ok(Math.abs(fitted.position.y - 3) < 1e-9);
+});
