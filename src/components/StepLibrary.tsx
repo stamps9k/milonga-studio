@@ -32,12 +32,14 @@ const StepLibrary = ({
   const { figures, loading, error } = useFigures();
   const details = useFigureDetails(figures);
   const [query, setQuery] = useState("");
-  const [hideMisfits, setHideMisfits] = useState(false);
+  const [hideMisfits, setHideMisfits] = useState(true);
 
-  // Figures that don't join cleanly are flagged, not removed: adding one
-  // anyway is still allowed (the sequence strip and canvas then show the
-  // gap), and hiding is an opt-in filter, so the library never seems to
-  // lose figures without explanation.
+  // Figures that don't join cleanly are hidden by default, so the library
+  // offers what can actually follow on. The switch stays visible whenever
+  // something is hidden, so the library never shrinks without an obvious
+  // way to see everything; turning it off shows the misfits flagged, and
+  // adding one is still allowed (the sequence strip and canvas then show
+  // the gap).
   const fitById = useMemo(() => {
     const fits = new Map<string, FigureFit>();
     if (sequenceEnd === null) return fits;
@@ -127,7 +129,7 @@ const StepLibrary = ({
               onChange={(event) => setHideMisfits(event.target.checked)}
             />
             <label className="form-check-label" htmlFor="hide-misfits">
-              Hide figures that don’t follow on ({misfitCount})
+              Hide figures that don’t follow on
             </label>
           </div>
         )}
