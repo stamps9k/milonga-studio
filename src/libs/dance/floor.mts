@@ -2,7 +2,6 @@ import type { Foot, Partner } from "./step.mts";
 import type { FootState, PartnerPose, Point2D, Pose } from "./pose.mts";
 import type { FloorTransform } from "./sequence.mts";
 import {
-  RAD_TO_DEG,
   addPoints,
   normalizeDegrees,
   rotatePoint,
@@ -55,8 +54,7 @@ export function applyTransform(transform: FloorTransform, pose: Pose): Pose {
   };
 }
 
-/** The 4 foot positions of a Pose in a fixed order -- the point
- *  correspondence fitTransform needs between two poses. */
+/** The 4 foot positions of a Pose in a fixed order. */
 function footPoints(pose: Pose): Point2D[] {
   const points: Point2D[] = [];
   for (const partner of PARTNERS) {
@@ -76,10 +74,10 @@ function centroid(points: Point2D[]): Point2D {
 }
 
 /**
- * Finds the rigid 2D transform (rotate, then translate) that best maps
- * `source`'s 4 foot positions onto `target`'s, in a least-squares sense
- * (2D orthogonal Procrustes, aka Kabsch restricted to rotation, no
- * reflection/scaling).
+ * Finds the rigid 2D transform (rotate, then translate) that places
+ * `source` onto `target`: the rotation turns the lead's frame in
+ * `source` to face the same way as the lead's frame in `target`, and
+ * the translation then lines up the two poses' foot centroids.
  *
  * Used to chain figures in a Sequence: fitting a figure's startPose onto
  * the previous entry's resolvedEndPose gives the FloorTransform that
@@ -87,39 +85,35 @@ function centroid(points: Point2D[]): Point2D {
  * the two figures are authored to actually connect (their transition
  * stance matches up to rotation/translation), the fit is exact --
  * applyTransform(result, source) reproduces target exactly. When they
- * aren't, this is the closest rigid placement available; the leftover
- * gap is a natural (currently unused) signal for a future "these two
- * figures don't connect cleanly" check.
+ * aren't, assessJoin (join.mts) measures what's left over.
+ *
+ * Why the lead's frame decides the rotation, rather than the feet:
+ * an earlier version found the rotation that best lined up all four
+ * feet (least-squares / orthogonal Procrustes). That's exact for
+ * congruent stances, but when a figure ends in a different stance shape
+ * than the next one starts in -- say mid-stride, with the lead's feet
+ * 0.6 apart front to back -- the best foot fit is a *turn*: it rotated
+ * the next figure about 31 degrees even though both partners were still
+ * facing straight down line of dance. Facing is what dancers keep
+ * continuous between figures, and PartnerPose.orientation records it
+ * directly, so it's used as-is and the feet only set the position.
+ *
+ * Provisional modelling choices:
+ * - The lead's frame stands for the couple's facing. The follow's frame
+ *   is ignored here because in some figures it legitimately turns away
+ *   from the lead's (the Ocho ends with the follow at 45 degrees); any
+ *   difference in the follow's facing shows up in assessJoin instead.
+ * - With the rotation fixed, the centroid match is the least-squares
+ *   translation: it splits any leftover stance mismatch evenly across
+ *   all four feet rather than favouring, say, the weighted feet.
  */
 export function fitTransform(source: Pose, target: Pose): FloorTransform {
-  const sourcePoints = footPoints(source);
-  const targetPoints = footPoints(target);
-
-  const sourceCentroid = centroid(sourcePoints);
-  const targetCentroid = centroid(targetPoints);
-
-  let crossSum = 0;
-  let dotSum = 0;
-  for (let i = 0; i < sourcePoints.length; i++) {
-    const s = subPoints(sourcePoints[i], sourceCentroid);
-    const t = subPoints(targetPoints[i], targetCentroid);
-    crossSum += s.x * t.y - s.y * t.x;
-    dotSum += s.x * t.x + s.y * t.y;
-  }
-
-  // atan2(crossSum, dotSum) is the standard orthogonal-Procrustes result
-  // for the usual counterclockwise/+X-origin rotation convention; negated
-  // here because rotatePoint above uses the clockwise/+Y-origin (compass
-  // bearing) convention instead -- see its comment.
-  const rotation =
-    crossSum === 0 && dotSum === 0
-      ? 0
-      : Math.atan2(-crossSum, dotSum) * RAD_TO_DEG;
-
-  const position = subPoints(
-    targetCentroid,
-    rotatePoint(sourceCentroid, rotation),
+  const rotation = normalizeDegrees(
+    target.lead.orientation - source.lead.orientation,
   );
-
-  return { position, rotation: normalizeDegrees(rotation) };
+  const position = subPoints(
+    centroid(footPoints(target)),
+    rotatePoint(centroid(footPoints(source)), rotation),
+  );
+  return { position, rotation };
 }

@@ -22,6 +22,8 @@ implementation's choice, not a confirmed dance rule.
   over time, at figure and sequence level.
 - `floor.mts`: applies floor transforms and fits the transform that chains
   one figure onto the end of the previous one.
+- `join.mts`: measures how cleanly one figure follows another (foot gaps,
+  facing changes, stepping off a weighted foot) once placed.
 - `serialize.mts`: converts builder state into a `Sequence` record.
 
 Everything here is plain data and pure functions with no React, DOM or
@@ -84,11 +86,11 @@ and usable by any renderer.
   and facing 0 degrees. Where a figure actually sits on the floor belongs to
   its `SequenceEntry.transform`, never to the figure.
 - `FloorTransform` rotates about the origin first, then translates.
-- `fitTransform` chains figures by finding the rigid transform
-  (least-squares, rotation and translation only) that maps a figure's
-  `startPose` feet onto the previous entry's `resolvedEndPose`. The fit is
-  exact when figures are authored to connect. The leftover error is a future
-  "these figures don't join cleanly" signal and is not used yet.
+- `fitTransform` chains figures by placing a figure's `startPose` onto the
+  previous entry's `resolvedEndPose`: the rotation lines up the lead's
+  frame, then the translation lines up the foot centroids. The fit is exact
+  when figures are authored to connect. `assessJoin` (`join.mts`) measures
+  whatever doesn't line up after that placement.
 - `resolvedStartPose` and `resolvedEndPose` are caches derived from `figure`
   and `transform`. Recompute them when either changes; never edit them
   independently.
@@ -121,10 +123,15 @@ the owner before building more on top of them.
 - An airborne step's excursion goes out along its movement for the first
   half of the step and retraces it for the second half
   (`airborneExcursionAt` in `fold.mts`).
+- `fitTransform` takes the couple's facing from the lead's frame alone and
+  ignores the follow's, which can legitimately differ (the Ocho). Any
+  follow facing difference is reported by `assessJoin` instead.
+- `assessJoin`'s tolerances (`JOIN_FOOT_GAP_TOLERANCE`, 5 cm, and
+  `JOIN_FACING_TOLERANCE`, 10 degrees) are judgement calls, not technique.
 - Seed figures (`db/seed.mts`) are plausible test data, not syllabus
   transcriptions. Seeded sequences are chained with `fitTransform`, like
-  the app's sequence builder, but how well two figures' stances join is not
-  scored yet, so some seeded joins are only a best fit.
+  the app's sequence builder. The waltz and cha-cha sequences join
+  cleanly; the tango ones don't yet (see `test/db/seed.test.mts`).
 - The free-foot rule above, and the rule that one partner never has two
   steps in progress at once, are checked against the seed as provisional
   rules.

@@ -41,7 +41,8 @@
  * origin, and every later entry is placed with fitTransform so its
  * startPose lands on the previous entry's resolved endPose. Where two
  * figures' stances don't match exactly, fitTransform finds the closest
- * rigid placement; scoring how well a join fits is still deferred.
+ * placement, and assessJoin (src/libs/dance/join.mts) reports what's
+ * left over.
  *
  * Run with: tsx db/seed.mts
  */

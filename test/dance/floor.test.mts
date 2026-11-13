@@ -255,9 +255,10 @@ test("fitTransform: when poses don't match exactly, the best fit still lines up 
 });
 
 test("fitTransform: a degenerate pose (all feet at one point) falls back to no rotation", () => {
-  // With every foot at the same spot there is no shape to align, so the
-  // rotation is undefined; fitTransform reports 0 and translates the
-  // point onto the target instead of returning NaN.
+  // With every foot at the same spot there is no shape to align, but
+  // the rotation comes from the lead's facing, which still matches, so
+  // fitTransform reports 0 and translates the point onto the target
+  // instead of returning NaN.
   const collapsed = makePose({
     leadLeft: [0, 0],
     leadRight: [0, 0],
@@ -274,4 +275,45 @@ test("fitTransform: a degenerate pose (all feet at one point) falls back to no r
   assert.equal(fitted.rotation, 0);
   assert.ok(Math.abs(fitted.position.x - 2) < 1e-9);
   assert.ok(Math.abs(fitted.position.y - 3) < 1e-9);
+});
+
+test("fitTransform: an open stance facing straight ahead doesn't produce a false turn", () => {
+  // Mid-stride, like the end of the seeded Walking Step: lead's left
+  // foot 0.6 ahead of his right, follow's right foot 0.6 behind her
+  // left, both partners still facing along line of dance. Fitting a
+  // closed stance onto it used to find a ~31 degree "best fit" turn from
+  // the feet alone; the couple hasn't turned, so the rotation must be 0.
+  const closed = makePose({ followLeft: [0.1, 0.4], followRight: [-0.1, 0.4] });
+  const midStride = makePose({
+    leadLeft: [-0.1, 0.6],
+    leadRight: [0.1, 0],
+    followLeft: [0.1, 0.4],
+    followRight: [-0.1, 1.0],
+  });
+  const fitted = fitTransform(closed, midStride);
+  assert.ok(
+    Math.abs(fitted.rotation) < 1e-9,
+    `expected no turn, got ${fitted.rotation}`,
+  );
+  // The closed stance is centred on the open one: centroid (0, 0.2)
+  // moves to (0, 0.5).
+  assert.ok(Math.abs(fitted.position.x) < 1e-9);
+  assert.ok(Math.abs(fitted.position.y - 0.3) < 1e-9);
+});
+
+test("fitTransform: the rotation follows the lead's facing, even when the feet alone suggest otherwise", () => {
+  // Same foot positions, but the lead now faces east (90). The couple
+  // has turned a quarter, so the next figure is turned a quarter too.
+  const source = makePose();
+  const target = makePose({ leadOrientation: 90, followOrientation: 270 });
+  const fitted = fitTransform(source, target);
+  assert.ok(Math.abs(fitted.rotation - 90) < 1e-9);
+});
+
+test("fitTransform: the follow's facing doesn't affect placement", () => {
+  // In an Ocho the follow ends turned away from the lead; that must not
+  // rotate the next figure, which is placed by the lead's frame.
+  const source = makePose();
+  const target = makePose({ followOrientation: 45 });
+  assert.equal(fitTransform(source, target).rotation, 0);
 });
