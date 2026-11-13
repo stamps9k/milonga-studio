@@ -5,6 +5,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  one -- so this is a fixed placeholder until that connection exists. */
 const PLACEHOLDER_BEATS_PER_SECOND = 1;
 
+/**
+ * Where playback should start when play is pressed at `current`: from
+ * the beginning if the position is already at (or past) the end of the
+ * sequence, otherwise from where it is. Without this, pressing play at
+ * the end started playback and stopped it again on the very next frame,
+ * so nothing happened.
+ */
+export function playbackStartBeat(current: number, totalBeats: number): number {
+  return totalBeats > 0 && current >= totalBeats ? 0 : current;
+}
+
 interface UsePlaybackResult {
   beat: number;
   playing: boolean;
@@ -64,14 +75,21 @@ export function usePlayback(totalBeats: number): UsePlaybackResult {
 
   const play = useCallback(() => {
     if (totalBeats <= 0) return;
+    // Clamp first: the stored beat can sit past the end if the sequence
+    // has since become shorter (see the clamp-on-read note below).
+    setBeat((current) => playbackStartBeat(clamp(current), totalBeats));
     setPlaying(true);
-  }, [totalBeats]);
+  }, [totalBeats, clamp]);
 
   const pause = useCallback(() => setPlaying(false), []);
 
   const toggle = useCallback(() => {
-    setPlaying((current) => (current ? false : totalBeats > 0));
-  }, [totalBeats]);
+    if (playing) {
+      pause();
+    } else {
+      play();
+    }
+  }, [playing, play, pause]);
 
   const seek = useCallback((value: number) => setBeat(clamp(value)), [clamp]);
 
