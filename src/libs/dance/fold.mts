@@ -443,6 +443,8 @@ export function sequenceDurationBeats(entries: { figure: Figure }[]): number {
 
 interface LocatedEntry<E extends { figure: Figure }> {
   entry: E;
+  /** Position of `entry` in the entries array. */
+  index: number;
   /** globalBeat translated into that entry's own [0, figureDurationBeats]
    *  range, already clamped. */
   localBeat: number;
@@ -466,7 +468,7 @@ function locateEntry<E extends { figure: Figure }>(
 
     if (globalBeat < elapsed + duration || isLast) {
       const localBeat = Math.min(Math.max(globalBeat - elapsed, 0), duration);
-      return { entry, localBeat };
+      return { entry, index: i, localBeat };
     }
     elapsed += duration;
   }
@@ -474,6 +476,45 @@ function locateEntry<E extends { figure: Figure }>(
   // Unreachable: the loop above always returns by its last iteration
   // (isLast becomes true), given entries.length > 0 was checked above.
   throw new Error("locateEntry: unreachable");
+}
+
+/** Where one entry sits on a sequence's beat timeline. */
+export interface EntrySpan {
+  /** Global beat where the entry's figure starts. */
+  startBeat: number;
+  /** Global beat where it ends (startBeat + the figure's duration). */
+  endBeat: number;
+}
+
+/**
+ * Each entry's [startBeat, endBeat) span on the sequence's beat
+ * timeline, in order. Entries play back to back, so each span starts
+ * where the previous one ends; a zero-length figure gets an empty span.
+ * Used to divide a scrubber into one segment per figure.
+ */
+export function sequenceEntrySpans(entries: { figure: Figure }[]): EntrySpan[] {
+  let elapsed = 0;
+  return entries.map((entry) => {
+    const startBeat = elapsed;
+    elapsed += figureDurationBeats(entry.figure);
+    return { startBeat, endBeat: elapsed };
+  });
+}
+
+/**
+ * Index of the entry that is current at `globalBeat` -- the same one
+ * sequencePoseAtBeat and sequenceCurrentStepsAtBeat use, so anything
+ * highlighting "the current figure" agrees with what's drawn. A beat
+ * exactly on a boundary belongs to the entry starting there; zero-length
+ * entries are never current (except as the last entry); positions past
+ * either end clamp to the first or last entry. Null for an empty
+ * sequence.
+ */
+export function sequenceEntryIndexAtBeat(
+  entries: { figure: Figure }[],
+  globalBeat: number,
+): number | null {
+  return locateEntry(entries, globalBeat)?.index ?? null;
 }
 
 /**

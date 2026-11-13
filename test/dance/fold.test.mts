@@ -11,6 +11,8 @@ import {
   sequenceFootTrails,
   sequencePoseAtBeat,
   sequenceTrailSegments,
+  sequenceEntrySpans,
+  sequenceEntryIndexAtBeat,
 } from "../../src/libs/dance/fold.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
@@ -807,4 +809,43 @@ test("sequenceTrailSegments: jumps within the tolerance aren't gaps, and a singl
   assert.deepEqual(sequenceTrailSegments(entries, 0.4).gaps, []);
   assert.deepEqual(sequenceTrailSegments([entries[0]], 0).gaps, []);
   assert.deepEqual(sequenceTrailSegments([], 0), { segments: [], gaps: [] });
+});
+
+test("sequenceEntrySpans: each figure's span starts where the previous one ends", () => {
+  const empty: Figure = { ...sideStep, id: "empty", steps: [] };
+  const entries = [
+    { figure: sideStep },
+    { figure: empty },
+    { figure: sideStep },
+  ];
+  assert.deepEqual(sequenceEntrySpans(entries), [
+    { startBeat: 0, endBeat: 1 },
+    { startBeat: 1, endBeat: 1 },
+    { startBeat: 1, endBeat: 2 },
+  ]);
+  assert.deepEqual(sequenceEntrySpans([]), []);
+});
+
+test("sequenceEntryIndexAtBeat: matches the entry the pose is drawn from, including boundaries and clamping", () => {
+  const empty: Figure = { ...sideStep, id: "empty", steps: [] };
+  const entries = [
+    { figure: sideStep, transform: IDENTITY },
+    { figure: empty, transform: IDENTITY },
+    { figure: sideStep, transform: IDENTITY },
+  ];
+  assert.equal(sequenceEntryIndexAtBeat(entries, 0), 0);
+  assert.equal(sequenceEntryIndexAtBeat(entries, 0.999), 0);
+  // A boundary belongs to the figure starting there; the zero-length
+  // figure in between is never current.
+  assert.equal(sequenceEntryIndexAtBeat(entries, 1), 2);
+  assert.equal(sequenceEntryIndexAtBeat(entries, 2), 2);
+  // Out of range clamps to the first and last entries.
+  assert.equal(sequenceEntryIndexAtBeat(entries, -1), 0);
+  assert.equal(sequenceEntryIndexAtBeat(entries, 99), 2);
+  assert.equal(sequenceEntryIndexAtBeat([], 0), null);
+  // Agrees with the entry sequenceCurrentStepsAtBeat reports.
+  assert.equal(
+    sequenceCurrentStepsAtBeat(entries, 1)?.figureId,
+    entries[sequenceEntryIndexAtBeat(entries, 1)!].figure.id,
+  );
 });
