@@ -25,6 +25,8 @@ implementation's choice, not a confirmed dance rule.
 - `join.mts`: measures how cleanly one figure follows another (foot gaps,
   facing changes, stepping off a weighted foot) once placed.
 - `serialize.mts`: converts builder state into a `Sequence` record.
+- `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
+  and which foot is the standing foot.
 
 Everything here is plain data and pure functions with no React, DOM or
 network dependencies. Keep it that way so it stays testable under `node:test`
@@ -120,6 +122,8 @@ the owner before building more on top of them.
   yet, for this reason.
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
+- `centerOfWeight` places the body directly over the weight-averaged feet.
+  It can't express weight held off-centre, such as a lunge.
 - An airborne step's excursion goes out along its movement for the first
   half of the step and retraces it for the second half
   (`airborneExcursionAt` in `fold.mts`).

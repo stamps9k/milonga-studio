@@ -6,6 +6,7 @@ import {
 } from "../libs/dance/fold.mts";
 import { headingToUnitVector } from "../libs/dance/heading.mts";
 import { JOIN_FOOT_GAP_TOLERANCE } from "../libs/dance/join.mts";
+import { centerOfWeight, isStandingFoot } from "../libs/dance/weight.mts";
 import type { Foot, Partner } from "../libs/dance/step.mts";
 import type { Point2D } from "../libs/dance/pose.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
@@ -152,10 +153,10 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
               left: toScreen(partnerPose.left.position),
               right: toScreen(partnerPose.right.position),
             };
-            const center = {
-              x: (feetScreen.left.x + feetScreen.right.x) / 2,
-              y: (feetScreen.left.y + feetScreen.right.y) / 2,
-            };
+            // The body marker sits over the partner's weight, not at the
+            // midpoint of the feet, so a weight transfer shows as the body
+            // travelling from one foot to the other (see weight.mts).
+            const center = toScreen(centerOfWeight(partnerPose));
             const facingFloor = headingToUnitVector(partnerPose.orientation);
             const facingScreen = toScreen(facingFloor);
             const facingEnd = {
@@ -221,9 +222,13 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                   fill={color}
                 />
 
+                {/* Feet are drawn as standing (filled) or free (outline)
+                    rather than shaded by weight: the body marker above
+                    already shows where the weight is and how it moves,
+                    so the feet only need to say which one is planted. */}
                 {FEET.map((foot) => {
                   const point = feetScreen[foot];
-                  const weight = partnerPose[foot].weight;
+                  const standing = isStandingFoot(partnerPose, foot);
                   return (
                     <circle
                       key={foot}
@@ -231,7 +236,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
                       cy={point.y}
                       r={view.footRadius}
                       fill={color}
-                      fillOpacity={0.15 + weight * 0.85}
+                      fillOpacity={standing ? 1 : 0.12}
                       stroke={color}
                       strokeWidth={view.strokeWidth * 0.6}
                     />
