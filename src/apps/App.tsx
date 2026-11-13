@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Toolbar, { type ViewMode } from "../components/Toolbar";
@@ -11,13 +11,26 @@ import ActiveStep from "../components/ActiveStep";
 import { useSequenceBuilder } from "../hooks/useSequenceBuilder.mts";
 import { usePlayback } from "../hooks/usePlayback.mts";
 import { useSequenceExport } from "../hooks/useSequenceExport.mts";
-import { sequenceDurationBeats } from "../libs/dance/fold.mts";
+import {
+  sequenceDurationBeats,
+  sequenceEntryIndexAtBeat,
+  sequenceEntrySpans,
+} from "../libs/dance/fold.mts";
 
 const App = () => {
   const { entries, activeFigureId, addFigure, removeFigure, loading, error } =
     useSequenceBuilder();
   const totalBeats = sequenceDurationBeats(entries);
   const { beat, playing, toggle, seek, stepBy } = usePlayback(totalBeats);
+  const timelineSegments = useMemo(
+    () =>
+      sequenceEntrySpans(entries).map((span, index) => ({
+        ...span,
+        label: entries[index].figure.name,
+      })),
+    [entries],
+  );
+  const currentSegment = sequenceEntryIndexAtBeat(entries, beat);
   const { shareStatus, share, exportSequence } = useSequenceExport(entries);
   const [view, setView] = useState<ViewMode>("2d");
 
@@ -64,6 +77,8 @@ const App = () => {
                     />
                     <Timeline
                       beat={beat}
+                      segments={timelineSegments}
+                      currentSegment={currentSegment}
                       totalBeats={totalBeats}
                       playing={playing}
                       onToggle={toggle}
