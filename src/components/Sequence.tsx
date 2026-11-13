@@ -9,6 +9,8 @@ interface SequenceProps {
   activeFigureId?: string | null;
   loading?: boolean;
   error?: string | null;
+  /** Called with an entry's index when its remove button is pressed. */
+  onRemove?: (index: number) => void;
 }
 
 const Sequence = ({
@@ -16,6 +18,7 @@ const Sequence = ({
   activeFigureId,
   loading,
   error,
+  onRemove,
 }: SequenceProps) => {
   // A warning sits before any figure that doesn't follow on cleanly from
   // the one before it, with the reasons in its tooltip.
@@ -23,6 +26,40 @@ const Sequence = ({
 
   return (
     <div className="card p-3">
+      <style>{`
+        .seq-item {
+          position: relative;
+          flex-shrink: 0;
+        }
+        /* Remove button: a small red circle over the chip's top-right
+           corner, shown while the chip is hovered or the button has
+           keyboard focus. Hidden with opacity (not display) so it stays
+           reachable with Tab. */
+        .seq-remove {
+          position: absolute;
+          top: 0;
+          right: 0;
+          transform: translate(40%, -40%);
+          width: 18px;
+          height: 18px;
+          padding: 0;
+          border: none;
+          border-radius: 50%;
+          background-color: var(--bs-danger, #dc3545);
+          color: #fff;
+          font-size: 12px;
+          line-height: 18px;
+          text-align: center;
+          opacity: 0;
+          pointer-events: none;
+          transition: opacity 0.12s ease-in-out;
+        }
+        .seq-item:hover .seq-remove,
+        .seq-remove:focus-visible {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      `}</style>
       <div className="d-flex align-items-center justify-content-between mb-2">
         <div className="eyebrow">Sequence</div>
         <button
@@ -53,7 +90,10 @@ const Sequence = ({
         </div>
       )}
 
-      <div className="d-flex align-items-center flex-nowrap overflow-auto">
+      {/* Top padding leaves room for the remove buttons, which sit
+          half outside their chips and would otherwise be clipped by
+          this scroll container. */}
+      <div className="d-flex align-items-center flex-nowrap overflow-auto pt-2 pe-2">
         {entries.length === 0 && !loading && (
           <span className="text-body-secondary small">
             Select figures from the library to build a sequence.
@@ -74,14 +114,26 @@ const Sequence = ({
                   ⚠
                 </span>
               )}
-              <span
-                className={
-                  "btn btn-outline-light seq-chip disabled" +
-                  (entry.figure.id === activeFigureId
-                    ? " bg-amber-dim text-amber fw-bold"
-                    : "")
-                }>
-                {entry.figure.name}
+              <span className="seq-item">
+                <span
+                  className={
+                    "btn btn-outline-light seq-chip disabled" +
+                    (entry.figure.id === activeFigureId
+                      ? " bg-amber-dim text-amber fw-bold"
+                      : "")
+                  }>
+                  {entry.figure.name}
+                </span>
+                {onRemove && (
+                  <button
+                    type="button"
+                    className="seq-remove"
+                    aria-label={`Remove ${entry.figure.name} from the sequence`}
+                    title="Remove from sequence"
+                    onClick={() => onRemove(index)}>
+                    ×
+                  </button>
+                )}
               </span>
               <span className="mx-2 flex-shrink-0"></span>
             </Fragment>
