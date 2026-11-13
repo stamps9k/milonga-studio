@@ -95,9 +95,17 @@ and usable by any renderer.
 - `Figure.startPose` and `endPose` are currently hand-authored and are not
   guaranteed to equal the result of folding the figure's steps. Code in
   `fold.mts` does not assume they match, and new code should not either,
-  unless it adds an explicit consistency check.
+  unless it adds an explicit consistency check. For the seeded figures,
+  `test/db/seed.test.mts` checks that they agree, so a seed change that
+  breaks that fails the tests.
 - Airborne (`contact: "air"`) steps describe a path for rendering but carry
   no weight and do not move the foot's resting position for the next step.
+  `poseAtBeat` animates the foot out along the movement and back; the floor
+  trails from `figureFootTrails` leave airborne steps out, because a trail
+  records where feet are placed.
+- A travelling step moves the partner's free foot, not the one carrying all
+  of their weight. Zero-distance steps (weight changes and pivots) are
+  exempt. The seed follows this, and `test/db/seed.test.mts` checks it.
 
 ## Provisional modelling choices
 
@@ -110,9 +118,16 @@ the owner before building more on top of them.
   yet, for this reason.
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
+- An airborne step's excursion goes out along its movement for the first
+  half of the step and retraces it for the second half
+  (`airborneExcursionAt` in `fold.mts`).
 - Seed figures (`db/seed.mts`) are plausible test data, not syllabus
-  transcriptions, and every seeded sequence entry uses the identity
-  transform.
+  transcriptions. Seeded sequences are chained with `fitTransform`, like
+  the app's sequence builder, but how well two figures' stances join is not
+  scored yet, so some seeded joins are only a best fit.
+- The free-foot rule above, and the rule that one partner never has two
+  steps in progress at once, are checked against the seed as provisional
+  rules.
 
 ## Terminology
 

@@ -19,7 +19,10 @@ export type Foot = "left" | "right";
 /** Whether the foot is weight-bearing on the floor, or an airborne leg
  *  action (boleo, voleo, gancho, etc). Airborne actions still describe a
  *  path for rendering, but never carry weight and don't affect the next
- *  step's starting position. */
+ *  step's starting position. fold.mts animates an airborne foot out
+ *  along its movement and back to where it started (a provisional
+ *  choice -- see airborneExcursionAt there) and leaves it out of the
+ *  floor trail. */
 export type Contact = "floor" | "air";
 
 /**

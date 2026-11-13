@@ -160,23 +160,58 @@ test("triggers: a movement's variant row must match its declared type", () => {
   );
 });
 
-test(
-  "triggers: changing a movement's type after its variant row exists is rejected",
-  {
-    todo: "the type-check triggers only fire on INSERT into movement_straight/movement_arc, so an UPDATE of movements.type can leave a straight row under an 'arc' movement, which assembleMovement would then misread",
-  },
-  () => {
-    const movementId = insertMovement("straight");
-    db.prepare(
-      "INSERT INTO movement_straight (movement_id, direction, distance) VALUES (?, 0, 1)",
-    ).run(movementId);
-    assert.throws(() =>
+test("triggers: changing a movement's type while its variant row exists is rejected", () => {
+  const movementId = insertMovement("straight");
+  db.prepare(
+    "INSERT INTO movement_straight (movement_id, direction, distance) VALUES (?, 0, 1)",
+  ).run(movementId);
+  assert.throws(
+    () =>
       db
         .prepare("UPDATE movements SET type = 'arc' WHERE id = ?")
         .run(movementId),
+    /movements.type cannot change/,
+  );
+});
+
+test("triggers: re-pointing a variant row at a movement of the other type is rejected", () => {
+  const straightMovement = insertMovement("straight");
+  db.prepare(
+    "INSERT INTO movement_straight (movement_id, direction, distance) VALUES (?, 0, 1)",
+  ).run(straightMovement);
+  const arcMovement = insertMovement("arc");
+  assert.throws(
+    () =>
+      db
+        .prepare(
+          "UPDATE movement_straight SET movement_id = ? WHERE movement_id = ?",
+        )
+        .run(arcMovement, straightMovement),
+    /type = straight/,
+  );
+});
+
+test("triggers: a movement's type can still change once its old variant row is removed", () => {
+  const movementId = insertMovement("straight");
+  db.prepare(
+    "INSERT INTO movement_straight (movement_id, direction, distance) VALUES (?, 0, 1)",
+  ).run(movementId);
+  db.transaction(() => {
+    db.prepare("DELETE FROM movement_straight WHERE movement_id = ?").run(
+      movementId,
     );
-  },
-);
+    db.prepare("UPDATE movements SET type = 'arc' WHERE id = ?").run(
+      movementId,
+    );
+    db.prepare(
+      "INSERT INTO movement_arc (movement_id, curvature, arc_length) VALUES (?, 1, 1)",
+    ).run(movementId);
+  })();
+  const row = db
+    .prepare("SELECT type FROM movements WHERE id = ?")
+    .get(movementId) as { type: string };
+  assert.equal(row.type, "arc");
+});
 
 test("uniqueness: two steps in one figure can't share a step_index", () => {
   const figureId = insertFigure();

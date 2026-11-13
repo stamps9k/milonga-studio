@@ -659,20 +659,58 @@ test("poseAtBeat and figureFootTrails agree on where every foot ends, including 
   }
 });
 
-test(
-  "poseAtBeat: an airborne step does not change where the foot rests afterwards",
-  {
-    todo: "step.mts documents that air steps don't affect the next step's starting position, but fold.mts ignores `contact` and moves the foot permanently",
-  },
-  () => {
-    const boleo = singleLeadStepFigure({
-      movement: { type: "straight", direction: 90, distance: 0.3 },
-      contact: "air",
-      weight: 0,
-    });
-    pointClose(poseAtBeat(boleo, 1).lead.left.position, { x: 0, y: 0 });
-  },
-);
+test("poseAtBeat: an airborne step does not change where the foot rests afterwards", () => {
+  const boleo = singleLeadStepFigure({
+    movement: { type: "straight", direction: 90, distance: 0.3 },
+    contact: "air",
+    weight: 0,
+  });
+  const end = poseAtBeat(boleo, 1);
+  pointClose(end.lead.left.position, { x: 0, y: 0 });
+  // An air step carries no weight, so it all stays on the standing foot.
+  assert.equal(end.lead.left.weight, 0);
+  assert.equal(end.lead.right.weight, 1);
+});
+
+test("poseAtBeat: an airborne foot goes out along its path and back again", () => {
+  const boleo = singleLeadStepFigure({
+    movement: { type: "straight", direction: 90, distance: 0.3 },
+    contact: "air",
+    weight: 0,
+  });
+  // Out for the first half of the step, back for the second.
+  pointClose(poseAtBeat(boleo, 0.25).lead.left.position, { x: 0.15, y: 0 });
+  pointClose(poseAtBeat(boleo, 0.5).lead.left.position, { x: 0.3, y: 0 });
+  pointClose(poseAtBeat(boleo, 0.75).lead.left.position, { x: 0.15, y: 0 });
+});
+
+test("figureFootTrails: airborne steps leave no floor trail, but still turn the frame for later arcs", () => {
+  const boleo = singleLeadStepFigure({
+    movement: { type: "straight", direction: 90, distance: 0.3 },
+    contact: "air",
+    weight: 0,
+    orientation: 90,
+  });
+  boleo.steps = [
+    ...boleo.steps,
+    {
+      ...boleo.steps[0],
+      id: "2",
+      contact: "floor",
+      weight: 1,
+      beat: 2,
+      // Starts facing east (set by the airborne step), so a right-curving
+      // quarter circle of radius 1 ends at (1, -1).
+      movement: { type: "arc", curvature: 1, arcLength: Math.PI / 2 },
+      orientation: 180,
+    },
+  ];
+  const trail = figureFootTrails(boleo, IDENTITY).lead.left;
+  assert.equal(trail.length, 2);
+  pointClose(trail[0], { x: 0, y: 0 });
+  pointClose(trail[1], { x: 1, y: -1 });
+  pointClose(poseAtBeat(boleo, 2).lead.left.position, { x: 1, y: -1 });
+});
 
 test("figureDurationBeats: an empty figure takes 0 beats, and fractional durations add up", () => {
   assert.equal(figureDurationBeats({ ...sideStep, steps: [] }), 0);
