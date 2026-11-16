@@ -64,16 +64,17 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 
 ## The figure
 
-| Field       | Meaning                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| `name`      | Shown in the library. Must be unique across the figure files.                                          |
-| `style`     | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                            |
-| `time`      | Time signature: `"3/4"` or `"4/4"`.                                                                    |
-| `start`     | Starting stance. Only `"closed"` so far, which is the default.                                         |
-| `slow`      | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.          |
-| `steps`     | The steps, in time order.                                                                              |
-| `expectEnd` | Optional, but recommended: where the figure should finish. See below.                                  |
-| `notes`     | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app. |
+| Field         | Meaning                                                                                                |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| `name`        | Shown in the library. Must be unique across the figure files.                                          |
+| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                            |
+| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                    |
+| `start`       | Starting stance. Only `"closed"` so far, which is the default.                                         |
+| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.          |
+| `steps`       | The steps, in time order.                                                                              |
+| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                  |
+| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                 |
+| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app. |
 
 Closed stance: the lead stands at the origin facing line of dance, feet 20 cm
 apart; the follow faces him 40 cm away.
@@ -193,6 +194,19 @@ mid-stride finish), with `facing` optional:
 Coordinates are in metres in the figure's own frame: the lead starts at the
 origin facing +y (line of dance), with +x to his right.
 
+## Checking the length: `expectBeats`
+
+The figure's length in beats is also worked out from the steps: the latest
+point any step finishes. `expectBeats` states how long it should be, as an
+independent check on the timing. It catches, for example, a `"Q"` written
+where an `"S"` was meant, which `expectEnd` can't see.
+
+```json
+"expectBeats": 3,
+```
+
+It's optional, but every figure in `db/figures/` has one.
+
 ## What gets checked
 
 The reset stops, listing every problem with its file and location, if:
@@ -205,7 +219,8 @@ The reset stops, listing every problem with its file and location, if:
 - a figure mixes `beat` and `length`, a step has neither, or beats are out of
   order;
 - one partner has two steps starting at the same time;
-- the steps don't end where `expectEnd` says.
+- the steps don't end where `expectEnd` says, or don't last as many beats as
+  `expectBeats` says.
 
 The sample dances in `db/seed.mts` refer to figures by name. If one of their
 figures is missing (because a file was renamed or removed), that sample is

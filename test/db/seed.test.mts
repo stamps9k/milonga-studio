@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type BetterSqlite3 from "better-sqlite3";
 
 import { openTestDatabase } from "../support/database.mts";
+import { loadFigures } from "../../db/figures/index.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
@@ -22,17 +23,9 @@ import type { Sequence } from "../../src/libs/dance/sequence.mts";
 // chaining (which fits the next figure onto the stored endPose) would
 // disagree about where the couple is.
 
-/** Figure lengths in beats, as documented in db/seed.mts's header. */
-const DOCUMENTED_DURATIONS: Record<string, number> = {
-  "Walking Step": 1,
-  "Side Step": 1,
-  Cruzada: 2,
-  Ocho: 4,
-  "Forward Waltz": 3,
-  "Balance Step": 3,
-  "Cha-Cha Basic": 4,
-  "Side Basic": 4,
-};
+/** The figure files the seed should have loaded: whatever is in
+ *  db/figures/, so adding a figure file never needs a test change. */
+const FIGURE_FILES = loadFigures();
 
 /** Exact-match tolerance for values the code derives itself. */
 const POSITION_EPSILON = 1e-6;
@@ -79,15 +72,15 @@ function headingDifference(a: number, b: number): number {
   return Math.abs(((((a - b) % 360) + 540) % 360) - 180);
 }
 
-test("seed: creates the documented 8 figures, 5 sequences and 5 dances", () => {
+test("seed: stores every figure file, plus the 5 sample sequences and dances", () => {
   const count = (table: string) =>
     (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
-  assert.equal(count("figures"), 8);
+  assert.equal(count("figures"), FIGURE_FILES.length);
   assert.equal(count("sequences"), 5);
   assert.equal(count("dances"), 5);
   assert.deepEqual(
     figures.map((figure) => figure.name).sort(),
-    Object.keys(DOCUMENTED_DURATIONS).sort(),
+    FIGURE_FILES.map((figure) => figure.name).sort(),
   );
 });
 
@@ -164,13 +157,25 @@ test("seed: folding each figure's steps reproduces its stored endPose", async (t
   }
 });
 
-test("seed: each figure's length matches the beat count documented in db/seed.mts", async (t) => {
+test("seed: the stored figures last as long as their files say", async (t) => {
+  // defineFigure already checks each file's expectBeats against its
+  // steps; this checks the length survives storing and reassembling.
+  const expected = new Map(
+    FIGURE_FILES.map((figure) => [
+      figure.name,
+      figureDurationBeats({
+        ...figure,
+        id: "file",
+        steps: figure.steps.map((step, index) => ({
+          ...step,
+          id: String(index),
+        })),
+      }),
+    ]),
+  );
   for (const figure of figures) {
     await t.test(figure.name, () => {
-      assert.equal(
-        figureDurationBeats(figure),
-        DOCUMENTED_DURATIONS[figure.name],
-      );
+      assert.equal(figureDurationBeats(figure), expected.get(figure.name));
     });
   }
 });

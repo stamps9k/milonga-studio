@@ -392,6 +392,22 @@ test("mistakes are reported with the figure and step, not silently corrected", (
   );
 });
 
+test("expectBeats passes when the steps last that long, and fails with both lengths otherwise", () => {
+  // S, Q, Q with the default slow of 2 beats: 2 + 1 + 1 = 4 beats.
+  const steps: StepRow[] = [
+    { both: "forward", by: 0.3, length: "S" },
+    { both: "forward", by: 0.3, length: "Q" },
+    { both: "close", length: "Q" },
+  ];
+  assert.doesNotThrow(() => figure(steps, { expectBeats: 4 }));
+  assert.throws(
+    () => figure(steps, { expectBeats: 3 }),
+    (error: unknown) =>
+      error instanceof FigureError &&
+      /the steps last 4 beats, but expectBeats says 3/.test(error.message),
+  );
+});
+
 test("the end pose is the folded steps, ready to store", () => {
   const authored = figure([
     { both: "forward", by: 0.4, beat: 1, rise: 0.05 },

@@ -35,7 +35,8 @@ import type {
  *
  * It then checks the result and throws a descriptive error if a step
  * moves the foot carrying the weight, the timing is inconsistent, or
- * the figure doesn't end where `expectEnd` says it should. The seed
+ * the figure doesn't end where `expectEnd` says it should (or last as
+ * many beats as `expectBeats` says). The seed
  * script calls it, so `npm test` catches mistakes.
  *
  * See db/FIGURES.md for a guide with examples.
@@ -234,6 +235,10 @@ export interface FigureDefinition {
   slow?: number;
   steps: StepRow[];
   expectEnd?: ExpectedEnd;
+  /** How many beats the figure should last. Checked against the length
+   *  worked out from the steps (figureDurationBeats), as an independent
+   *  check on the timing, the way expectEnd checks the end position. */
+  expectBeats?: number;
   /** Free text for whoever reads or edits the figure file: sources,
    *  caveats, open questions. Not stored in the database. */
   notes?: string;
@@ -856,6 +861,14 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
   if (definition.expectEnd) {
     checkExpectedEnd(name, definition.expectEnd, endPose);
   }
+  if (definition.expectBeats !== undefined) {
+    const beats = figureDurationBeats(figure);
+    if (Math.abs(beats - definition.expectBeats) > 1e-9) {
+      throw new FigureError(
+        `${name}: the steps last ${beats} beats, but expectBeats says ${definition.expectBeats}`,
+      );
+    }
+  }
 
   return {
     name,
@@ -1105,6 +1118,7 @@ export function parseFigureDefinition(
     "slow",
     "steps",
     "expectEnd",
+    "expectBeats",
     "notes",
   ]);
   checkString("name", value.name, true);
@@ -1115,6 +1129,7 @@ export function parseFigureDefinition(
   }
   checkOneOf("start", value.start, ["closed"]);
   checkNumber("slow", value.slow, { positive: true });
+  checkNumber("expectBeats", value.expectBeats, { positive: true });
   checkString("notes", value.notes);
   if (value.$schema !== undefined && typeof value.$schema !== "string") {
     problem("$schema", "should be text (the path to figure.schema.json)");

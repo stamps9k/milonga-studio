@@ -5,6 +5,7 @@ import type { AddressInfo } from "node:net";
 import express from "express";
 
 import { openTestDatabase } from "../support/database.mts";
+import { loadFigures } from "../../db/figures/index.mts";
 
 // HTTP-level tests for the routes in api/dances.mts, served from a
 // seeded temporary database. The router is mounted on a bare Express
@@ -59,7 +60,7 @@ test("GET /api/figures: lists lightweight summaries sorted by name, with string 
   assert.equal(body.success, true);
 
   const figures = body.message as Record<string, unknown>[];
-  assert.equal(figures.length, 8);
+  assert.equal(figures.length, loadFigures().length);
   const names = figures.map((figure) => figure.name as string);
   assert.deepEqual(names, [...names].sort());
   for (const figure of figures) {

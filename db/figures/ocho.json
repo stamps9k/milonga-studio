@@ -53,6 +53,7 @@
       "length": "Q"
     }
   ],
+  "expectBeats": 4,
   "expectEnd": {
     "feet": {
       "lead": {

@@ -80,6 +80,7 @@ const WITH_STANCE_END = {
       label: { lead: "a", follow: "b" },
     },
   ],
+  expectBeats: 4,
   expectEnd: {
     stance: "closed",
     moved: { forward: 0.4, right: -0.3 },

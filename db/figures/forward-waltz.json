@@ -30,6 +30,7 @@
       }
     }
   ],
+  "expectBeats": 3,
   "expectEnd": {
     "stance": "closed",
     "moved": {

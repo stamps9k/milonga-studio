@@ -28,6 +28,7 @@
       "label": "side again"
     }
   ],
+  "expectBeats": 3,
   "expectEnd": {
     "feet": {
       "lead": {

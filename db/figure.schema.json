@@ -46,6 +46,11 @@
       "items": { "$ref": "#/definitions/step" },
       "description": "The steps, in time order."
     },
+    "expectBeats": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "How many beats the figure should last, checked against the steps' timing."
+    },
     "expectEnd": {
       "description": "Where the figure should finish, checked against the steps (within 1 mm).",
       "oneOf": [
