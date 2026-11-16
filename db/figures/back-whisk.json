@@ -1,0 +1,42 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Back Whisk",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Standard name (International Style waltz); the owner's class doesn't name it. Owner's description (2026-11-16): a variation on Box Turn (backward half) that ends with the legs crossed (the lead's left foot behind) and the shoulders open, not facing each other, ready for a promenade figure next. Steps 1 and 2 are the box turn's backward half exactly, including its quarter turn right on count 2, as the owner asked. On count 3 the lead's left toe goes just behind his right heel (owner's estimate), and both partners open an eighth (lead to his left, follow to her right) into a V: promenade position. The crossing foot ends about 0.25 behind and 0.05 across the standing foot, measured in the opened (final) facing, so the legs are crossed relative to the body; the offsets are rounded to the centimetre. Standard technique has little or no turn on count 2 of a back whisk; this follows the owner's version. Written with separate lead and follow rows on count 3 because the partners turn opposite ways; the offsets are from where each foot is before the step (lead's left at (-0.1, -0.5) facing east, follow's right at (-0.1, -0.1) facing west). expectEnd lists exact feet because promenade isn't a named stance yet.",
+  "steps": [
+    {
+      "both": "back",
+      "by": 0.5,
+      "foot": "L",
+      "beat": 1
+    },
+    {
+      "both": { "forward": -0.9, "right": -0.2 },
+      "turn": { "right": "1/4" },
+      "beat": 2,
+      "label": "side, turning 1/4 right"
+    },
+    {
+      "lead": {
+        "go": { "forward": -0.14, "right": 0.61 },
+        "turn": { "left": "1/8" },
+        "label": "cross behind, opening to promenade"
+      },
+      "follow": {
+        "go": { "forward": -0.54, "right": -1.01 },
+        "turn": { "right": "1/8" },
+        "label": "cross behind, opening to promenade"
+      },
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "feet": {
+      "lead": { "L": [-0.24, -1.11], "R": [-0.1, -0.9] },
+      "follow": { "L": [0.3, -0.9], "R": [0.44, -1.11] }
+    },
+    "facing": { "lead": 45, "follow": 315 }
+  }
+}
