@@ -95,8 +95,8 @@ and usable by any renderer.
 - Every figure is authored in its own local frame: the frame of the named
   stance it starts in (`stancePose` in `authoring.mts`). For closed hold
   that is the lead's feet centred on the origin, facing 0 degrees. For
-  "crossed promenade" it is the closed hold the couple opened from, so the
-  lead starts facing 315 (owner's decision, 2026-11-16, to keep promenade
+  the two promenade stances it is the closed hold the couple opened from,
+  so the lead starts facing 315 (owner's decision, 2026-11-16, to keep promenade
   figures' numbers readable). Where a figure actually sits on the floor
   belongs to its `SequenceEntry.transform`, never to the figure; chaining
   lines up the lead's facing whatever it starts at.
@@ -177,6 +177,10 @@ the owner before building more on top of them.
   from the lead's right foot. Its default starting weight is on the
   crossed feet. Standard technique has the follow make most of the
   opening; the even split is the owner's.
+- The "promenade apart" stance is where the owner's Promenade Chassé
+  ends: the same V and frame as crossed promenade, with each trailing
+  foot `PROMENADE_SIDE_STEP` (40 cm) back along the line of travel and
+  stance width to the side, measured from the lead's left foot.
 
 ## Terminology
 

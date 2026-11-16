@@ -299,6 +299,27 @@ test("crossed promenade: a figure can start in it, opened an eighth each with th
   assert.equal(steps[0].foot, "right");
 });
 
+test("promenade apart: the leading feet at the front of the V, the trailing ones closed behind", () => {
+  // Lead's left at the origin facing 315; his right 0.4 back along the
+  // line of travel (+x) and 0.2 to his right, (s, s) * 0.2:
+  // (0.4 + 0.2s, 0.2s). Follow's right at (0, 0.4) facing 225; her left
+  // 0.4 back and 0.2 to her left, (s, -s) * 0.2: (0.4 + 0.2s, 0.4 - 0.2s).
+  const { startPose, steps } = figure(
+    [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
+    { start: "promenade apart" },
+  );
+  const s = Math.SQRT1_2;
+  pointClose(startPose.lead.left.position, [0, 0]);
+  pointClose(startPose.lead.right.position, [0.4 + 0.2 * s, 0.2 * s]);
+  pointClose(startPose.follow.right.position, [0, 0.4]);
+  pointClose(startPose.follow.left.position, [0.4 + 0.2 * s, 0.4 - 0.2 * s]);
+  assert.equal(startPose.lead.orientation, 315);
+  assert.equal(startPose.follow.orientation, 225);
+  assert.equal(startPose.lead.left.weight, 1);
+  assert.equal(startPose.follow.right.weight, 1);
+  assert.equal(steps[0].foot, "right");
+});
+
 test("crossed promenade: a figure starting in it follows a whisk with no gap", () => {
   const whisk = figure(WHISK_STEPS, { time: "3/4" });
   const after = figure(
@@ -598,7 +619,7 @@ test("parseFigureDefinition: stances are closed or crossed promenade", () => {
   );
   assert.match(
     problemsOf({ ...VALID_FILE, start: "promenade" }),
-    /start: should be one of: "closed", "crossed promenade"/,
+    /start: should be one of: "closed", "crossed promenade", "promenade apart"/,
   );
 });
 

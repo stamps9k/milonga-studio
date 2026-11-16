@@ -70,8 +70,13 @@ export const PARTNER_DISTANCE = 0.4;
  *   "crossed" so plain "promenade" stays free for a feet-apart version
  *   (tango's promenade starts differently; owner's decision,
  *   2026-11-16).
+ * - "promenade apart": the same V, but with the feet apart, where the
+ *   Promenade Chassé ends: each partner's leading foot (the lead's left,
+ *   the follow's right) has gone PROMENADE_SIDE_STEP along the line of
+ *   travel past where the trailing foot closed. See
+ *   promenadeApartPose. Named by the owner (2026-11-16).
  */
-export type StanceName = "closed" | "crossed promenade";
+export type StanceName = "closed" | "crossed promenade" | "promenade apart";
 
 /** In "crossed promenade", how far the crossing foot is behind the
  *  other foot, and how far across it, in metres, measured in the
@@ -80,9 +85,16 @@ export type StanceName = "closed" | "crossed promenade";
 export const CROSS_BEHIND = 0.25;
 export const CROSS_ACROSS = 0.05;
 
+/** In "promenade apart", how far the leading foot is past the trailing
+ *  foot along the line of travel, in metres: the chassé's side step.
+ *  Provisional: the owner's agreed side-step size for the waltz
+ *  figures, not technique. */
+export const PROMENADE_SIDE_STEP = 0.4;
+
 export const STANCE_NAMES: readonly StanceName[] = [
   "closed",
   "crossed promenade",
+  "promenade apart",
 ];
 
 type ShortFoot = "L" | "R";
@@ -102,6 +114,8 @@ export function stancePose(
   switch (stance) {
     case "crossed promenade":
       return crossedPromenadePose(weight);
+    case "promenade apart":
+      return promenadeApartPose(weight);
     case "closed":
       return {
         lead: {
@@ -181,6 +195,57 @@ function crossedPromenadePose(
         position: crossed(followLeft, 225, -CROSS_ACROSS),
         weight: weight("follow", "right"),
       },
+      orientation: 225,
+      rise: 0,
+    },
+  };
+}
+
+/**
+ * "promenade apart", in the same frame as "crossed promenade" (the
+ * closed hold the couple opened from, so the lead faces 315 and the
+ * follow 225, and the line of travel is towards -x), but measured from
+ * the lead's left foot, the one he stands on:
+ *
+ * - Lead: left foot at (0, 0). His right foot is where it closed in the
+ *   chassé: PROMENADE_SIDE_STEP back along the line of travel, then
+ *   STANCE_WIDTH to his right across his opened facing.
+ * - Follow: right foot at (0, 0.4), PARTNER_DISTANCE from the lead's left
+ *   across the line of travel. Her left foot is the mirror image:
+ *   PROMENADE_SIDE_STEP back along the line, then STANCE_WIDTH to her
+ *   left.
+ *
+ * The weights come from `weight`, normally on the leading feet (the
+ * lead's left, the follow's right).
+ */
+function promenadeApartPose(
+  weight: (partner: Partner, foot: Foot) => number,
+): Pose {
+  // Back along the line of travel (-x) is +x.
+  const back = { x: PROMENADE_SIDE_STEP, y: 0 };
+  const trailing = (leading: Point2D, facing: number, side: 90 | -90) =>
+    addPoints(
+      addPoints(leading, back),
+      scalePoint(headingToUnitVector(facing + side), STANCE_WIDTH),
+    );
+  const leadLeft = { x: 0, y: 0 };
+  const followRight = { x: 0, y: PARTNER_DISTANCE };
+  return {
+    lead: {
+      left: { position: leadLeft, weight: weight("lead", "left") },
+      right: {
+        position: trailing(leadLeft, 315, 90),
+        weight: weight("lead", "right"),
+      },
+      orientation: 315,
+      rise: 0,
+    },
+    follow: {
+      left: {
+        position: trailing(followRight, 225, -90),
+        weight: weight("follow", "left"),
+      },
+      right: { position: followRight, weight: weight("follow", "right") },
       orientation: 225,
       rise: 0,
     },
@@ -703,6 +768,7 @@ function parseTime(time: string, name: string): TimeSignature {
 const DEFAULT_STANDING: Record<StanceName, Record<Partner, Foot>> = {
   closed: { lead: "right", follow: "left" },
   "crossed promenade": { lead: "left", follow: "right" },
+  "promenade apart": { lead: "left", follow: "right" },
 };
 
 function inferStanding(

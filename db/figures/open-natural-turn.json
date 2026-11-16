@@ -1,0 +1,50 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Open Natural Turn",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Owner's description (2026-11-16): the box-turn-like figure after the Promenade Chassé. Steps as the box turn's forward half: forward on the right, side on the left, close the right (not the American-style open ending, which passes back on 3). The couple turns a quarter to the right from the line joining the partners, gradually across all three steps, and the partners turn to face each other on count 2; no rise. Three counts, ending in closed hold with another figure to follow. Named as the figure that takes a natural turn out of promenade; the closing on 3 is the owner's, as in the International Natural Turn. Turns: the couple's quarter is spread evenly, 30 degrees (1/12) a step; closing the V adds an eighth on count 2 (the lead right, the follow left). So the lead turns 1/12, 5/24 and 1/12 to the right (3/8 in all, from facing 315 to 90) and the follow 1/12 right, 1/24 left and 1/12 right (an eighth in all, from 225 to 270); they face each other from the end of count 2. Sizes: the lead's right foot comes from behind along the line of travel and lands about 0.46 past his left (1.0 travelled); his left lands 0.4 to the side of it once turned; then he closes. The follow is on the inside of the turn, so her steps are smaller: her left goes 0.6 along the line, her right lands to stay in hold, and she closes. Offsets to the millimetre where the closed-hold check needs them.",
+  "start": "promenade apart",
+  "steps": [
+    {
+      "lead": {
+        "go": "diagonal forward left",
+        "by": 1.0,
+        "turn": { "right": "1/12" },
+        "label": "forward, turning to face"
+      },
+      "follow": {
+        "go": "diagonal forward right",
+        "by": 0.6,
+        "turn": { "right": "1/12" },
+        "label": "forward, turning to face"
+      },
+      "beat": 1
+    },
+    {
+      "lead": {
+        "go": { "forward": 0.641, "right": -0.305 },
+        "turn": { "right": "5/24" },
+        "label": "side, facing partner"
+      },
+      "follow": {
+        "go": { "forward": 0.022, "right": 0.151 },
+        "turn": { "left": "1/24" },
+        "label": "side, facing partner"
+      },
+      "beat": 2
+    },
+    {
+      "lead": { "go": "close", "turn": { "right": "1/12" } },
+      "follow": { "go": "close", "turn": { "right": "1/12" } },
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": { "forward": 0.44, "right": -0.46 },
+    "turned": { "right": "1/4" },
+    "leadStandingOn": "R"
+  }
+}

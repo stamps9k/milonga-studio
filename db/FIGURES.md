@@ -66,17 +66,17 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 
 ## The figure
 
-| Field         | Meaning                                                                                                |
-| ------------- | ------------------------------------------------------------------------------------------------------ |
-| `name`        | Shown in the library. Must be unique across the figure files.                                          |
-| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                            |
-| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                    |
-| `start`       | Starting stance: `"closed"` (the default) or `"crossed promenade"`. See "Stances" below.               |
-| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.          |
-| `steps`       | The steps, in time order.                                                                              |
-| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                  |
-| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                 |
-| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app. |
+| Field         | Meaning                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| `name`        | Shown in the library. Must be unique across the figure files.                                           |
+| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                             |
+| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                     |
+| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"` or `"promenade apart"`. See "Stances". |
+| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.           |
+| `steps`       | The steps, in time order.                                                                               |
+| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                   |
+| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                  |
+| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.  |
 
 Closed stance: the lead stands at the origin facing line of dance, feet 20 cm
 apart; the follow faces him 40 cm away.
@@ -239,6 +239,14 @@ A stance is a named position for both partners, used by `start` and by
   the lead faces 315° and the follow 225°. By default each partner stands on
   the crossed foot.
 
+- **`"promenade apart"`**: where the Promenade Chassé ends. It's the same V, in
+  the same frame (the lead faces 315°, the follow 225°, and the line of travel
+  runs towards −x), but with the feet apart. The lead's left foot is at the
+  origin, the follow's right is 40 cm from it across the line, and each
+  partner's other foot is 40 cm back along the line and 20 cm to the side,
+  where it closed. By default each partner stands on the leading foot (the
+  lead's left, the follow's right).
+
 `"crossed promenade"` measures from the lead's right foot rather than the
 middle of his feet, so a whisk's ending reads as where that foot went:
 
@@ -290,5 +298,5 @@ skipped with a warning, and the rest of the seed carries on.
 ## Not supported yet
 
 Curved paths (all steps travel in straight lines), crossing positions
-(`"cross"`), and stances other than closed hold and crossed promenade. These
+(`"cross"`), and stances other than closed hold and the two promenades. These
 will be added when a figure needs them.
