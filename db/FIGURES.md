@@ -16,6 +16,24 @@ To add a figure:
    start.
 2. Run `npm run db:reset` (with the API stopped), then reload the app.
 
+## Editor help
+
+Each figure file starts with:
+
+```json
+"$schema": "../figure.schema.json",
+```
+
+That line points your editor at `db/figure.schema.json`, which describes the
+format. VS Code then autocompletes field names and directions as you type,
+shows a short description when you hover over a field, and underlines
+mistakes such as `"beats"` instead of `"beat"` or `"forwards"` instead of
+`"forward"`. Keep the line when you copy a file. The app and the seed ignore
+it.
+
+The schema checks the file's shape only. Whether the steps make sense as
+dancing (weight, timing, `expectEnd`) is checked when you run the reset.
+
 If anything is wrong in any figure file, the reset stops before touching the
 database and lists every problem, each with its file name and where in the
 file it is. `npm test` runs the same checks.
@@ -27,6 +45,7 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 
 ```json
 {
+  "$schema": "../figure.schema.json",
   "name": "Forward Waltz",
   "style": "waltz",
   "time": "3/4",

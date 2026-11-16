@@ -220,6 +220,8 @@ export type ExpectedEnd =
     };
 
 export interface FigureDefinition {
+  /** Path to db/figure.schema.json, for editor support. Ignored. */
+  $schema?: string;
   name: string;
   /** Free-form style tag, as used in the library (tango, waltz, ...). */
   style: string;
@@ -838,6 +840,10 @@ export { FigureError };
  * location (for example `steps[2].follow.turn`), prefixed with
  * `source` (the file name). It checks shape only; whether the steps
  * make sense as dancing is checked by defineFigure.
+ *
+ * db/figure.schema.json describes the same shape for editors, and
+ * test/db/figureSchema.test.mts checks that the two accept and reject
+ * exactly the same files. Change both together.
  */
 export function parseFigureDefinition(
   value: unknown,
@@ -933,11 +939,12 @@ export function parseFigureDefinition(
       return;
     }
     const amount = v[keys[0]];
-    const fraction =
-      typeof amount === "string" && /^\d+\s*\/\s*\d+$/.test(amount)
-        ? Number(amount.split("/")[0]) / Number(amount.split("/")[1])
-        : amount;
-    if (!isNumber(fraction) || !(fraction > 0)) {
+    // Text fractions need a non-zero numerator and denominator, matching
+    // the turnAmount pattern in db/figure.schema.json.
+    const validText =
+      typeof amount === "string" &&
+      /^0*[1-9]\d*\s*\/\s*0*[1-9]\d*$/.test(amount);
+    if (!validText && !(isNumber(amount) && amount > 0)) {
       problem(
         `${path}.${keys[0]}`,
         'should be a positive fraction of a turn, such as 0.125 or "1/8"',
@@ -1030,6 +1037,7 @@ export function parseFigureDefinition(
     throw new FigureError(`${source}: should contain a single JSON object`);
   }
   checkKeys("", value, [
+    "$schema",
     "name",
     "style",
     "time",
@@ -1048,6 +1056,9 @@ export function parseFigureDefinition(
   checkOneOf("start", value.start, ["closed"]);
   checkNumber("slow", value.slow, { positive: true });
   checkString("notes", value.notes);
+  if (value.$schema !== undefined && typeof value.$schema !== "string") {
+    problem("$schema", "should be text (the path to figure.schema.json)");
+  }
   if (!Array.isArray(value.steps) || value.steps.length === 0) {
     problem("steps", "should be a list with at least one step");
   } else {
@@ -1072,7 +1083,9 @@ export function parseFigureDefinition(
       checkMoveOptions(`${path}.`, row);
       checkNumber(`${path}.beat`, row.beat, { positive: true });
       checkOneOf(`${path}.length`, row.length, ["S", "Q"]);
-      if (row.label !== undefined && typeof row.label !== "string") {
+      if (typeof row.label === "string") {
+        checkString(`${path}.label`, row.label);
+      } else if (row.label !== undefined) {
         if (!isObject(row.label)) {
           problem(
             `${path}.label`,

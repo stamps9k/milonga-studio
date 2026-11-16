@@ -1,4 +1,5 @@
 {
+  "$schema": "../figure.schema.json",
   "name": "Forward Waltz",
   "style": "waltz",
   "time": "3/4",
@@ -8,7 +9,10 @@
       "both": "forward",
       "by": 0.4,
       "beat": 1,
-      "label": { "lead": "step forward", "follow": "step back" }
+      "label": {
+        "lead": "step forward",
+        "follow": "step back"
+      }
     },
     {
       "both": 36.86989764584402,
@@ -28,7 +32,10 @@
   ],
   "expectEnd": {
     "stance": "closed",
-    "moved": { "forward": 0.4, "right": 0.3 },
+    "moved": {
+      "forward": 0.4,
+      "right": 0.3
+    },
     "leadStandingOn": "L"
   }
 }

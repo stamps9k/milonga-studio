@@ -1,4 +1,5 @@
 {
+  "$schema": "../figure.schema.json",
   "name": "Balance Step",
   "style": "waltz",
   "time": "3/4",
@@ -20,13 +21,27 @@
         "follow": "close right to left"
       }
     },
-    { "both": "side right", "by": 0.3, "beat": 3, "label": "side again" }
+    {
+      "both": "side right",
+      "by": 0.3,
+      "beat": 3,
+      "label": "side again"
+    }
   ],
   "expectEnd": {
     "feet": {
-      "lead": { "L": [0.2, 0], "R": [0.7, 0] },
-      "follow": { "L": [0.7, 0.4], "R": [0.2, 0.4] }
+      "lead": {
+        "L": [0.2, 0],
+        "R": [0.7, 0]
+      },
+      "follow": {
+        "L": [0.7, 0.4],
+        "R": [0.2, 0.4]
+      }
     },
-    "facing": { "lead": 0, "follow": 180 }
+    "facing": {
+      "lead": 0,
+      "follow": 180
+    }
   }
 }

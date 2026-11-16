@@ -30,7 +30,9 @@ frontend and a small Express + SQLite API.
   types in `src/libs/dance/`. `db/seed.mts` loads sample figures and
   sequences. Figures are JSON files in `db/figures/`, one per figure; every
   file there is loaded and checked by the seed, and `db/FIGURES.md`
-  explains the format. Generated `db/*.sqlite`
+  explains the format. `db/figure.schema.json` describes the same format
+  for editors; change it together with `parseFigureDefinition`
+  (`test/db/figureSchema.test.mts` fails if the two disagree). Generated `db/*.sqlite`
   files are not committed.
 - `test/` holds `node:test` suites that mirror `src/` paths (for example
   `test/dance/fold.test.mts` covers `src/libs/dance/fold.mts`).

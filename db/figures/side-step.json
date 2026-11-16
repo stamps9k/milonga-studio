@@ -1,4 +1,5 @@
 {
+  "$schema": "../figure.schema.json",
   "name": "Side Step",
   "style": "tango",
   "time": "4/4",
@@ -8,14 +9,26 @@
       "both": "side right",
       "by": 0.35,
       "length": "Q",
-      "label": { "lead": "side step", "follow": "side step (mirrored)" }
+      "label": {
+        "lead": "side step",
+        "follow": "side step (mirrored)"
+      }
     }
   ],
   "expectEnd": {
     "feet": {
-      "lead": { "L": [0.25, 0], "R": [0.1, 0] },
-      "follow": { "L": [0.1, 0.4], "R": [0.25, 0.4] }
+      "lead": {
+        "L": [0.25, 0],
+        "R": [0.1, 0]
+      },
+      "follow": {
+        "L": [0.1, 0.4],
+        "R": [0.25, 0.4]
+      }
     },
-    "facing": { "lead": 0, "follow": 180 }
+    "facing": {
+      "lead": 0,
+      "follow": 180
+    }
   }
 }

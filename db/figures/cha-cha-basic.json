@@ -1,4 +1,5 @@
 {
+  "$schema": "../figure.schema.json",
   "name": "Cha-Cha Basic",
   "style": "cha-cha",
   "time": "4/4",
@@ -8,17 +9,38 @@
       "both": "forward",
       "by": 0.3,
       "beat": 1,
-      "label": { "lead": "rock forward", "follow": "rock back" }
+      "label": {
+        "lead": "rock forward",
+        "follow": "rock back"
+      }
     },
-    { "both": "in place", "beat": 2, "label": "recover weight" },
+    {
+      "both": "in place",
+      "beat": 2,
+      "label": "recover weight"
+    },
     {
       "both": "back",
       "by": 0.3,
       "beat": 3,
-      "label": { "lead": "cha: step back", "follow": "cha: step forward" }
+      "label": {
+        "lead": "cha: step back",
+        "follow": "cha: step forward"
+      }
     },
-    { "both": "in place", "beat": 3.5, "label": "cha: in place" },
-    { "both": "in place", "beat": 4, "label": "cha: in place" }
+    {
+      "both": "in place",
+      "beat": 3.5,
+      "label": "cha: in place"
+    },
+    {
+      "both": "in place",
+      "beat": 4,
+      "label": "cha: in place"
+    }
   ],
-  "expectEnd": { "stance": "closed", "leadStandingOn": "L" }
+  "expectEnd": {
+    "stance": "closed",
+    "leadStandingOn": "L"
+  }
 }

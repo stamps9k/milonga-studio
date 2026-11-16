@@ -1,4 +1,5 @@
 {
+  "$schema": "../figure.schema.json",
   "name": "Cruzada",
   "style": "tango",
   "time": "4/4",
@@ -23,9 +24,18 @@
   ],
   "expectEnd": {
     "feet": {
-      "lead": { "L": [-0.1, 0.3], "R": [0.1, 0] },
-      "follow": { "L": [0.1, 0.25], "R": [-0.1, 0.1] }
+      "lead": {
+        "L": [-0.1, 0.3],
+        "R": [0.1, 0]
+      },
+      "follow": {
+        "L": [0.1, 0.25],
+        "R": [-0.1, 0.1]
+      }
     },
-    "facing": { "lead": 0, "follow": 180 }
+    "facing": {
+      "lead": 0,
+      "follow": 180
+    }
   }
 }

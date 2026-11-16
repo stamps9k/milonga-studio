@@ -1,4 +1,5 @@
 {
+  "$schema": "../figure.schema.json",
   "name": "Side Basic",
   "style": "cha-cha",
   "time": "4/4",
@@ -11,10 +12,30 @@
       "beat": 1,
       "label": "side break"
     },
-    { "both": "in place", "beat": 2, "label": "recover weight" },
-    { "both": "side left", "by": 0.3, "beat": 3, "label": "cha: side" },
-    { "both": "in place", "beat": 3.5, "label": "cha: in place" },
-    { "both": "in place", "beat": 4, "label": "cha: in place" }
+    {
+      "both": "in place",
+      "beat": 2,
+      "label": "recover weight"
+    },
+    {
+      "both": "side left",
+      "by": 0.3,
+      "beat": 3,
+      "label": "cha: side"
+    },
+    {
+      "both": "in place",
+      "beat": 3.5,
+      "label": "cha: in place"
+    },
+    {
+      "both": "in place",
+      "beat": 4,
+      "label": "cha: in place"
+    }
   ],
-  "expectEnd": { "stance": "closed", "leadStandingOn": "R" }
+  "expectEnd": {
+    "stance": "closed",
+    "leadStandingOn": "R"
+  }
 }
