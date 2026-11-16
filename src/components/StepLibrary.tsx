@@ -33,6 +33,25 @@ const StepLibrary = ({
   const details = useFigureDetails(figures);
   const [query, setQuery] = useState("");
   const [hideMisfits, setHideMisfits] = useState(true);
+  // Styles the user has collapsed. Every style starts expanded, so nothing
+  // is hidden until the user asks; while searching, every group is shown
+  // expanded regardless, so a match is never hidden inside a collapsed
+  // group. Kept in component state only, so it resets on reload.
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const searching = query.trim() !== "";
+
+  const toggleStyle = (style: string) =>
+    setCollapsed((previous) => {
+      const next = new Set(previous);
+      if (next.has(style)) {
+        next.delete(style);
+      } else {
+        next.add(style);
+      }
+      return next;
+    });
 
   // Figures that don't join cleanly are hidden by default, so the library
   // offers what can actually follow on. The switch stays visible whenever
@@ -93,6 +112,24 @@ const StepLibrary = ({
         }
         .step-item.misfit:hover {
           opacity: 1;
+        }
+        .style-toggle {
+          background: none;
+          border: 0;
+          padding: 0;
+          color: inherit;
+          width: 100%;
+          text-align: left;
+        }
+        .style-toggle:hover {
+          color: var(--amber);
+        }
+        .style-toggle .chevron {
+          display: inline-block;
+          transition: transform 0.15s ease;
+        }
+        .style-toggle[aria-expanded="false"] .chevron {
+          transform: rotate(-90deg);
         }
       `}</style>
       <div className="card h-100 p-3">
@@ -156,42 +193,69 @@ const StepLibrary = ({
 
         {!loading &&
           !error &&
-          groups.map(([style, figuresInGroup]) => (
-            <div key={style}>
-              <div className="eyebrow mb-1">{capitalize(style)}</div>
-              <div className="list-group list-group-flush mb-2">
-                {figuresInGroup.map((figure) => {
-                  const fit = fitById.get(figure.id);
-                  const misfit = fit !== undefined && !fit.fits;
-                  return (
-                    <button
-                      key={figure.id}
-                      type="button"
-                      className={
-                        "list-group-item d-flex align-items-center gap-2 rounded-3 mb-1 border-0 step-item" +
-                        (misfit ? " misfit" : "")
-                      }
-                      title={
-                        misfit
-                          ? `Doesn’t follow on cleanly:\n${fit.reasons.join("\n")}`
-                          : undefined
-                      }
-                      onClick={() => onSelectFigure?.(figure.id)}>
-                      <span className="dot"></span>
-                      {figure.name}
-                      {misfit && (
-                        <span
-                          className="ms-auto text-warning small"
-                          aria-label="Doesn’t follow on cleanly">
-                          ⚠
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+          groups.map(([style, figuresInGroup]) => {
+            const expanded = searching || !collapsed.has(style);
+            const listId = `figure-style-${style.replace(/\W+/g, "-")}`;
+            return (
+              <div key={style}>
+                <button
+                  type="button"
+                  className="style-toggle eyebrow mb-1 d-flex align-items-center gap-1"
+                  aria-expanded={expanded}
+                  aria-controls={listId}
+                  disabled={searching}
+                  title={
+                    searching
+                      ? "All groups are open while searching"
+                      : expanded
+                        ? `Collapse ${capitalize(style)}`
+                        : `Expand ${capitalize(style)}`
+                  }
+                  onClick={() => toggleStyle(style)}>
+                  <span className="chevron" aria-hidden="true">
+                    ▾
+                  </span>
+                  {capitalize(style)}
+                  <span className="ms-auto text-body-secondary">
+                    {figuresInGroup.length}
+                  </span>
+                </button>
+                {expanded && (
+                  <div id={listId} className="list-group list-group-flush mb-2">
+                    {figuresInGroup.map((figure) => {
+                      const fit = fitById.get(figure.id);
+                      const misfit = fit !== undefined && !fit.fits;
+                      return (
+                        <button
+                          key={figure.id}
+                          type="button"
+                          className={
+                            "list-group-item d-flex align-items-center gap-2 rounded-3 mb-1 border-0 step-item" +
+                            (misfit ? " misfit" : "")
+                          }
+                          title={
+                            misfit
+                              ? `Doesn’t follow on cleanly:\n${fit.reasons.join("\n")}`
+                              : undefined
+                          }
+                          onClick={() => onSelectFigure?.(figure.id)}>
+                          <span className="dot"></span>
+                          {figure.name}
+                          {misfit && (
+                            <span
+                              className="ms-auto text-warning small"
+                              aria-label="Doesn’t follow on cleanly">
+                              ⚠
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
     </div>
   );
