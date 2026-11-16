@@ -27,7 +27,7 @@
       "description": "Time signature, such as \"3/4\" or \"4/4\"."
     },
     "start": {
-      "enum": ["closed"],
+      "enum": ["closed", "crossed promenade"],
       "description": "Starting stance. Default \"closed\"."
     },
     "slow": {
@@ -221,7 +221,7 @@
       "additionalProperties": false,
       "required": ["stance"],
       "properties": {
-        "stance": { "enum": ["closed"] },
+        "stance": { "enum": ["closed", "crossed promenade"] },
         "moved": {
           "type": "object",
           "additionalProperties": false,

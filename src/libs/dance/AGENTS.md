@@ -166,6 +166,12 @@ the owner before building more on top of them.
   standing foot at stance width, across the facing after the turn) and its
   default starting weight (lead on his right, follow on her left) are
   agreed defaults, not technique.
+- The "crossed promenade" stance (`authoring.mts`) is the owner's whisk
+  ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
+  (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured
+  from the lead's right foot. Its default starting weight is on the
+  crossed feet. Standard technique has the follow make most of the
+  opening; the even split is the owner's.
 
 ## Terminology
 

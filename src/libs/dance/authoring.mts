@@ -56,9 +56,31 @@ export const STANCE_WIDTH = 0.2;
  *  hold. Both values can change independently. */
 export const PARTNER_DISTANCE = 0.4;
 
-/** Named starting positions. Only closed hold so far: lead at the
- *  origin facing line of dance (0), follow facing him (180). */
-export type StanceName = "closed";
+/**
+ * Named positions a figure can start or end in (`start`, and
+ * `expectEnd.stance`):
+ * - "closed": closed hold. The midpoint of the lead's feet is at the
+ *   origin, the lead faces line of dance (0) and the follow faces him
+ *   (180), PARTNER_DISTANCE in front.
+ * - "crossed promenade": the position a whisk ends in. Each partner has
+ *   opened an eighth from closed hold (the lead to his left, the follow
+ *   to her right) into a V that opens to the lead's left, and has the
+ *   crossing foot (the lead's left, the follow's right) behind the
+ *   other one. See crossedPromenadePose for the exact geometry. Named
+ *   "crossed" so plain "promenade" stays free for a feet-apart version
+ *   (tango's promenade starts differently; owner's decision,
+ *   2026-11-16).
+ */
+export type StanceName = "closed" | "crossed promenade";
+
+/** In "crossed promenade", how far the crossing foot is behind the
+ *  other foot, and how far across it, in metres, measured in the
+ *  opened facing. Provisional: from the owner's description of the
+ *  whisk ("toe just behind the right heel"), not technique. */
+export const CROSS_BEHIND = 0.25;
+export const CROSS_ACROSS = 0.05;
+
+const STANCE_NAMES: readonly StanceName[] = ["closed", "crossed promenade"];
 
 type ShortFoot = "L" | "R";
 
@@ -72,6 +94,8 @@ function stancePose(stance: StanceName, standing: Record<Partner, Foot>): Pose {
   const weight = (partner: Partner, foot: Foot) =>
     standing[partner] === foot ? 1 : 0;
   switch (stance) {
+    case "crossed promenade":
+      return crossedPromenadePose(weight);
     case "closed":
       return {
         lead: {
@@ -101,6 +125,60 @@ function stancePose(stance: StanceName, standing: Record<Partner, Foot>): Pose {
         },
       };
   }
+}
+
+/**
+ * "crossed promenade", in the frame of the closed hold the couple opened
+ * from: the lead's right foot (the one he doesn't cross) is at the
+ * origin, and before opening he faced 0 with the follow facing him.
+ * Measuring from his right foot keeps a figure's `moved` readable: for a
+ * whisk it's simply where that foot went.
+ *
+ * - Lead: right foot at (0, 0); faces 315 (opened an eighth to his
+ *   left); left foot CROSS_BEHIND behind the right and CROSS_ACROSS to
+ *   its right, in that opened facing.
+ * - Follow: left foot PARTNER_DISTANCE in front of the lead's right
+ *   foot, at (0, 0.4), where it was in hold; faces 225 (opened an eighth
+ *   to her right); right foot CROSS_BEHIND behind her left and
+ *   CROSS_ACROSS to its left (the mirror image).
+ *
+ * The weights come from `weight`, normally on the crossed feet, which
+ * is how a whisk ends.
+ */
+function crossedPromenadePose(
+  weight: (partner: Partner, foot: Foot) => number,
+): Pose {
+  const crossed = (standingFoot: Point2D, facing: number, across: number) =>
+    addPoints(
+      addPoints(
+        standingFoot,
+        scalePoint(headingToUnitVector(facing), -CROSS_BEHIND),
+      ),
+      scalePoint(headingToUnitVector(facing + 90), across),
+    );
+  const leadRight = { x: 0, y: 0 };
+  const followLeft = { x: 0, y: PARTNER_DISTANCE };
+  return {
+    lead: {
+      left: {
+        position: crossed(leadRight, 315, CROSS_ACROSS),
+        weight: weight("lead", "left"),
+      },
+      right: { position: leadRight, weight: weight("lead", "right") },
+      orientation: 315,
+      rise: 0,
+    },
+    follow: {
+      left: { position: followLeft, weight: weight("follow", "left") },
+      right: {
+        // Across to her left: the mirror of the lead's cross.
+        position: crossed(followLeft, 225, -CROSS_ACROSS),
+        weight: weight("follow", "right"),
+      },
+      orientation: 225,
+      rise: 0,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------
@@ -612,7 +690,21 @@ function parseTime(time: string, name: string): TimeSignature {
  *  partner stands on the other one; a pivot is on the standing foot. A
  *  partner with no foot given on their first step starts standing on
  *  the usual foot: the lead on his right, the follow on her left. */
-function inferStanding(rows: StepRow[], name: string): Record<Partner, Foot> {
+/** Who stands on which foot before a stance's first step, when the step
+ *  doesn't say: in closed hold the lead is on his right (stepping off
+ *  the left) and the follow on her left; in crossed promenade each is
+ *  on the crossed foot, which is how a whisk ends. */
+const DEFAULT_STANDING: Record<StanceName, Record<Partner, Foot>> = {
+  closed: { lead: "right", follow: "left" },
+  "crossed promenade": { lead: "left", follow: "right" },
+};
+
+function inferStanding(
+  rows: StepRow[],
+  name: string,
+  stance: StanceName,
+): Record<Partner, Foot> {
+  const defaults = DEFAULT_STANDING[stance];
   const standing: Partial<Record<Partner, Foot>> = {};
   for (const [index, row] of rows.entries()) {
     for (const { partner, move } of movesOfRow(
@@ -625,16 +717,18 @@ function inferStanding(rows: StepRow[], name: string): Record<Partner, Foot> {
         foot = OTHER[FOOT[row.foot]];
       }
       if (foot === undefined) {
-        // Nothing to infer from: the usual starting weight, lead on his
-        // right (stepping off the left), follow on her left.
-        standing[partner] = partner === "lead" ? "right" : "left";
+        // Nothing to infer from: the stance's usual starting weight.
+        standing[partner] = defaults[partner];
       } else {
         standing[partner] = move.go === "pivot" ? foot : OTHER[foot];
       }
     }
     if (standing.lead && standing.follow) break;
   }
-  return { lead: standing.lead ?? "right", follow: standing.follow ?? "left" };
+  return {
+    lead: standing.lead ?? defaults.lead,
+    follow: standing.follow ?? defaults.follow,
+  };
 }
 
 function checkExpectedEnd(
@@ -752,10 +846,8 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     }
   });
 
-  const startPose = stancePose(
-    definition.start ?? "closed",
-    inferStanding(rows, name),
-  );
+  const start = definition.start ?? "closed";
+  const startPose = stancePose(start, inferStanding(rows, name, start));
   const state: Record<Partner, PartnerState> = {
     lead: {
       position: {
@@ -1186,7 +1278,7 @@ export function parseFigureDefinition(
     }
     if ("stance" in v) {
       checkKeys(path, v, ["stance", "moved", "turned", "leadStandingOn"]);
-      checkOneOf(`${path}.stance`, v.stance, ["closed"]);
+      checkOneOf(`${path}.stance`, v.stance, STANCE_NAMES);
       if (v.moved !== undefined) {
         if (!isObject(v.moved)) problem(`${path}.moved`, "should be an object");
         else {
@@ -1251,7 +1343,7 @@ export function parseFigureDefinition(
   else if (typeof value.time !== "string" || !/^\d+\/\d+$/.test(value.time)) {
     problem("time", 'should look like "3/4" or "4/4"');
   }
-  checkOneOf("start", value.start, ["closed"]);
+  checkOneOf("start", value.start, STANCE_NAMES);
   checkNumber("slow", value.slow, { positive: true });
   checkNumber("expectBeats", value.expectBeats, { positive: true });
   checkString("notes", value.notes);
