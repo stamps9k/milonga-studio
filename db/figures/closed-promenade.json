@@ -1,0 +1,41 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Closed Promenade",
+  "style": "tango",
+  "time": "2/4",
+  "slow": 1,
+  "notes": "Owner's description (2026-11-17): a simple promenade, slow, quick, quick, slow, starting in promenade (where the Progressive Link ends) and finishing facing each other in closed position; the change from promenade to facing happens on the last step. Named after the standard figure it matches, the Closed Promenade. Lead: slow, left foot along the line of travel in promenade; quick, right foot forward and across in front of the left (a deliberate cross, owner confirmed); quick, left foot along the line again, a little towards his partner, uncrossing; slow, right foot closes to the left, turning an eighth to the right to face his partner. The follow mirrors: right, left across in front of the right, right, left closes, turning an eighth to the left. The feet close on the last slow (owner confirmed). Sizes (owner: as earlier): the link has already put the outside foot 0.6 out, so the first slow moves it only 0.2 more (a 0.8 stride; a further 0.5 would make it 1.1); the cross lands 0.5 past the other foot; the third step lands 0.4 past the crossed foot and 0.15 across the line, the lead slightly forward and the follow slightly back as in the book, which keeps them 0.4 apart and lets his left foot clear his right as it passes. These sizes are provisional. Timing: 2/4, a slow is one beat and a quick half.",
+  "start": "tango promenade",
+  "steps": [
+    {
+      "lead": { "go": "diagonal forward left", "by": 0.2 },
+      "follow": { "go": "diagonal forward right", "by": 0.2 },
+      "length": "S",
+      "label": "side, in promenade"
+    },
+    {
+      "lead": { "go": "diagonal forward left", "by": 1.3, "cross": true },
+      "follow": { "go": "diagonal forward right", "by": 1.3, "cross": true },
+      "length": "Q",
+      "label": "forward and across"
+    },
+    {
+      "lead": { "go": { "forward": 0.742, "right": -0.53 } },
+      "follow": { "go": { "forward": 0.53, "right": 0.742 } },
+      "length": "Q",
+      "label": "side, uncrossing"
+    },
+    {
+      "lead": { "go": "close", "turn": { "right": "1/8" } },
+      "follow": { "go": "close", "turn": { "left": "1/8" } },
+      "length": "S",
+      "label": "close, turning to face"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": { "forward": 0.15, "right": -1.6 },
+    "leadStandingOn": "R"
+  }
+}
