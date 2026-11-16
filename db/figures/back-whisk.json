@@ -1,0 +1,41 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Back Whisk",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Standard name (International Style waltz): the Whisk danced backward. Added at the owner's request (2026-11-16) for the library, though not currently danced in class. The lead goes back on the left, then back and side on the right (landing level with the left foot and 0.4 to its side, the same sizes as the other waltz figures), then crosses the left foot behind the right into promenade position; no turn on counts 1 and 2. The crossing finish matches the owner's Whisk: the crossing foot ends about 0.25 behind and 0.05 across the standing foot in the opened facing, and both partners open an eighth (lead to his left, follow to her right) into a V. Standard technique has the follow make most of the opening while the lead turns little; this keeps the Whisk's even split so the two figures finish the same way. Count 3 has separate lead and follow rows because the partners turn opposite ways, and expectEnd lists exact feet because promenade isn't a named stance yet.",
+  "steps": [
+    {
+      "both": "back",
+      "by": 0.5,
+      "foot": "L",
+      "beat": 1
+    },
+    {
+      "both": { "forward": -0.5, "right": 0.2 },
+      "beat": 2,
+      "label": "back and side"
+    },
+    {
+      "lead": {
+        "go": { "forward": -0.14, "right": 0.61 },
+        "turn": { "left": "1/8" },
+        "label": "cross behind, opening to promenade"
+      },
+      "follow": {
+        "go": { "forward": -0.14, "right": -0.61 },
+        "turn": { "right": "1/8" },
+        "label": "cross behind, opening to promenade"
+      },
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "feet": {
+      "lead": { "L": [0.51, -0.64], "R": [0.3, -0.5] },
+      "follow": { "L": [0.3, -0.1], "R": [0.51, 0.04] }
+    },
+    "facing": { "lead": 315, "follow": 225 }
+  }
+}
