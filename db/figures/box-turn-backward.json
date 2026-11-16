@@ -3,7 +3,7 @@
   "name": "Box Turn (backward half)",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's description: follows Box Turn (forward half); a backward step on the opposite (left) foot with the same quarter turn clockwise, counts 1-2-3, feet closing on 3. Step sizes and rise are assumptions the owner accepted for now (2026-11-16), the same as the forward half mirrored backwards: 0.5 back, then the right foot lands 0.4 beyond the left in the turned frame; no rise. The whole quarter turn is placed on step 2. Step 2 travels (-0.2, -0.9) in the frame before the turn: 192.5288 degrees from forward over 0.9220.",
+  "notes": "Owner's description: follows Box Turn (forward half); a backward step on the opposite (left) foot with the same quarter turn clockwise, counts 1-2-3, feet closing on 3. Step sizes and rise are assumptions the owner accepted for now (2026-11-16), the same as the forward half mirrored backwards: 0.5 back, then the right foot lands 0.4 beyond the left in the turned frame; no rise. The whole quarter turn is placed on step 2. Measured from the facing before the turn, step 2 is 0.9 back and 0.2 left.",
   "steps": [
     {
       "both": "back",
@@ -12,8 +12,7 @@
       "beat": 1
     },
     {
-      "both": 192.5288077091515,
-      "by": 0.9219544457292888,
+      "both": { "forward": -0.9, "right": -0.2 },
       "turn": { "right": "1/4" },
       "beat": 2,
       "label": "side, turning 1/4 right"
