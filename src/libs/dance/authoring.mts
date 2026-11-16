@@ -589,6 +589,12 @@ function applyMove(
     contact: air ? "air" : "floor",
     // A pivot keeps the weight on the pivoting foot.
     weight: takesWeight || move.go === "pivot" ? 1 : 0,
+    // A close brings the foot in first and changes weight once it's
+    // there (agreed with the owner for every dance, 2026-11-16; other
+    // steps keep the even transfer until a figure needs otherwise).
+    ...(takesWeight && move.go === "close"
+      ? { weightTiming: "late" as const }
+      : {}),
     orientation: after,
     rise: move.rise ?? 0,
     label: label || defaultLabel(move.go, move.turn, air),

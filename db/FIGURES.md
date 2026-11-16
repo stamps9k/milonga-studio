@@ -107,19 +107,24 @@ options on the row), or as an object with its own options:
 
 ### Actions
 
-| Action                                               | Meaning                                                            |
-| ---------------------------------------------------- | ------------------------------------------------------------------ |
-| `"forward"`, `"back"`, `"side left"`, `"side right"` | Travel that way, relative to the dancer's own facing. Needs `by`.  |
-| `"diagonal forward left"` and the other diagonals    | The same, at 45°.                                                  |
-| a number, such as `10` or `-10`                      | Degrees clockwise from forward, for angles in between. Needs `by`. |
-| `{ "forward": 0.9, "right": 0.2 }`                   | Travel this far forward and right, in metres. No `by`. See below.  |
-| `"close"`                                            | Bring the free foot beside the standing foot (stance width apart). |
-| `"in place"`                                         | Change weight onto the free foot without moving it (a recover).    |
-| `"pivot"`                                            | Turn on the standing foot without moving it. Needs `turn`.         |
+| Action                                               | Meaning                                                                                |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `"forward"`, `"back"`, `"side left"`, `"side right"` | Travel that way, relative to the dancer's own facing. Needs `by`.                      |
+| `"diagonal forward left"` and the other diagonals    | The same, at 45°.                                                                      |
+| a number, such as `10` or `-10`                      | Degrees clockwise from forward, for angles in between. Needs `by`.                     |
+| `{ "forward": 0.9, "right": 0.2 }`                   | Travel this far forward and right, in metres. No `by`. See below.                      |
+| `"close"`                                            | Bring the free foot beside the standing foot (stance width apart), then change weight. |
+| `"in place"`                                         | Change weight onto the free foot without moving it (a recover).                        |
+| `"pivot"`                                            | Turn on the standing foot without moving it. Needs `turn`.                             |
 
 The four diagonals are `"diagonal forward left"`, `"diagonal forward right"`,
 `"diagonal back left"` and `"diagonal back right"`. Directions are measured
 from the way the dancer faces **before** the step's turn.
+
+On a **close**, the playback brings the foot in over the first two thirds of
+the step and changes weight in the last third, the way a close is danced. Every
+other step moves the weight evenly across the step. For a close that doesn't
+change weight at all (a tango collect, say), add `"weight": false`.
 
 An **offset** says where the moving foot goes: so many metres forward and so
 many to the right of where it is now, with negative numbers for back and left.

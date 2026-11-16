@@ -230,6 +230,25 @@ test("both: a turn on a close, in place or pivot is rejected, since the hold wou
   }
 });
 
+test("a close changes weight late; other steps, and a close without weight, don't say", () => {
+  const { steps } = figure([
+    { both: "forward", by: 0.4, length: "Q" },
+    { both: "close", length: "Q" },
+    { both: "back", by: 0.4, length: "Q" },
+    { both: "close", weight: false, length: "Q" },
+  ]);
+  const lead = steps.filter((step) => step.partner === "lead");
+  assert.deepEqual(
+    lead.map((step) => step.weightTiming),
+    [undefined, "late", undefined, undefined],
+  );
+  // The follow's mirrored close is late too.
+  assert.equal(
+    steps.filter((step) => step.partner === "follow")[1].weightTiming,
+    "late",
+  );
+});
+
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
   const { endPose } = figure([
     { both: "forward", by: 0.4, length: "Q" },

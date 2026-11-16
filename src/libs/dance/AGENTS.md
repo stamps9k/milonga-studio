@@ -130,6 +130,13 @@ the owner before building more on top of them.
   yet, for this reason.
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
+  The exception is a step with `weightTiming: "late"`: its foot arrives at
+  `LATE_WEIGHT_FOOT_SHARE` (two thirds) of the step and the weight changes
+  over the rest (`stepPhases` in `fold.mts`). `defineFigure` marks every
+  close that takes weight as late. The owner agreed this suits closes in
+  all the dances they do (waltz, tango, blues, jitterbug, cha-cha);
+  travelling steps stay even until a figure needs otherwise, when a
+  per-step option in the figure format is the planned next step.
 - `centerOfWeight` places the body directly over the weight-averaged feet.
   It can't express weight held off-centre, such as a lunge.
 - An airborne step's excursion goes out along its movement for the first
