@@ -97,6 +97,14 @@ export const PROMENADE_SIDE_STEP = 0.4;
  *  partners' inner feet stay PARTNER_FOOT_CLEARANCE apart. */
 export const PROMENADE_CLOSE_WIDTH = 0.1;
 
+/** In "promenade apart", how far each partner has moved out from the
+ *  lines they started the chassé on (away from the other), in metres:
+ *  the chassé's count 2 lands each leading foot this much wider, which
+ *  makes room for the Open Natural Turn's first stride (owner's request,
+ *  2026-11-16). The chassé writes it as 0.05 forward and 0.05 outward
+ *  in each dancer's opened facing, 0.05 * sqrt 2 across the line. */
+export const PROMENADE_SEPARATION = 0.05 * Math.SQRT2;
+
 export const STANCE_NAMES: readonly StanceName[] = [
   "closed",
   "crossed promenade",
@@ -235,7 +243,7 @@ function promenadeApartPose(
       scalePoint(headingToUnitVector(facing + side), PROMENADE_CLOSE_WIDTH),
     );
   const leadLeft = { x: 0, y: 0 };
-  const followRight = { x: 0, y: PARTNER_DISTANCE };
+  const followRight = { x: 0, y: PARTNER_DISTANCE + 2 * PROMENADE_SEPARATION };
   return {
     lead: {
       left: { position: leadLeft, weight: weight("lead", "left") },

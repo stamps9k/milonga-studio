@@ -184,7 +184,9 @@ the owner before building more on top of them.
   ends: the same V and frame as crossed promenade, with each trailing
   foot `PROMENADE_SIDE_STEP` (40 cm) back along the line of travel and
   `PROMENADE_CLOSE_WIDTH` (10 cm) to the side, measured from the lead's
-  left foot.
+  left foot. The partners are `PROMENADE_SEPARATION` (about 7 cm) further
+  apart each than in crossed promenade, to leave room for the Open
+  Natural Turn's first stride (owner's request).
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

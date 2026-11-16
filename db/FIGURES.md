@@ -245,7 +245,9 @@ A stance is a named position for both partners, used by `start` and by
 - **`"promenade apart"`**: where the Promenade Chassé ends. It's the same V, in
   the same frame (the lead faces 315°, the follow 225°, and the line of travel
   runs towards −x), but with the feet apart. The lead's left foot is at the
-  origin, the follow's right is 40 cm from it across the line, and each
+  origin, the follow's right is about 54 cm from it across the line (the
+  chassé separates the partners by about 7 cm each to make room for the next
+  stride), and each
   partner's other foot is 40 cm back along the line and 10 cm to the side,
   where it closed. By default each partner stands on the leading foot (the
   lead's left, the follow's right).

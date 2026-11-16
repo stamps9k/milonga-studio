@@ -317,8 +317,9 @@ test("crossed promenade: a figure can start in it, opened an eighth each with th
 test("promenade apart: the leading feet at the front of the V, the trailing ones closed behind", () => {
   // Lead's left at the origin facing 315; his right 0.4 back along the
   // line of travel (+x) and 0.1 to his right, (s, s) * 0.1:
-  // (0.4 + 0.1s, 0.1s). Follow's right at (0, 0.4) facing 225; her left
-  // 0.4 back and 0.1 to her left, (s, -s) * 0.1: (0.4 + 0.1s, 0.4 - 0.1s).
+  // (0.4 + 0.1s, 0.1s). The partners have separated by 0.05 * sqrt 2
+  // each, so the follow's right is at (0, 0.4 + 0.1 * sqrt 2), facing
+  // 225; her left 0.4 back and 0.1 to her left, (s, -s) * 0.1.
   const { startPose, steps } = figure(
     [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
     { start: "promenade apart" },
@@ -326,8 +327,9 @@ test("promenade apart: the leading feet at the front of the V, the trailing ones
   const s = Math.SQRT1_2;
   pointClose(startPose.lead.left.position, [0, 0]);
   pointClose(startPose.lead.right.position, [0.4 + 0.1 * s, 0.1 * s]);
-  pointClose(startPose.follow.right.position, [0, 0.4]);
-  pointClose(startPose.follow.left.position, [0.4 + 0.1 * s, 0.4 - 0.1 * s]);
+  const gap = 0.4 + 0.1 * Math.SQRT2;
+  pointClose(startPose.follow.right.position, [0, gap]);
+  pointClose(startPose.follow.left.position, [0.4 + 0.1 * s, gap - 0.1 * s]);
   assert.equal(startPose.lead.orientation, 315);
   assert.equal(startPose.follow.orientation, 225);
   assert.equal(startPose.lead.left.weight, 1);
