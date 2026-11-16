@@ -152,3 +152,35 @@ test("db:reset seeds whatever figure files are in the folder, skipping sample se
     /Seed complete: 2 figures, 1 sequences, 1 dances\./,
   );
 });
+
+test("db:reset leaves the existing database alone when a figure file has a problem", () => {
+  // Start from a fully seeded database.
+  assert.equal(runScript("db/reset.mts").status, 0);
+  assert.equal(countRows("figures"), 8);
+
+  const figuresDir = mkdtempSync(join(directory, "bad-figures-"));
+  writeFileSync(
+    join(figuresDir, "broken.json"),
+    JSON.stringify({
+      name: "Broken",
+      style: "tango",
+      time: "4/4",
+      steps: [{ both: "forward", length: "Q" }], // no `by`
+    }),
+  );
+  const result = spawnSync(
+    process.execPath,
+    ["--import", "tsx", join(repoRoot, "db/reset.mts")],
+    {
+      cwd: repoRoot,
+      env: { ...process.env, DB_PATH: dbPath, FIGURES_DIR: figuresDir },
+      encoding: "utf8",
+    },
+  );
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /broken\.json/);
+  assert.doesNotMatch(result.stdout, /Recreated/);
+  // The database was never deleted, so the old data is still there.
+  assert.equal(countRows("figures"), 8);
+  assert.equal(countRows("dances"), 5);
+});

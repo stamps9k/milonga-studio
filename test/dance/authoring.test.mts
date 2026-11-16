@@ -136,6 +136,50 @@ test("directions are measured from the facing before the step's turn, and the fa
   assert.equal(steps[1].orientation, 270);
 });
 
+test("both: on a turning step the follow keeps her place in front of the lead", () => {
+  // Lead: left foot forward 0.4 from (-0.1, 0) to (-0.1, 0.4), turning a
+  // quarter right to face east; his right closes to its right (south),
+  // (-0.1, 0.2). Follow: her right foot started 0.4 north of his left;
+  // that offset turns with the couple to 0.4 east, so it lands at
+  // (0.3, 0.4) -- not (-0.1, 0.8), her own spot turned in place. Facing
+  // west, her left closes to the south, (0.3, 0.2). She ends 0.4 in front
+  // of him: closed hold turned a quarter right.
+  const { endPose } = figure(
+    [
+      { both: "forward", by: 0.4, turn: { right: 1 / 4 }, length: "Q" },
+      { both: "close", length: "Q" },
+    ],
+    {
+      expectEnd: {
+        stance: "closed",
+        moved: { forward: 0.3, right: -0.1 },
+        turned: { right: 1 / 4 },
+        leadStandingOn: "R",
+      },
+    },
+  );
+  pointClose(endPose.lead.left.position, [-0.1, 0.4]);
+  pointClose(endPose.lead.right.position, [-0.1, 0.2]);
+  pointClose(endPose.follow.right.position, [0.3, 0.4]);
+  pointClose(endPose.follow.left.position, [0.3, 0.2]);
+  assert.equal(endPose.follow.orientation, 270);
+});
+
+test("both: a turn on a close, in place or pivot is rejected, since the hold would come apart", () => {
+  for (const action of ["close", "in place", "pivot"] as const) {
+    assert.throws(
+      () =>
+        figure([
+          { both: "forward", by: 0.4, length: "Q" },
+          { both: action, turn: { right: 1 / 8 }, length: "Q" },
+        ]),
+      (error: unknown) =>
+        error instanceof FigureError &&
+        /step 2: with `both`, a turn can't go on/.test(error.message),
+    );
+  }
+});
+
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
   const { endPose } = figure([
     { both: "forward", by: 0.4, length: "Q" },

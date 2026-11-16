@@ -5,6 +5,7 @@ import {
   addPoints,
   headingToUnitVector,
   normalizeDegrees,
+  rotatePoint,
   scalePoint,
   subPoints,
 } from "./heading.mts";
@@ -331,9 +332,10 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
       );
     }
     const lead: PartnerMove = { ...shared, go: row.both };
-    // The follow mirrors the lead: the other foot, the same floor
-    // direction and distance, and the same turn (the couple rotates
-    // together). The foot is filled in once the lead's is known.
+    // The follow mirrors the lead: the other foot and the same turn.
+    // Her foot and her travel are filled in once the lead's step is
+    // known: see defineFigure, which keeps her placed relative to him
+    // so that the couple turns together.
     const follow: PartnerMove = { ...shared, go: row.both, foot: undefined };
     return [
       { partner: "lead", move: lead, label: labelFor("lead") ?? "" },
@@ -694,7 +696,28 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       start = beat - 1;
     }
 
+    if (
+      row.both !== undefined &&
+      row.turn !== undefined &&
+      turnDegrees(row.turn) !== 0 &&
+      (row.both === "close" || row.both === "in place" || row.both === "pivot")
+    ) {
+      // On these steps each partner turns over their own standing foot,
+      // which doesn't move, so the two can't swing round each other and
+      // closed hold would silently come apart (the follow would end up
+      // beside the lead instead of in front of him). Turning on a
+      // standing foot while the couple rotates round a shared centre
+      // isn't modelled yet.
+      throw new FigureError(
+        `${where}: with \`both\`, a turn can't go on "${row.both}": each partner would turn on their own standing foot and the hold would come apart. Put the turn on a travelling step, or write \`lead\` and \`follow\` separately`,
+      );
+    }
+
     let leadFoot: Foot | undefined;
+    // Where the lead's moving foot was and where it lands on this row,
+    // for mirroring a turning step (see below).
+    let leadFrom: Point2D | undefined;
+    let leadTo: Point2D | undefined;
     for (const { partner, move, label } of movesOfRow(row, where)) {
       let explicit: Foot | undefined = move.foot ? FOOT[move.foot] : undefined;
       if (row.both !== undefined && partner === "follow") {
@@ -708,26 +731,62 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       );
       if (partner === "lead") leadFoot = foot;
 
-      // With `both`, the follow travels in the lead's floor direction:
-      // for a plain direction, convert the lead's absolute heading back
-      // into her relative terms.
+      // With `both`, the follow's travelling step is worked out from the
+      // lead's, so that she keeps the same position relative to him.
+      //
+      // Her moving foot starts at some offset from his moving foot (in
+      // closed hold, 40 cm along his facing). The step turns the couple
+      // by the step's turn, so that offset turns with it: her foot lands
+      // at his foot's landing point plus the offset rotated by the turn.
+      //
+      // Without a turn this is the plain mirror: the same floor
+      // direction and distance as the lead. With a turn the partners
+      // swing round each other and their steps differ: whoever is on the
+      // outside of the turn travels further. (Previously she took the
+      // lead's floor direction and distance and turned on the spot,
+      // which left her beside him rather than in front after a turn.)
+      //
+      // Airborne steps don't place a foot, so they keep the plain
+      // mirror: the same floor direction as the lead.
       let partnerMove = move;
-      if (
-        row.both !== undefined &&
-        partner === "follow" &&
-        (typeof move.go === "number" || move.go in DIRECTION_DEGREES)
-      ) {
-        const leadRelative =
-          typeof move.go === "number"
-            ? move.go
-            : DIRECTION_DEGREES[move.go as keyof typeof DIRECTION_DEGREES];
-        const absolute =
-          state.lead.orientation - turnDegrees(move.turn) + leadRelative;
-        partnerMove = {
-          ...move,
-          go: normalizeDegrees(absolute - state.follow.orientation),
-        };
+      const travels =
+        typeof move.go === "number" || move.go in DIRECTION_DEGREES;
+      if (row.both !== undefined && partner === "follow" && travels) {
+        if (move.air !== true && leadFrom && leadTo) {
+          const offset = subPoints(state.follow.position[foot], leadFrom);
+          const target = addPoints(
+            leadTo,
+            rotatePoint(offset, turnDegrees(move.turn)),
+          );
+          const delta = subPoints(target, state.follow.position[foot]);
+          const distance = Math.hypot(delta.x, delta.y);
+          // Compass heading of the delta (0 = +y, clockwise), relative
+          // to her facing before the turn, as `go` expects.
+          partnerMove =
+            distance < 1e-12
+              ? { ...move, go: "in place", by: undefined }
+              : {
+                  ...move,
+                  go: normalizeDegrees(
+                    Math.atan2(delta.x, delta.y) * RAD_TO_DEG -
+                      state.follow.orientation,
+                  ),
+                  by: distance,
+                };
+        } else {
+          const leadRelative =
+            typeof move.go === "number"
+              ? move.go
+              : DIRECTION_DEGREES[move.go as keyof typeof DIRECTION_DEGREES];
+          const absolute =
+            state.lead.orientation - turnDegrees(move.turn) + leadRelative;
+          partnerMove = {
+            ...move,
+            go: normalizeDegrees(absolute - state.follow.orientation),
+          };
+        }
       }
+      if (partner === "lead") leadFrom = state.lead.position[foot];
       const step = applyMove(
         partner,
         partnerMove,
@@ -736,6 +795,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         label,
         `${where} (${partner})`,
       );
+      if (partner === "lead") leadTo = state.lead.position[foot];
       if (partnerMove !== move && !label) {
         // Describe the follow's mirrored step in her own terms.
         step.label = defaultLabel(
