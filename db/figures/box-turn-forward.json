@@ -1,0 +1,33 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Box Turn (forward half)",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Owner's description: the basic waltz step, counts 1-2-3, a quarter turn clockwise while progressing forward; lead starts forward on the right foot, the feet close on 3, and the turn is felt mostly on 2. Usually followed by Box Turn (backward half). Step sizes and rise are assumptions the owner accepted for now (2026-11-16): 0.5 forward, then the left foot lands 0.4 beyond the right in the turned frame; no rise. The whole quarter turn is placed on step 2. Step 2 is 'side' in the turned frame, so in the frame before the turn the left foot travels from beside the right heel to 0.4 past the right foot: (0.2, 0.9), which is 12.5288 degrees from forward over 0.9220.",
+  "steps": [
+    {
+      "both": "forward",
+      "by": 0.5,
+      "foot": "R",
+      "beat": 1
+    },
+    {
+      "both": 12.528807709151511,
+      "by": 0.9219544457292888,
+      "turn": { "right": "1/4" },
+      "beat": 2,
+      "label": "side, turning 1/4 right"
+    },
+    {
+      "both": "close",
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": { "forward": 0.8, "right": 0.1 },
+    "turned": { "right": "1/4" },
+    "leadStandingOn": "R"
+  }
+}
