@@ -145,6 +145,9 @@ function emptyTrails(startPose: Pose): FootTrails {
  * trail would show a step that never happened. The animated pose from
  * poseAtBeat still shows the excursion while it's in progress.
  */
+/** How many straight pieces an arc is drawn with in a trail. */
+const ARC_TRAIL_SAMPLES = 12;
+
 function localFootTrails(figure: Figure): FootTrails {
   const positions: Record<Partner, Record<Foot, Point2D>> = {
     lead: {
@@ -184,6 +187,20 @@ function localFootTrails(figure: Figure): FootTrails {
       step.movement,
     );
 
+    // An arc is drawn as a curve, not its chord: a few points along it
+    // before the end point, enough for the bend to read in the trail.
+    if (step.movement.type === "arc") {
+      for (let i = 1; i < ARC_TRAIL_SAMPLES; i++) {
+        trails[step.partner][step.foot].push(
+          movementPointAt(
+            start,
+            orientationBefore[step.partner],
+            step.movement,
+            i / ARC_TRAIL_SAMPLES,
+          ),
+        );
+      }
+    }
     positions[step.partner][step.foot] = end;
     orientationBefore[step.partner] = step.orientation;
     trails[step.partner][step.foot].push(end);

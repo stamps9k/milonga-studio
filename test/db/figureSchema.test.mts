@@ -73,6 +73,7 @@ const WITH_STANCE_END = {
         rise: 0,
         weight: true,
         air: false,
+        path: "around the front",
         label: "lead",
       },
       follow: "pivot",

@@ -12,7 +12,7 @@
  * out the model's absolute headings, feet, weights, timing and end pose,
  * and checks each figure's expectEnd. db/FIGURES.md is the guide.
  * Movements are straight lines only (including zero-distance weight
- * changes and pivots); arcs aren't authored yet.
+ * changes and pivots), except steps marked to curve "around the front".
  *
  * The figures are whatever files are in db/figures/. Each file's
  * expectBeats and expectEnd state its length and where it finishes, and
@@ -92,11 +92,12 @@ const insertPartnerPose = db.prepare(
 const insertFootState = db.prepare(
   "INSERT INTO foot_states (pose_id, partner, foot, x, y, weight) VALUES (?, ?, ?, ?, ?, ?)",
 );
-const insertMovement = db.prepare(
-  "INSERT INTO movements (type) VALUES ('straight')",
-);
+const insertMovement = db.prepare("INSERT INTO movements (type) VALUES (?)");
 const insertMovementStraight = db.prepare(
   "INSERT INTO movement_straight (movement_id, direction, distance) VALUES (?, ?, ?)",
+);
+const insertMovementArc = db.prepare(
+  "INSERT INTO movement_arc (movement_id, curvature, arc_length) VALUES (?, ?, ?)",
 );
 const insertFigure = db.prepare(
   `INSERT INTO figures (name, style, beats_per_measure, beat_unit, start_pose_id, end_pose_id)
@@ -178,17 +179,23 @@ function seedFigure(figure: AuthoredFigure): SeededFigure {
   ).lastInsertRowid as number;
 
   figure.steps.forEach((step, index) => {
-    // defineFigure only produces straight movements (including
-    // zero-distance ones); arcs aren't authored yet.
-    if (step.movement.type !== "straight") {
-      throw new Error(`${figure.name}: arc movements can't be seeded yet`);
+    // Straight movements (including zero-distance ones), or arcs from
+    // steps with `path: "around the front"`.
+    const movementId = insertMovement.run(step.movement.type)
+      .lastInsertRowid as number;
+    if (step.movement.type === "straight") {
+      insertMovementStraight.run(
+        movementId,
+        step.movement.direction,
+        step.movement.distance,
+      );
+    } else {
+      insertMovementArc.run(
+        movementId,
+        step.movement.curvature,
+        step.movement.arcLength,
+      );
     }
-    const movementId = insertMovement.run().lastInsertRowid as number;
-    insertMovementStraight.run(
-      movementId,
-      step.movement.direction,
-      step.movement.distance,
-    );
     insertStep.run(
       figureId,
       index,

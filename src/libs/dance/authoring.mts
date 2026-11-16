@@ -14,6 +14,7 @@ import type {
   DanceStep,
   Figure,
   Foot,
+  Movement,
   Partner,
   TimeSignature,
 } from "./step.mts";
@@ -396,6 +397,13 @@ export interface MoveOptions {
   /** An airborne action (boleo, gancho, ...): the free leg goes out
    *  along the direction and back, carrying no weight. */
   air?: boolean;
+  /** "around the front": the foot travels on a curve instead of a
+   *  straight line. It sets off the way the dancer faces before the
+   *  step's turn and curves round to land exactly where the step says,
+   *  so on a turning step it swings round in front of the body instead
+   *  of cutting across behind the standing foot. Owner's request
+   *  (2026-11-16), for the Open Natural Turn. */
+  path?: "around the front";
   label?: string;
 }
 
@@ -556,6 +564,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     rise: row.rise,
     weight: row.weight,
     air: row.air,
+    path: row.path,
   };
   const labelFor = (partner: Partner) =>
     typeof row.label === "string" ? row.label : row.label?.[partner];
@@ -719,7 +728,19 @@ function applyMove(
     distance = move.by;
   }
 
+  let movement: Movement = { type: "straight", direction, distance };
+  if (move.path === "around the front") {
+    if (air || distance === 0) {
+      throw new FigureError(
+        `${where}: "path" needs a step that travels along the floor`,
+      );
+    }
+    movement = curveAroundTheFront(before, direction, distance, where);
+  }
+
   if (!air && distance > 0) {
+    // The curve, if there is one, ends at the same spot as the straight
+    // step would (see curveAroundTheFront).
     state.position[foot] = addPoints(
       start,
       scalePoint(headingToUnitVector(direction), distance),
@@ -734,7 +755,7 @@ function applyMove(
   return {
     partner,
     foot,
-    movement: { type: "straight", direction, distance },
+    movement,
     contact: air ? "air" : "floor",
     // A pivot keeps the weight on the pivoting foot.
     weight: takesWeight || move.go === "pivot" ? 1 : 0,
@@ -747,6 +768,50 @@ function applyMove(
     orientation: after,
     rise: move.rise ?? 0,
     label: label || defaultLabel(move.go, move.turn, air),
+  };
+}
+
+/** How far a curve "around the front" may turn away from the dancer's
+ *  facing to reach its landing spot. Beyond this the foot would swing
+ *  round behind the body, which isn't "around the front". */
+const MAX_CURVE_DEGREES = 120;
+
+/**
+ * The circular arc for a step with `path: "around the front"`.
+ *
+ * The model draws an arc from where the foot is, setting off along the
+ * dancer's facing before the step (arcEndpoint in fold.mts), bending
+ * with a constant curvature. There is exactly one such arc through the
+ * landing spot: if the landing spot is `theta` degrees round from the
+ * facing (clockwise positive) and `chord` metres away, the arc turns
+ * through 2 * theta, so
+ *   curvature = 2 sin(theta) / chord   (positive curves right)
+ *   arcLength = chord * theta / sin(theta)   (theta in radians).
+ * Setting off forward means the foot passes in front of the body before
+ * it curves to land, which is what the owner described for the left
+ * foot on count 2 of the Open Natural Turn.
+ */
+function curveAroundTheFront(
+  facing: number,
+  direction: number,
+  chord: number,
+  where: string,
+): Movement {
+  const theta = normalizeDegrees(direction - facing + 180) - 180;
+  if (Math.abs(theta) < 1e-9) {
+    // The landing spot is straight ahead: the curve is a straight line.
+    return { type: "straight", direction, distance: chord };
+  }
+  if (Math.abs(theta) > MAX_CURVE_DEGREES) {
+    throw new FigureError(
+      `${where}: "around the front" can't reach a spot ${Math.round(Math.abs(theta))}° round from the way the dancer faces (at most ${MAX_CURVE_DEGREES}°)`,
+    );
+  }
+  const radians = theta / RAD_TO_DEG;
+  return {
+    type: "arc",
+    curvature: (2 * Math.sin(radians)) / chord,
+    arcLength: (chord * radians) / Math.sin(radians),
   };
 }
 
@@ -1311,7 +1376,15 @@ export function parseFigureDefinition(
     }
   }
 
-  const MOVE_OPTIONS = ["foot", "by", "turn", "rise", "weight", "air"] as const;
+  const MOVE_OPTIONS = [
+    "foot",
+    "by",
+    "turn",
+    "rise",
+    "weight",
+    "air",
+    "path",
+  ] as const;
   function checkMoveOptions(path: string, object: Record<string, unknown>) {
     checkOneOf(`${path}foot`, object.foot, ["L", "R"]);
     checkNumber(`${path}by`, object.by, { positive: true });
@@ -1319,6 +1392,7 @@ export function parseFigureDefinition(
     checkNumber(`${path}rise`, object.rise);
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
+    checkOneOf(`${path}path`, object.path, ["around the front"]);
   }
 
   function checkPartner(path: string, v: unknown) {

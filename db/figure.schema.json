@@ -135,6 +135,10 @@
       "type": "boolean",
       "description": "true for an airborne action (boleo, gancho): out and back, no weight."
     },
+    "path": {
+      "enum": ["around the front"],
+      "description": "\"around the front\": the foot sets off the way the dancer faces and curves round to land where the step says, instead of a straight line."
+    },
     "label": {
       "type": "string",
       "minLength": 1,
@@ -156,6 +160,7 @@
             "rise": { "$ref": "#/definitions/rise" },
             "weight": { "$ref": "#/definitions/weight" },
             "air": { "$ref": "#/definitions/air" },
+            "path": { "$ref": "#/definitions/path" },
             "label": { "$ref": "#/definitions/label" }
           }
         }
@@ -197,7 +202,8 @@
         "turn": { "$ref": "#/definitions/turn" },
         "rise": { "$ref": "#/definitions/rise" },
         "weight": { "$ref": "#/definitions/weight" },
-        "air": { "$ref": "#/definitions/air" }
+        "air": { "$ref": "#/definitions/air" },
+        "path": { "$ref": "#/definitions/path" }
       }
     },
     "point": {

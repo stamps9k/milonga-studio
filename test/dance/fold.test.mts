@@ -689,7 +689,7 @@ test("poseAtBeat: an airborne foot goes out along its path and back again", () =
   pointClose(poseAtBeat(boleo, 0.75).lead.left.position, { x: 0.15, y: 0 });
 });
 
-test("figureFootTrails: airborne steps leave no floor trail, but still turn the frame for later arcs", () => {
+test("figureFootTrails: airborne steps leave no floor trail, but still turn the frame for later arcs, which are drawn as curves", () => {
   const boleo = singleLeadStepFigure({
     movement: { type: "straight", direction: 90, distance: 0.3 },
     contact: "air",
@@ -711,9 +711,13 @@ test("figureFootTrails: airborne steps leave no floor trail, but still turn the 
     },
   ];
   const trail = figureFootTrails(boleo, IDENTITY).lead.left;
-  assert.equal(trail.length, 2);
+  // The arc is drawn as a curve: the start, 11 points along it, then the
+  // end. Halfway round the quarter circle (centre (0, -1)) is at
+  // (sin 45°, -1 + cos 45°).
+  assert.equal(trail.length, 13);
   pointClose(trail[0], { x: 0, y: 0 });
-  pointClose(trail[1], { x: 1, y: -1 });
+  pointClose(trail[6], { x: Math.SQRT1_2, y: Math.SQRT1_2 - 1 });
+  pointClose(trail[12], { x: 1, y: -1 });
   pointClose(poseAtBeat(boleo, 2).lead.left.position, { x: 1, y: -1 });
 });
 

@@ -13,6 +13,7 @@ import type {
   StepRow,
 } from "../../src/libs/dance/authoring.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
+import { poseAtBeat } from "../../src/libs/dance/fold.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 
 // Worked examples for defineFigure. Closed hold: lead's feet at
@@ -335,6 +336,59 @@ test("crossed promenade: a figure starting in it follows a whisk with no gap", (
   assert.ok(join.maxFootGap < 1e-3);
 });
 
+test("path around the front: the foot sets off forward and curves round to land where the step says", () => {
+  // Lead's left foot at (-0.1, 0), facing north, goes 0.3 forward and 0.3
+  // right. Setting off north, the only circle through the landing spot
+  // is a quarter circle of radius 0.3 curving right, centred on (0.2, 0):
+  // it ends at (0.2, 0.3), and halfway round it is at
+  // (0.2 - 0.3 cos 45°, 0.3 sin 45°).
+  const authored = defineFigure({
+    name: "Curve",
+    style: "test",
+    time: "4/4",
+    steps: [
+      {
+        lead: { go: { forward: 0.3, right: 0.3 }, path: "around the front" },
+        length: "Q",
+      },
+    ],
+  });
+  const step = authored.steps[0];
+  assert.equal(step.movement.type, "arc");
+  if (step.movement.type === "arc") {
+    assert.ok(Math.abs(step.movement.curvature - 1 / 0.3) < 1e-9);
+    assert.ok(Math.abs(step.movement.arcLength - (0.3 * Math.PI) / 2) < 1e-9);
+  }
+  pointClose(authored.endPose.lead.left.position, [0.2, 0.3]);
+  const curve = { ...authored, id: "c", steps: [{ ...step, id: "0" }] };
+  const halfway = poseAtBeat(curve, 0.5).lead.left.position;
+  pointClose(halfway, [0.2 - 0.3 * Math.SQRT1_2, 0.3 * Math.SQRT1_2]);
+});
+
+test("path around the front: straight ahead stays straight; it needs a travelling step and a spot in front", () => {
+  const straight = figure([
+    { lead: { go: "forward", by: 0.4, path: "around the front" }, length: "Q" },
+  ]);
+  assert.equal(straight.steps[0].movement.type, "straight");
+  assert.throws(
+    () =>
+      figure([
+        { lead: { go: "in place", path: "around the front" }, length: "Q" },
+      ]),
+    /step 1 \(lead\): "path" needs a step that travels along the floor/,
+  );
+  assert.throws(
+    () =>
+      figure([
+        {
+          lead: { go: "back", by: 0.4, path: "around the front" },
+          length: "Q",
+        },
+      ]),
+    /"around the front" can't reach a spot 180° round/,
+  );
+});
+
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
   const { endPose } = figure([
     { both: "forward", by: 0.4, length: "Q" },
@@ -609,6 +663,16 @@ function problemsOf(value: unknown): string {
   }
   assert.fail("expected parseFigureDefinition to reject the file");
 }
+
+test('parseFigureDefinition: path is only "around the front"', () => {
+  assert.match(
+    problemsOf({
+      ...VALID_FILE,
+      steps: [{ both: "forward", by: 0.3, path: "around the back", beat: 1 }],
+    }),
+    /steps\[0\]\.path: should be one of: "around the front"/,
+  );
+});
 
 test("parseFigureDefinition: stances are closed or crossed promenade", () => {
   assert.doesNotThrow(() =>
