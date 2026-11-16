@@ -25,9 +25,17 @@ import { dirname, join } from "node:path";
 import { readFileSync, rmSync } from "node:fs";
 import Database from "better-sqlite3";
 
+import { loadFigures } from "./figures/index.mts";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = process.env.DB_PATH ?? join(__dirname, "milonga.sqlite");
 const schemaPath = join(__dirname, "schema.sql");
+
+// Check every figure file before touching the database. The seed checks
+// them too, but only after the old database has been deleted, so a
+// mistake in a figure used to leave an empty database behind. This
+// throws with the full list of problems and the database is untouched.
+loadFigures(process.env.FIGURES_DIR || undefined);
 
 // SQLite can leave side files next to the database (a rollback journal,
 // or -wal/-shm files in WAL mode). A stale one left beside a new
