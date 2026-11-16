@@ -66,18 +66,18 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 
 ## The figure
 
-| Field         | Meaning                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------- |
-| `name`        | Shown in the library. Must be unique across the figure files.                                           |
-| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                             |
-| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                     |
-| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"` or `"promenade apart"`. See "Stances". |
-| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.           |
-| `steps`       | The steps, in time order.                                                                               |
-| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                   |
-| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                  |
-| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".   |
-| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.  |
+| Field         | Meaning                                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Shown in the library. Must be unique across the figure files.                                                                |
+| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                                                  |
+| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                                          |
+| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"` or `"tango promenade"`. See "Stances". |
+| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.                                |
+| `steps`       | The steps, in time order.                                                                                                    |
+| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                                        |
+| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                                       |
+| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".                        |
+| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.                       |
 
 Closed stance: the lead stands at the origin facing line of dance, feet 20 cm
 apart; the follow faces him 40 cm away.
@@ -251,6 +251,13 @@ A stance is a named position for both partners, used by `start` and by
   partner's other foot is 40 cm back along the line and 10 cm to the side,
   where it closed. By default each partner stands on the leading foot (the
   lead's left, the follow's right).
+- **`"tango promenade"`**: the ballroom tango promenade, where the Progressive
+  Link ends and the Closed Promenade starts. The same V and frame (the lead
+  faces 315°, the follow 225°, travel towards −x), with the feet apart and
+  uncrossed. The lead's right foot is at the origin and his left 60 cm along
+  the line of travel; the follow's left is 40 cm across the line from his right
+  and her right 60 cm along the line, level with his left. By default each
+  partner stands on the inside foot (the lead's right, the follow's left).
 
 `"crossed promenade"` measures from the lead's right foot rather than the
 middle of his feet, so a whisk's ending reads as where that foot went:

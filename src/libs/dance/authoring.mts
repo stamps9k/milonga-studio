@@ -76,8 +76,15 @@ export const PARTNER_DISTANCE = 0.4;
  *   the follow's right) has gone PROMENADE_SIDE_STEP along the line of
  *   travel past where the trailing foot closed. See
  *   promenadeApartPose. Named by the owner (2026-11-16).
+ * - "tango promenade": the ballroom tango promenade, where the owner's
+ *   Progressive Link ends and the Closed Promenade starts. The same V
+ *   and frame as the waltz promenades, with the feet apart and
+ *   uncrossed: each partner stands on the inside foot (the lead's right,
+ *   the follow's left) with the outside foot TANGO_PROMENADE_WIDTH out
+ *   along the line of travel. See tangoPromenadePose.
  */
-export type StanceName = "closed" | "crossed promenade" | "promenade apart";
+export type StanceName =
+  "closed" | "crossed promenade" | "promenade apart" | "tango promenade";
 
 /** In "crossed promenade", how far the crossing foot is behind the
  *  other foot, and how far across it, in metres, measured in the
@@ -105,10 +112,17 @@ export const PROMENADE_CLOSE_WIDTH = 0.1;
  *  in each dancer's opened facing, 0.05 * sqrt 2 across the line. */
 export const PROMENADE_SEPARATION = 0.05 * Math.SQRT2;
 
+/** In "tango promenade", how far each partner's outside foot is along
+ *  the line of travel from the inside foot, in metres. Provisional: the
+ *  owner's link steps wide, landing level with the other foot 0.4 out
+ *  from where it was, from a closed stance 0.2 wide (2026-11-17). */
+export const TANGO_PROMENADE_WIDTH = 0.6;
+
 export const STANCE_NAMES: readonly StanceName[] = [
   "closed",
   "crossed promenade",
   "promenade apart",
+  "tango promenade",
 ];
 
 type ShortFoot = "L" | "R";
@@ -130,6 +144,8 @@ export function stancePose(
       return crossedPromenadePose(weight);
     case "promenade apart":
       return promenadeApartPose(weight);
+    case "tango promenade":
+      return tangoPromenadePose(weight);
     case "closed":
       return {
         lead: {
@@ -260,6 +276,51 @@ function promenadeApartPose(
         weight: weight("follow", "left"),
       },
       right: { position: followRight, weight: weight("follow", "right") },
+      orientation: 225,
+      rise: 0,
+    },
+  };
+}
+
+/**
+ * "tango promenade", in the same frame as the waltz promenades (the
+ * lead faces 315 and the follow 225, and the line of travel runs
+ * towards -x), measured from the lead's right foot, the one he stands
+ * on:
+ *
+ * - Lead: right foot at (0, 0); left foot TANGO_PROMENADE_WIDTH along
+ *   the line of travel, at (-0.6, 0).
+ * - Follow: left foot PARTNER_DISTANCE across the line, at (0, 0.4),
+ *   where it was in closed hold; right foot TANGO_PROMENADE_WIDTH along
+ *   the line, at (-0.6, 0.4).
+ *
+ * Unlike "promenade apart", the outside feet are level with each other
+ * along the line (as the owner's link leaves them) and the partners
+ * keep closed hold's distance. The weights come from `weight`, normally
+ * on the inside feet.
+ */
+function tangoPromenadePose(
+  weight: (partner: Partner, foot: Foot) => number,
+): Pose {
+  const out = { x: -TANGO_PROMENADE_WIDTH, y: 0 };
+  const leadRight = { x: 0, y: 0 };
+  const followLeft = { x: 0, y: PARTNER_DISTANCE };
+  return {
+    lead: {
+      left: {
+        position: addPoints(leadRight, out),
+        weight: weight("lead", "left"),
+      },
+      right: { position: leadRight, weight: weight("lead", "right") },
+      orientation: 315,
+      rise: 0,
+    },
+    follow: {
+      left: { position: followLeft, weight: weight("follow", "left") },
+      right: {
+        position: addPoints(followLeft, out),
+        weight: weight("follow", "right"),
+      },
       orientation: 225,
       rise: 0,
     },
@@ -956,6 +1017,7 @@ const DEFAULT_STANDING: Record<StanceName, Record<Partner, Foot>> = {
   closed: { lead: "right", follow: "left" },
   "crossed promenade": { lead: "left", follow: "right" },
   "promenade apart": { lead: "left", follow: "right" },
+  "tango promenade": { lead: "right", follow: "left" },
 };
 
 function inferStanding(

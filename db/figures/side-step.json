@@ -1,7 +1,7 @@
 {
   "$schema": "../figure.schema.json",
   "name": "Side Step",
-  "style": "tango",
+  "style": "argentine tango",
   "time": "4/4",
   "notes": "One sideways step to the lead's right. Reproduced as originally seeded: the lead moves his free (left) foot to the right and the follow mirrors with her right foot, so both end with their feet crossed. That may not be what's intended -- a side step to the right would usually start from the right foot -- and is left for the owner to confirm. Exempt from the \"crossed feet\" check (added 2026-11-16) because both partners end with their feet crossed, which is the known data problem noted above. Remove skipChecks when the figure is rewritten from the owner's tango.",
   "steps": [

@@ -187,6 +187,12 @@ the owner before building more on top of them.
   left foot. The partners are `PROMENADE_SEPARATION` (about 7 cm) further
   apart each than in crossed promenade, to leave room for the Open
   Natural Turn's first stride (owner's request).
+- The "tango promenade" stance is where the owner's tango Progressive
+  Link ends: the same V and frame, feet apart and uncrossed, each
+  outside foot `TANGO_PROMENADE_WIDTH` (60 cm, from the owner's wide
+  step) along the line of travel from the inside foot, measured from the
+  lead's right foot, partners at closed hold's distance. Its default
+  starting weight is on the inside feet.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

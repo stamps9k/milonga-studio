@@ -1,0 +1,47 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Two Walks and Progressive Link",
+  "style": "tango",
+  "time": "2/4",
+  "slow": 1,
+  "notes": "Owner's description (2026-11-16): walk forward slow, slow; then quick, quick into promenade. Slow 1: the lead walks forward on his left; slow 2: forward on his right. Quick 1: a wide step taking weight on the left, opening into promenade as he steps. Quick 2: weight back onto the right with no travel (the owner turns the right foot slightly, ready for the promenade; the model has no foot direction separate from the body, so that twist isn't shown). The follow mirrors: back on her right, back on her left, a wide step on her right, weight back onto her left. Named after the standard figures: two Walks and a Progressive Link. In the book the link's first quick is a small step forward and its second a step side and slightly back; the owner's version steps wide on the first quick and changes weight back on the second, ending in the same place: the lead on his right, his left foot out along the line of travel. Provisional (owner accepted the waltz sizes as a starting point): walks 0.5 each, straight (real tango walks curve gradually left); the wide step lands level with the other foot and 0.4 out from where it was, so the feet end 0.6 apart; the opening is an eighth each (the lead turning left, the follow right, as in the waltz promenade) and happens on quick 1; no rise (tango has none); the partners stay directly in front of each other in closed hold, the same hold as the waltz, until a figure needs the tango offset. Timing: 2/4, a slow is one beat and a quick half. Ends in the \"tango promenade\" stance (feet apart and uncrossed, owner's description; the V open to the lead's left), with the lead's right foot 1.0 forward and 0.1 right of where the midpoint of his feet started.",
+  "steps": [
+    {
+      "both": "forward",
+      "by": 0.5,
+      "foot": "L",
+      "length": "S",
+      "label": { "lead": "walk forward", "follow": "walk back" }
+    },
+    {
+      "both": "forward",
+      "by": 1.0,
+      "length": "S",
+      "label": { "lead": "walk forward", "follow": "walk back" }
+    },
+    {
+      "lead": {
+        "go": { "forward": 0.5, "right": -0.4 },
+        "turn": { "left": "1/8" },
+        "label": "wide step, opening to promenade"
+      },
+      "follow": {
+        "go": { "forward": -0.5, "right": 0.4 },
+        "turn": { "right": "1/8" },
+        "label": "wide step, opening to promenade"
+      },
+      "length": "Q"
+    },
+    {
+      "both": "in place",
+      "length": "Q",
+      "label": "weight back, in promenade"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "tango promenade",
+    "moved": { "forward": 1.0, "right": 0.1 },
+    "leadStandingOn": "R"
+  }
+}
