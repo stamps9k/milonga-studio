@@ -24,6 +24,9 @@ implementation's choice, not a confirmed dance rule.
   one figure onto the end of the previous one.
 - `join.mts`: measures how cleanly one figure follows another (foot gaps,
   facing changes, stepping off a weighted foot) once placed.
+- `footprints.mts`: where and when each foot is placed in a sequence
+  (`sequenceFootprints`), numbered with its count, and which placements
+  are taken or coming up at an instant (`footprintsAtBeat`).
 - `serialize.mts`: converts builder state into a `Sequence` record.
 - `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
   and which foot is the standing foot.
@@ -135,6 +138,10 @@ the owner before building more on top of them.
 - `fitTransform` takes the couple's facing from the lead's frame alone and
   ignores the follow's, which can legitimately differ (the Ocho). Any
   follow facing difference is reported by `assessJoin` instead.
+- A footprint points the way its partner's frame faces when the step
+  finishes (`footprints.mts`). The model has no separate foot direction,
+  so turned-out feet and feet placed before the body finishes turning
+  aren't shown.
 - `assessJoin`'s tolerances (`JOIN_FOOT_GAP_TOLERANCE`, 5 cm, and
   `JOIN_FACING_TOLERANCE`, 10 degrees) are judgement calls, not technique.
 - Seed figures (`db/seed.mts`) are plausible test data, not syllabus

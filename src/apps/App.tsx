@@ -11,6 +11,7 @@ import ActiveStep from "../components/ActiveStep";
 import { useSequenceBuilder } from "../hooks/useSequenceBuilder.mts";
 import { usePlayback } from "../hooks/usePlayback.mts";
 import { useSequenceExport } from "../hooks/useSequenceExport.mts";
+import type { Partner } from "../libs/dance/step.mts";
 import {
   sequenceDurationBeats,
   sequenceEntryIndexAtBeat,
@@ -33,6 +34,14 @@ const App = () => {
   const currentSegment = sequenceEntryIndexAtBeat(entries, beat);
   const { shareStatus, share, exportSequence } = useSequenceExport(entries);
   const [view, setView] = useState<ViewMode>("2d");
+  // Which dancers the 2D canvas draws (see PartnerToggle). Kept here
+  // rather than in Canvas2D so it survives switching to 3D and back.
+  const [shownPartners, setShownPartners] = useState<Record<Partner, boolean>>({
+    lead: true,
+    follow: true,
+  });
+  const toggleShownPartner = (partner: Partner) =>
+    setShownPartners((shown) => ({ ...shown, [partner]: !shown[partner] }));
 
   return (
     <BrowserRouter>
@@ -62,7 +71,12 @@ const App = () => {
                   <div className="col-9 d-flex flex-column gap-4">
                     <div className="card overflow-hidden">
                       {view === "2d" ? (
-                        <Canvas2D entries={entries} currentBeat={beat} />
+                        <Canvas2D
+                          entries={entries}
+                          currentBeat={beat}
+                          shown={shownPartners}
+                          onToggleShown={toggleShownPartner}
+                        />
                       ) : (
                         <Canvas3D />
                       )}

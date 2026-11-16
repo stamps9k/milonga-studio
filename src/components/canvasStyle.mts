@@ -1,4 +1,4 @@
-import type { Foot, Partner } from "../libs/dance/step.mts";
+import type { Partner } from "../libs/dance/step.mts";
 
 /**
  * The visual encoding of the 2D canvas, shared by Canvas2D (which draws
@@ -11,29 +11,43 @@ export const PARTNER_COLOR: Record<Partner, string> = {
   follow: "var(--teal)",
 };
 
-/** Letter drawn on each partner's body marker. */
-export const PARTNER_LABEL: Record<Partner, string> = {
-  lead: "L",
-  follow: "F",
-};
-
 export const PARTNER_NAME: Record<Partner, string> = {
   lead: "Lead",
   follow: "Follow",
 };
 
-/** Fill opacity of a free (unweighted) foot; a standing foot is solid. */
-export const FREE_FOOT_FILL_OPACITY = 0.12;
+/** Fill opacity of the dancer's current feet: a standing foot is
+ *  nearly solid, a free foot only faintly filled (its outline is drawn
+ *  at full strength either way). */
+export const STANDING_FOOT_FILL_OPACITY = 0.9;
+export const FREE_FOOT_FILL_OPACITY = 0.15;
 
-/** Trail line opacity per foot: the left foot's trail is drawn stronger
- *  so the two trails can be told apart. */
-export const TRAIL_OPACITY: Record<Foot, number> = {
-  left: 0.8,
-  right: 0.45,
-};
+/**
+ * Fill opacity of a footprint already taken, by age (0 = the partner's
+ * most recent). Recent prints are clear; older ones fade towards a floor
+ * so the whole figure stays faintly visible as a map.
+ */
+export function takenFootprintOpacity(age: number): number {
+  return Math.max(0.12, 0.5 * 0.72 ** age);
+}
+
+/** Outline opacity of the footprint the foot is landing on now, and of
+ *  the next one after it. Both are dashed outlines, not filled, so it's
+ *  clear the foot isn't there yet. */
+export const LANDING_FOOTPRINT_OPACITY = 0.95;
+export const NEXT_FOOTPRINT_OPACITY = 0.5;
+
+/** Dark outline round the counts on footprints, so they read over feet
+ *  and bodies. The counts themselves are in the partner's colour. */
+export const COUNT_HALO_COLOR = "#14161c";
+
+/** Each foot's path, drawn dotted and faint: background context behind
+ *  the footprints. */
+export const TRAIL_OPACITY = 0.28;
+
+/** The dancer pictograph: shoulders and head lightly filled so the feet
+ *  under them stay visible, outline and nose solid. */
+export const BODY_FILL_OPACITY = 0.22;
 
 /** Opacity of the dashed line marking a jump between figures. */
 export const GAP_OPACITY = 0.6;
-
-/** Text colour on the body markers (dark, to read on amber and teal). */
-export const MARKER_TEXT_COLOR = "#14161c";

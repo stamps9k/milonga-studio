@@ -4,21 +4,36 @@ import {
   sequencePoseAtBeat,
   sequenceTrailSegments,
 } from "../libs/dance/fold.mts";
-import { headingToUnitVector } from "../libs/dance/heading.mts";
+import {
+  footprintsAtBeat,
+  sequenceFootprints,
+} from "../libs/dance/footprints.mts";
+import type { FootprintState } from "../libs/dance/footprints.mts";
+import {
+  addPoints,
+  headingToUnitVector,
+  scalePoint,
+} from "../libs/dance/heading.mts";
 import { JOIN_FOOT_GAP_TOLERANCE } from "../libs/dance/join.mts";
 import { centerOfWeight, isStandingFoot } from "../libs/dance/weight.mts";
 import type { Foot, Partner } from "../libs/dance/step.mts";
 import type { Point2D } from "../libs/dance/pose.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
 import CanvasLegend from "./CanvasLegend";
+import PartnerToggle from "./PartnerToggle";
 import {
+  BODY_FILL_OPACITY,
+  COUNT_HALO_COLOR,
   FREE_FOOT_FILL_OPACITY,
   GAP_OPACITY,
-  MARKER_TEXT_COLOR,
+  LANDING_FOOTPRINT_OPACITY,
+  NEXT_FOOTPRINT_OPACITY,
   PARTNER_COLOR,
-  PARTNER_LABEL,
+  STANDING_FOOT_FILL_OPACITY,
   TRAIL_OPACITY,
+  takenFootprintOpacity,
 } from "./canvasStyle.mts";
+import { BODY, FOOT_PATHS, placeAt } from "./figureShapes.mts";
 import { formatScaleLength, niceScaleLength } from "./scaleBar.mts";
 
 interface Canvas2DProps {
@@ -27,9 +42,17 @@ interface Canvas2DProps {
    *  sequence (see usePlayback) -- the pose rendered is the sequence
    *  interpolated at this instant, not just its final state. */
   currentBeat: number;
+  /** Which dancers to draw. A hidden dancer's trails, footprints, feet
+   *  and counts are all left out; the framing stays the same, so the
+   *  view doesn't jump when a dancer is shown or hidden. */
+  shown: Record<Partner, boolean>;
+  onToggleShown: (partner: Partner) => void;
 }
 
 const PARTNERS: readonly Partner[] = ["lead", "follow"];
+
+/** How far towards the heel a footprint's count sits, in metres. */
+const COUNT_HEEL_OFFSET = 0.06;
 const FEET: readonly Foot[] = ["left", "right"];
 
 /** Floor space has +Y = "north" / facing forward (see heading.mts).
@@ -45,6 +68,43 @@ function pathFrom(points: Point2D[]): string {
   return (
     `M ${first.x} ${first.y} ` + rest.map((p) => `L ${p.x} ${p.y}`).join(" ")
   );
+}
+
+/**
+ * The footprints to draw at this instant, and which of them get their
+ * count shown. Only one count per spot: weight changes and pivots leave
+ * a foot where it was, so several prints of the same foot can sit on
+ * the same spot (a cha-cha's "4 & 1"), and their counts would print on
+ * top of each other. The newest visible print at a spot wins, so an
+ * upcoming step's count shows over an older one.
+ */
+function withCounts(states: FootprintState[]) {
+  const labelled = new Set<string>();
+  const counts: FootprintState[] = [];
+  for (let index = states.length - 1; index >= 0; index--) {
+    const state = states[index];
+    const { footprint } = state;
+    if (state.phase === "later" || footprint.count === "") continue;
+    // Prints within a centimetre of each other count as one spot.
+    const key = [
+      footprint.partner,
+      footprint.foot,
+      Math.round(footprint.position.x * 100),
+      Math.round(footprint.position.y * 100),
+    ].join(" ");
+    if (labelled.has(key)) continue;
+    labelled.add(key);
+    counts.push(state);
+  }
+  return { footprints: states, counts };
+}
+
+/** Counts stay readable on faded prints: they fade more slowly than the
+ *  prints, down to 0.45. */
+function countOpacity(phase: FootprintState["phase"], age: number): number {
+  if (phase === "landing") return LANDING_FOOTPRINT_OPACITY;
+  if (phase === "next") return NEXT_FOOTPRINT_OPACITY;
+  return Math.max(0.45, Math.min(1, takenFootprintOpacity(age) * 2));
 }
 
 interface Bounds {
@@ -66,7 +126,12 @@ function boundsOf(points: Point2D[]): Bounds {
   );
 }
 
-const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
+const Canvas2D = ({
+  entries,
+  currentBeat,
+  shown,
+  onToggleShown,
+}: Canvas2DProps) => {
   const forFold = useMemo(
     () =>
       entries.map((entry) => ({
@@ -116,9 +181,12 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     };
     const viewBox = [box.x, box.y, box.width, box.height].join(" ");
 
-    const footRadius = extent * 0.04 + 0.01;
-    const strokeWidth = extent * 0.015 + 0.004;
-    const facingLength = extent * 0.14 + 0.03;
+    // Feet and dancers are drawn at real size (figureShapes.mts), so
+    // only line widths and text scale with the view: thin enough to
+    // outline a 9 cm foot when zoomed in on one figure, still visible
+    // when a long sequence is zoomed out.
+    const strokeWidth = extent * 0.0025 + 0.004;
+    const countFontSize = 0.07;
 
     // Scale bar in the bottom-left corner of the view, in floor units so
     // it scales with the drawing: the largest round length up to a fifth
@@ -137,11 +205,11 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     return {
       segments,
       gaps,
+      footprints: sequenceFootprints(forFold),
       viewBox,
       scaleBar,
-      footRadius,
       strokeWidth,
-      facingLength,
+      countFontSize,
     };
   }, [forFold]);
 
@@ -151,8 +219,20 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     [forFold, currentBeat],
   );
 
+  const visiblePartners = PARTNERS.filter((partner) => shown[partner]);
+
   const view =
-    layout === null || currentPose === null ? null : { ...layout, currentPose };
+    layout === null || currentPose === null
+      ? null
+      : {
+          ...layout,
+          currentPose,
+          ...withCounts(
+            footprintsAtBeat(layout.footprints, currentBeat).filter(
+              (state) => shown[state.footprint.partner],
+            ),
+          ),
+        };
 
   return (
     <div
@@ -196,120 +276,180 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
             </text>
           </g>
 
-          {PARTNERS.map((partner) => {
-            const color = PARTNER_COLOR[partner];
-            const partnerPose = view.currentPose[partner];
-            const feetScreen = {
-              left: toScreen(partnerPose.left.position),
-              right: toScreen(partnerPose.right.position),
-            };
-            // The body marker sits over the partner's weight, not at the
-            // midpoint of the feet, so a weight transfer shows as the body
-            // travelling from one foot to the other (see weight.mts).
-            const center = toScreen(centerOfWeight(partnerPose));
-            const facingFloor = headingToUnitVector(partnerPose.orientation);
-            const facingScreen = toScreen(facingFloor);
-            const facingEnd = {
-              x: center.x + facingScreen.x * view.facingLength,
-              y: center.y + facingScreen.y * view.facingLength,
-            };
-
-            return (
-              <g key={partner}>
-                {view.segments.flatMap((trails, entryIndex) =>
-                  FEET.map((foot) => (
-                    <path
-                      key={`${entryIndex}-${foot}`}
-                      d={pathFrom(trails[partner][foot])}
-                      fill="none"
-                      stroke={color}
-                      strokeWidth={view.strokeWidth}
-                      strokeOpacity={TRAIL_OPACITY[foot]}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )),
-                )}
-
-                {/* Where a figure doesn't start where the previous one
-                    left this foot: a thin dashed line marks the jump, so
-                    it isn't mistaken for a step. */}
-                {view.gaps
-                  .filter((gap) => gap.partner === partner)
-                  .map((gap) => {
-                    const from = toScreen(gap.from);
-                    const to = toScreen(gap.to);
-                    return (
-                      <line
-                        key={`gap-${gap.entryIndex}-${gap.foot}`}
-                        x1={from.x}
-                        y1={from.y}
-                        x2={to.x}
-                        y2={to.y}
-                        stroke={color}
-                        strokeWidth={view.strokeWidth * 0.6}
-                        strokeOpacity={GAP_OPACITY}
-                        strokeDasharray={`${view.strokeWidth * 2} ${view.strokeWidth * 2}`}
-                        strokeLinecap="round"
-                      />
-                    );
-                  })}
-
-                <line
-                  x1={center.x}
-                  y1={center.y}
-                  x2={facingEnd.x}
-                  y2={facingEnd.y}
-                  stroke={color}
-                  strokeWidth={view.strokeWidth}
-                  strokeLinecap="round"
-                />
-
-                <circle
-                  cx={center.x}
-                  cy={center.y}
-                  r={view.footRadius * 1.4}
-                  fill={color}
-                />
-
-                {/* Feet are drawn as standing (filled) or free (outline)
-                    rather than shaded by weight: the body marker above
-                    already shows where the weight is and how it moves,
-                    so the feet only need to say which one is planted. */}
-                {FEET.map((foot) => {
-                  const point = feetScreen[foot];
-                  const standing = isStandingFoot(partnerPose, foot);
+          {/* Layer 1: each foot's path, dotted and faint, and dashed
+              jumps where a figure doesn't join. */}
+          {visiblePartners.map((partner) => (
+            <g key={`trails-${partner}`} stroke={PARTNER_COLOR[partner]}>
+              {view.segments.flatMap((trails, entryIndex) =>
+                FEET.map((foot) => (
+                  <path
+                    key={`${entryIndex}-${foot}`}
+                    d={pathFrom(trails[partner][foot])}
+                    fill="none"
+                    strokeWidth={view.strokeWidth * 1.4}
+                    strokeOpacity={TRAIL_OPACITY}
+                    strokeDasharray={`0 ${view.strokeWidth * 4}`}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )),
+              )}
+              {view.gaps
+                .filter((gap) => gap.partner === partner)
+                .map((gap) => {
+                  const from = toScreen(gap.from);
+                  const to = toScreen(gap.to);
                   return (
-                    <circle
-                      key={foot}
-                      cx={point.x}
-                      cy={point.y}
-                      r={view.footRadius}
-                      fill={color}
-                      fillOpacity={standing ? 1 : FREE_FOOT_FILL_OPACITY}
-                      stroke={color}
-                      strokeWidth={view.strokeWidth * 0.6}
+                    <line
+                      key={`gap-${gap.entryIndex}-${gap.foot}`}
+                      x1={from.x}
+                      y1={from.y}
+                      x2={to.x}
+                      y2={to.y}
+                      strokeWidth={view.strokeWidth}
+                      strokeOpacity={GAP_OPACITY}
+                      strokeDasharray={`${view.strokeWidth * 3} ${view.strokeWidth * 3}`}
+                      strokeLinecap="round"
                     />
                   );
                 })}
+            </g>
+          ))}
 
-                <text
-                  x={center.x}
-                  y={center.y}
-                  dy={view.footRadius * 0.35}
-                  textAnchor="middle"
-                  fontFamily="JetBrains Mono"
-                  fontSize={view.footRadius * 1.6}
-                  fontWeight="700"
-                  fill={MARKER_TEXT_COLOR}>
-                  {PARTNER_LABEL[partner]}
-                </text>
+          {/* Layer 2: footprints. Taken ones are filled and fade with
+              age; the one the foot is landing on and the next one are
+              dashed outlines. Oldest drawn first, so newer prints sit on
+              top where they overlap. Their counts are drawn last
+              (layer 5) so feet and bodies don't hide them. */}
+          {view.footprints.map(({ footprint, phase, age }, index) => {
+            if (phase === "later") return null;
+            const color = PARTNER_COLOR[footprint.partner];
+            const taken = phase === "taken";
+            const opacity = taken
+              ? takenFootprintOpacity(age)
+              : phase === "landing"
+                ? LANDING_FOOTPRINT_OPACITY
+                : NEXT_FOOTPRINT_OPACITY;
+            const at = toScreen(footprint.position);
+            return (
+              <g key={`print-${index}`}>
+                <path
+                  d={FOOT_PATHS[footprint.foot]}
+                  transform={placeAt(at, footprint.orientation)}
+                  fill={taken ? color : "none"}
+                  fillOpacity={taken ? opacity : undefined}
+                  stroke={taken ? "none" : color}
+                  strokeOpacity={taken ? undefined : opacity}
+                  strokeWidth={view.strokeWidth}
+                  strokeDasharray={
+                    taken
+                      ? undefined
+                      : `${view.strokeWidth * 2.5} ${view.strokeWidth * 1.5}`
+                  }
+                />
               </g>
+            );
+          })}
+
+          {/* Layer 3: where each foot is now. Solid outline; the
+              standing foot filled, the free foot almost empty. */}
+          {visiblePartners.map((partner) =>
+            FEET.map((foot) => {
+              const partnerPose = view.currentPose[partner];
+              const standing = isStandingFoot(partnerPose, foot);
+              return (
+                <path
+                  key={`foot-${partner}-${foot}`}
+                  d={FOOT_PATHS[foot]}
+                  transform={placeAt(
+                    toScreen(partnerPose[foot].position),
+                    partnerPose.orientation,
+                  )}
+                  fill={PARTNER_COLOR[partner]}
+                  fillOpacity={
+                    standing
+                      ? STANDING_FOOT_FILL_OPACITY
+                      : FREE_FOOT_FILL_OPACITY
+                  }
+                  stroke={PARTNER_COLOR[partner]}
+                  strokeWidth={view.strokeWidth}
+                />
+              );
+            }),
+          )}
+
+          {/* Layer 4: the dancers, seen from above, over their weight
+              (centerOfWeight), so a weight change shows as the body
+              moving from one foot to the other. Lightly filled so the
+              feet underneath show through. */}
+          {visiblePartners.map((partner) => {
+            const partnerPose = view.currentPose[partner];
+            const color = PARTNER_COLOR[partner];
+            return (
+              <g
+                key={`body-${partner}`}
+                transform={placeAt(
+                  toScreen(centerOfWeight(partnerPose)),
+                  partnerPose.orientation,
+                )}
+                stroke={color}
+                strokeWidth={view.strokeWidth}>
+                <ellipse
+                  {...BODY.shoulders}
+                  fill={color}
+                  fillOpacity={BODY_FILL_OPACITY}
+                />
+                <circle
+                  {...BODY.head}
+                  fill={color}
+                  fillOpacity={BODY_FILL_OPACITY}
+                />
+                <path d={BODY.nose} fill={color} />
+              </g>
+            );
+          })}
+          {/* Layer 5: the counts on the footprints, on top of everything
+              with a dark outline so they read over feet and bodies. */}
+          {view.counts.map(({ footprint, phase, age }, index) => {
+            // Towards the heel of the print, not its middle: in closed
+            // hold the lead often steps where the follow has just been,
+            // and since they face opposite ways, putting each count at
+            // its own heel keeps the two apart.
+            const at = toScreen(
+              addPoints(
+                footprint.position,
+                scalePoint(
+                  headingToUnitVector(footprint.orientation),
+                  -COUNT_HEEL_OFFSET,
+                ),
+              ),
+            );
+            return (
+              <text
+                key={`count-${index}`}
+                x={at.x}
+                y={at.y}
+                dy={view.countFontSize * 0.35}
+                textAnchor="middle"
+                fontSize={view.countFontSize}
+                fontWeight="700"
+                fill={PARTNER_COLOR[footprint.partner]}
+                fillOpacity={countOpacity(phase, age)}
+                stroke={COUNT_HALO_COLOR}
+                strokeWidth={view.countFontSize * 0.22}
+                strokeOpacity={countOpacity(phase, age)}
+                strokeLinejoin="round"
+                paintOrder="stroke">
+                {footprint.count}
+              </text>
             );
           })}
         </svg>
       )}
       {view !== null && <CanvasLegend />}
+      {view !== null && (
+        <PartnerToggle shown={shown} onToggle={onToggleShown} />
+      )}
     </div>
   );
 };
