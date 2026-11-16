@@ -128,9 +128,86 @@ export type RelativeDirection =
  *   width, across the dancer's facing after any turn), taking weight;
  * - "in place": change weight onto the free foot without moving it
  *   (a recover, or a cha-cha "in place" step);
- * - "pivot": turn on the standing foot without moving it (needs `turn`).
+ * - "pivot": turn on the standing foot without moving it (needs `turn`);
+ * - an Offset: travel this far forward and this far right, taking
+ *   weight (no `by`: the distance comes from the offset).
  */
-export type Action = RelativeDirection | "close" | "in place" | "pivot";
+export type Action =
+  RelativeDirection | "close" | "in place" | "pivot" | Offset;
+
+/**
+ * Where the moving foot goes, as metres forward and metres to the right
+ * of where it is now (negative for back and left), measured from the
+ * dancer's facing before the step's turn, like the other directions.
+ * `{ "forward": 0.9, "right": 0.2 }` is the same step as a direction of
+ * about 12.53 degrees and `by` of about 0.922, but reads as the move a
+ * dancer has in mind and avoids long decimals. Either part may be left
+ * out (it is then 0), but not both.
+ */
+export interface Offset {
+  forward?: number;
+  right?: number;
+}
+
+/** An action other than an offset: what a move holds once any offset
+ *  has been turned into a direction and distance (resolveOffset). */
+type PlainAction = Exclude<Action, Offset>;
+
+/** A partner's move once any offset has been resolved. */
+type PlainMove = Omit<PartnerMove, "go"> & { go: PlainAction };
+
+function isOffset(action: unknown): action is Offset {
+  return typeof action === "object" && action !== null;
+}
+
+/** An offset as a direction and distance, the form the rest of
+ *  defineFigure works with. Compass convention: 0 is forward, 90 is
+ *  right. */
+function offsetMove(
+  offset: Offset,
+  move: MoveOptions,
+  where: string,
+): { go: number; by: number } {
+  if (move.by !== undefined) {
+    throw new FigureError(
+      `${where}: a step written as { forward, right } finds its own distance, so it doesn't take \`by\``,
+    );
+  }
+  const forward = offset.forward ?? 0;
+  const right = offset.right ?? 0;
+  const by = Math.hypot(forward, right);
+  if (by < 1e-12) {
+    throw new FigureError(
+      `${where}: { forward, right } doesn't move the foot; use "in place" for a weight change`,
+    );
+  }
+  return {
+    go: normalizeDegrees(Math.atan2(right, forward) * RAD_TO_DEG),
+    by,
+  };
+}
+
+/** The move with any offset turned into a direction and `by`. */
+function resolveOffset(move: PartnerMove, where: string): PlainMove {
+  return isOffset(move.go)
+    ? { ...move, ...offsetMove(move.go, move, where) }
+    : { ...move, go: move.go };
+}
+
+/** "0.9 forward, 0.2 right", for default labels. */
+function describeOffset(offset: Offset): string {
+  const metres = (value: number) => Number(Math.abs(value).toFixed(3));
+  const parts: string[] = [];
+  const forward = offset.forward ?? 0;
+  const right = offset.right ?? 0;
+  if (forward !== 0) {
+    parts.push(`${metres(forward)} ${forward > 0 ? "forward" : "back"}`);
+  }
+  if (right !== 0) {
+    parts.push(`${metres(right)} ${right > 0 ? "right" : "left"}`);
+  }
+  return parts.join(", ");
+}
 
 /** A turn, as a fraction of a full turn: `{ right: 1 / 8 }` is 45
  *  degrees clockwise (a natural turn), `{ left: 3 / 8 }` is 135 degrees
@@ -298,7 +375,11 @@ function describeTurn(turn: Turn): string {
 }
 
 function defaultLabel(action: Action, turn: Turn | undefined, air: boolean) {
-  const base = typeof action === "number" ? `${action}° from forward` : action;
+  const base = isOffset(action)
+    ? describeOffset(action)
+    : typeof action === "number"
+      ? `${action}° from forward`
+      : action;
   const withTurn = turn ? `${base}, turning ${describeTurn(turn)}` : base;
   if (action === "pivot" && turn) return `pivot ${describeTurn(turn)}`;
   return air ? `${withTurn} (in the air)` : withTurn;
@@ -313,7 +394,7 @@ interface PartnerState {
 /** A partner's resolved part of a row before timing is attached. */
 interface ResolvedMove {
   partner: Partner;
-  move: PartnerMove;
+  move: PlainMove;
   label: string;
 }
 
@@ -336,15 +417,32 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
         `${where}: use either \`both\` or \`lead\`/\`follow\`, not both`,
       );
     }
-    const lead: PartnerMove = { ...shared, go: row.both };
+    const lead = resolveOffset({ ...shared, go: row.both }, where);
+    let leadLabel = labelFor("lead") ?? "";
+    let followLabel = labelFor("follow") ?? "";
+    if (isOffset(row.both)) {
+      // Label from the offset as written, before it becomes degrees.
+      // The follow's mirror of it is the same offset reversed: his
+      // forward is her back, his right her left.
+      const air = row.air === true;
+      leadLabel ||= defaultLabel(row.both, row.turn, air);
+      followLabel ||= defaultLabel(
+        {
+          forward: -(row.both.forward ?? 0),
+          right: -(row.both.right ?? 0),
+        },
+        row.turn,
+        air,
+      );
+    }
     // The follow mirrors the lead: the other foot and the same turn.
     // Her foot and her travel are filled in once the lead's step is
     // known: see defineFigure, which keeps her placed relative to him
     // so that the couple turns together.
-    const follow: PartnerMove = { ...shared, go: row.both, foot: undefined };
+    const follow: PlainMove = { ...lead, foot: undefined };
     return [
-      { partner: "lead", move: lead, label: labelFor("lead") ?? "" },
-      { partner: "follow", move: follow, label: labelFor("follow") ?? "" },
+      { partner: "lead", move: lead, label: leadLabel },
+      { partner: "follow", move: follow, label: followLabel },
     ];
   }
 
@@ -352,13 +450,18 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
   for (const partner of ["lead", "follow"] as const) {
     const value = row[partner];
     if (value === undefined) continue;
-    const move: PartnerMove =
-      typeof value === "object" ? value : { ...shared, go: value };
-    moves.push({
-      partner,
-      move,
-      label: move.label ?? labelFor(partner) ?? "",
-    });
+    // An object with `go` is this partner's own move and options; any
+    // other object is an offset, used like a plain action.
+    const written: PartnerMove =
+      typeof value === "object" && "go" in value
+        ? value
+        : { ...shared, go: value };
+    let label = written.label ?? labelFor(partner) ?? "";
+    if (isOffset(written.go)) {
+      // Label from the offset as written, before it becomes degrees.
+      label ||= defaultLabel(written.go, written.turn, written.air === true);
+    }
+    moves.push({ partner, move: resolveOffset(written, where), label });
   }
   if (moves.length === 0) {
     throw new FigureError(`${where}: needs \`both\`, \`lead\` or \`follow\``);
@@ -369,7 +472,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
 /** The foot a move uses, and whether it's travelling (needs the free
  *  foot) or a pivot (needs the standing foot). */
 function chooseFoot(
-  move: PartnerMove,
+  move: PlainMove,
   state: PartnerState,
   explicit: Foot | undefined,
   where: string,
@@ -412,7 +515,7 @@ function chooseFoot(
  *  (without timing) and updating `state`. */
 function applyMove(
   partner: Partner,
-  move: PartnerMove,
+  move: PlainMove,
   foot: Foot,
   state: PartnerState,
   label: string,
@@ -882,7 +985,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
 
 /** The follow's name for the direction of a mirrored step: the same
  *  floor direction, seen from facing the other way. */
-function mirrorName(action: Action): Action {
+function mirrorName(action: PlainAction): PlainAction {
   if (typeof action === "number") return normalizeDegrees(action + 180);
   if (action in DIRECTION_DEGREES) {
     const degrees = normalizeDegrees(
@@ -891,7 +994,7 @@ function mirrorName(action: Action): Action {
     const name = Object.entries(DIRECTION_DEGREES).find(
       ([, value]) => value === degrees,
     )?.[0];
-    return (name as Action | undefined) ?? degrees;
+    return (name as PlainAction | undefined) ?? degrees;
   }
   return action;
 }
@@ -994,10 +1097,23 @@ export function parseFigureDefinition(
   function checkAction(path: string, v: unknown) {
     if (isNumber(v)) return;
     if (typeof v === "string" && ACTION_NAMES.includes(v)) return;
+    if (isObject(v)) {
+      checkOffset(path, v);
+      return;
+    }
     problem(
       path,
-      `should be a number of degrees or one of: ${ACTION_NAMES.map((a) => JSON.stringify(a)).join(", ")}`,
+      `should be a number of degrees, { "forward": …, "right": … }, or one of: ${ACTION_NAMES.map((a) => JSON.stringify(a)).join(", ")}`,
     );
+  }
+
+  function checkOffset(path: string, v: Record<string, unknown>) {
+    checkKeys(path, v, ["forward", "right"]);
+    if (v.forward === undefined && v.right === undefined) {
+      problem(path, 'needs "forward", "right" or both, in metres');
+    }
+    checkNumber(`${path}.forward`, v.forward);
+    checkNumber(`${path}.right`, v.right);
   }
 
   function checkTurn(path: string, v: unknown) {
@@ -1037,7 +1153,9 @@ export function parseFigureDefinition(
 
   function checkPartner(path: string, v: unknown) {
     if (v === undefined) return;
-    if (isObject(v)) {
+    if (isObject(v) && !("go" in v) && ("forward" in v || "right" in v)) {
+      checkOffset(path, v);
+    } else if (isObject(v)) {
       checkKeys(path, v, ["go", ...MOVE_OPTIONS, "label"]);
       if (v.go === undefined) problem(`${path}.go`, "is required");
       else checkAction(`${path}.go`, v.go);

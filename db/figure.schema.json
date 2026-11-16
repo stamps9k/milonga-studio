@@ -61,9 +61,24 @@
   },
   "definitions": {
     "action": {
-      "description": "A direction relative to the dancer's facing (or degrees clockwise from forward), \"close\", \"in place\" or \"pivot\".",
+      "description": "A direction relative to the dancer's facing (or degrees clockwise from forward), an offset in metres ({ \"forward\": 0.9, \"right\": 0.2 }), \"close\", \"in place\" or \"pivot\".",
       "anyOf": [
         { "type": "number" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "forward": {
+              "type": "number",
+              "description": "Metres forward (negative for back), from the facing before the step's turn."
+            },
+            "right": {
+              "type": "number",
+              "description": "Metres to the right (negative for left), from the facing before the step's turn."
+            }
+          }
+        },
         {
           "enum": [
             "forward",
