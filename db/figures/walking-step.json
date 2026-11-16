@@ -1,7 +1,7 @@
 {
   "$schema": "../figure.schema.json",
   "name": "Walking Step",
-  "style": "tango",
+  "style": "argentine tango",
   "time": "4/4",
   "notes": "One walking step: the lead walks forward on his left, the follow walks back on her right. Ends mid-stride (open), so the expected end is given as exact foot positions rather than a stance.",
   "steps": [
