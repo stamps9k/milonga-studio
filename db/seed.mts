@@ -22,7 +22,7 @@
  *   - Practice: single walk   -- Walking Step
  *   - Basic Combination       -- Walking Step, Side Step, Cruzada
  *   - Ocho Combination        -- Walking Step, Ocho
- *   - Waltz Basics            -- Forward Waltz, Balance Step
+ *   - Waltz Basics            -- LF Closed Change, Balance Step
  *   - Cha-Cha Basics          -- Cha-Cha Basic, Side Basic
  *
  * Each sequence chains its figures the same way the sequence builder in
@@ -292,7 +292,7 @@ const SAMPLE_DANCES: {
   },
   {
     sequence: "Waltz Basics",
-    figures: ["Forward Waltz", "Balance Step"],
+    figures: ["LF Closed Change", "Balance Step"],
     dance: "Waltz box practice",
     tempo: 90,
     notes: "Forward waltz into a balance step",

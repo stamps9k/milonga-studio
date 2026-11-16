@@ -46,18 +46,20 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 ```json
 {
   "$schema": "../figure.schema.json",
-  "name": "Forward Waltz",
+  "name": "LF Closed Change",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Forward, side, close.",
+  "notes": "Forward on the left foot, side on the right, close.",
   "steps": [
-    { "both": "forward", "by": 0.4, "beat": 1 },
-    { "both": "diagonal forward right", "by": 0.5657, "beat": 2, "rise": 0.05 },
+    { "both": "forward", "by": 0.5, "foot": "L", "beat": 1 },
+    { "both": { "forward": 0.5, "right": 0.2 }, "beat": 2, "label": "side" },
     { "both": "close", "beat": 3 }
   ],
+  "expectBeats": 3,
   "expectEnd": {
     "stance": "closed",
-    "moved": { "forward": 0.4, "right": 0.4 }
+    "moved": { "forward": 0.5, "right": 0.2 },
+    "leadStandingOn": "L"
   }
 }
 ```
