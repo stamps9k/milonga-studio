@@ -1,0 +1,50 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Back Corté",
+  "style": "tango",
+  "time": "2/4",
+  "slow": 1,
+  "notes": "Owner's description (2026-11-17): slow, quick, quick, slow, the lead stepping directly backward and the feet closing on the last slow, turning a quarter to the left across the last two steps (45° each); starts and ends in closed position, from where the Closed Promenade ends. Named after the standard figure the owner agreed it matches. Differences from the book, kept as the owner dances it: the book's Back Corté starts on the lead's right foot and its third step is side and slightly forward; here the lead starts on his left (the Closed Promenade leaves him standing on his right) and every travelling step goes straight back. Lead: slow, left back; quick, right back past it; quick, left back past it, turning 1/8 left; slow, right closes to the left, turning 1/8 left. The follow walks forward to match (right, left, right, left closes), turning with him. Her third step is written as an offset (1.4 forward, 0.4 right) so she ends in closed hold: the model turns a close on each dancer's own standing foot rather than turning the couple about a shared centre, so she has to get round him on the quick before the close. Because the lead turns on the spot while stepping straight back, she is on the outside of the turn and that step is long (1.08 from her standing foot, about twice his); the book's side step for the lead on this quick is what shares that travel between the partners. Provisional (owner: same as the walks): strides of 0.5 from the standing foot, so the passing steps move 1.0. No rise. Timing: 2/4, a slow is one beat and a quick half.",
+  "steps": [
+    {
+      "both": "back",
+      "by": 0.5,
+      "foot": "L",
+      "length": "S",
+      "label": { "lead": "back", "follow": "forward" }
+    },
+    {
+      "both": "back",
+      "by": 1.0,
+      "length": "Q",
+      "label": { "lead": "back", "follow": "forward" }
+    },
+    {
+      "lead": {
+        "go": "back",
+        "by": 1.0,
+        "turn": { "left": "1/8" },
+        "label": "back, turning"
+      },
+      "follow": {
+        "go": { "forward": 1.4, "right": 0.4 },
+        "turn": { "left": "1/8" },
+        "label": "forward, turning"
+      },
+      "length": "Q"
+    },
+    {
+      "lead": { "go": "close", "turn": { "left": "1/8" } },
+      "follow": { "go": "close", "turn": { "left": "1/8" } },
+      "length": "S",
+      "label": "close, turning"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": { "forward": -1.4, "right": -0.1 },
+    "turned": { "left": "1/4" },
+    "leadStandingOn": "R"
+  }
+}
