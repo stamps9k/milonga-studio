@@ -1,24 +1,47 @@
 import type { ReactNode } from "react";
 
 import {
+  BODY_FILL_OPACITY,
   FREE_FOOT_FILL_OPACITY,
   GAP_OPACITY,
-  MARKER_TEXT_COLOR,
+  LANDING_FOOTPRINT_OPACITY,
+  NEXT_FOOTPRINT_OPACITY,
   PARTNER_COLOR,
-  PARTNER_LABEL,
   PARTNER_NAME,
+  STANDING_FOOT_FILL_OPACITY,
   TRAIL_OPACITY,
+  takenFootprintOpacity,
 } from "./canvasStyle.mts";
+import { BODY, FOOT_PATHS } from "./figureShapes.mts";
 
 /**
  * Key to the 2D canvas, overlaid in its top-left corner. Each row shows
- * a miniature of a mark exactly as Canvas2D draws it (same colours and
- * opacities, from canvasStyle.mts) next to what it means. It is a
+ * a miniature of a mark exactly as Canvas2D draws it (same shapes, from
+ * figureShapes.mts, and the same colours and opacities, from
+ * canvasStyle.mts) next to what it means. It is a
  * <details> element, open by default, so it can be collapsed out of the
  * way without any extra state.
  */
 
 const NEUTRAL = "var(--bs-body-color, #ccc)";
+
+/** The canvas shapes are in metres; in the 28 x 14 px glyphs a metre is
+ *  this many pixels. Strokes stay 1 px (non-scaling). */
+const GLYPH_SCALE = 42;
+
+function Shape({
+  x,
+  y = 7,
+  children,
+}: {
+  x: number;
+  y?: number;
+  children: ReactNode;
+}) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${GLYPH_SCALE})`}>{children}</g>
+  );
+}
 
 function Glyph({ children }: { children: ReactNode }) {
   return (
@@ -82,79 +105,122 @@ const CanvasLegend = () => (
     `}</style>
     <summary>Legend</summary>
     <ul>
-      {(["lead", "follow"] as const).map((partner) => (
-        <Row
-          key={partner}
-          glyph={
-            <Glyph>
-              <line
-                x1="14"
-                y1="7"
-                x2="25"
-                y2="7"
-                stroke={PARTNER_COLOR[partner]}
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <circle cx="11" cy="7" r="6" fill={PARTNER_COLOR[partner]} />
-              <text
-                x="11"
-                y="10"
-                textAnchor="middle"
-                fontSize="8"
-                fontWeight="700"
-                fontFamily="JetBrains Mono"
-                fill={MARKER_TEXT_COLOR}>
-                {PARTNER_LABEL[partner]}
-              </text>
-            </Glyph>
-          }>
-          <strong>{PARTNER_NAME[partner]}</strong>: body over the weight, line =
-          facing
-        </Row>
-      ))}
+      {(["lead", "follow"] as const).map((partner) => {
+        const color = PARTNER_COLOR[partner];
+        return (
+          <Row
+            key={partner}
+            glyph={
+              <Glyph>
+                <Shape x={14} y={8}>
+                  <g
+                    stroke={color}
+                    strokeWidth={1}
+                    vectorEffect="non-scaling-stroke">
+                    <ellipse
+                      {...BODY.shoulders}
+                      fill={color}
+                      fillOpacity={BODY_FILL_OPACITY}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <circle
+                      {...BODY.head}
+                      fill={color}
+                      fillOpacity={BODY_FILL_OPACITY}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                    <path d={BODY.nose} fill={color} stroke="none" />
+                  </g>
+                </Shape>
+              </Glyph>
+            }>
+            <strong>{PARTNER_NAME[partner]}</strong> from above, over the
+            weight; nose = facing
+          </Row>
+        );
+      })}
       <Row
         glyph={
           <Glyph>
-            <circle cx="7" cy="7" r="4.5" fill={NEUTRAL} stroke={NEUTRAL} />
-            <circle
-              cx="20"
-              cy="7"
-              r="4.5"
-              fill={NEUTRAL}
-              fillOpacity={FREE_FOOT_FILL_OPACITY}
-              stroke={NEUTRAL}
-            />
+            {(
+              [
+                [8, STANDING_FOOT_FILL_OPACITY],
+                [20, FREE_FOOT_FILL_OPACITY],
+              ] as const
+            ).map(([x, fillOpacity]) => (
+              <Shape key={x} x={x}>
+                <path
+                  d={FOOT_PATHS.right}
+                  fill={NEUTRAL}
+                  fillOpacity={fillOpacity}
+                  stroke={NEUTRAL}
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+              </Shape>
+            ))}
           </Glyph>
         }>
-        Standing foot / free foot
+        Feet now: standing / free (big toe on the inside)
+      </Row>
+      <Row
+        glyph={
+          <Glyph>
+            {[0, 2, 5].map((age, index) => (
+              <Shape key={age} x={5 + index * 9}>
+                <path
+                  d={FOOT_PATHS.left}
+                  fill={NEUTRAL}
+                  fillOpacity={takenFootprintOpacity(age)}
+                />
+              </Shape>
+            ))}
+          </Glyph>
+        }>
+        Footprints taken, fading with age, numbered with the count
+      </Row>
+      <Row
+        glyph={
+          <Glyph>
+            {(
+              [
+                [8, LANDING_FOOTPRINT_OPACITY],
+                [20, NEXT_FOOTPRINT_OPACITY],
+              ] as const
+            ).map(([x, strokeOpacity]) => (
+              <Shape key={x} x={x}>
+                <path
+                  d={FOOT_PATHS.left}
+                  fill="none"
+                  stroke={NEUTRAL}
+                  strokeOpacity={strokeOpacity}
+                  strokeWidth={1}
+                  strokeDasharray="2.5 1.5"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </Shape>
+            ))}
+          </Glyph>
+        }>
+        Landing now / next step
       </Row>
       <Row
         glyph={
           <Glyph>
             <line
-              x1="2"
-              y1="4"
+              x1="3"
+              y1="7"
               x2="26"
-              y2="4"
+              y2="7"
               stroke={NEUTRAL}
-              strokeOpacity={TRAIL_OPACITY.left}
+              strokeOpacity={TRAIL_OPACITY * 2}
               strokeWidth="2"
-              strokeLinecap="round"
-            />
-            <line
-              x1="2"
-              y1="10"
-              x2="26"
-              y2="10"
-              stroke={NEUTRAL}
-              strokeOpacity={TRAIL_OPACITY.right}
-              strokeWidth="2"
+              strokeDasharray="0 4"
               strokeLinecap="round"
             />
           </Glyph>
         }>
-        Left foot trail (stronger) / right foot trail
+        Path of each foot
       </Row>
       <Row
         glyph={
