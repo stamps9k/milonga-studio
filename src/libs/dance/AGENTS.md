@@ -92,9 +92,14 @@ and usable by any renderer.
 
 ## Frames, placement and derived data
 
-- Every figure is authored in its own local frame, starting at the origin
-  and facing 0 degrees. Where a figure actually sits on the floor belongs to
-  its `SequenceEntry.transform`, never to the figure.
+- Every figure is authored in its own local frame: the frame of the named
+  stance it starts in (`stancePose` in `authoring.mts`). For closed hold
+  that is the lead's feet centred on the origin, facing 0 degrees. For
+  "crossed promenade" it is the closed hold the couple opened from, so the
+  lead starts facing 315 (owner's decision, 2026-11-16, to keep promenade
+  figures' numbers readable). Where a figure actually sits on the floor
+  belongs to its `SequenceEntry.transform`, never to the figure; chaining
+  lines up the lead's facing whatever it starts at.
 - `FloorTransform` rotates about the origin first, then translates.
 - `fitTransform` chains figures by placing a figure's `startPose` onto the
   previous entry's `resolvedEndPose`: the rotation lines up the lead's

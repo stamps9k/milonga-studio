@@ -80,7 +80,10 @@ export type StanceName = "closed" | "crossed promenade";
 export const CROSS_BEHIND = 0.25;
 export const CROSS_ACROSS = 0.05;
 
-const STANCE_NAMES: readonly StanceName[] = ["closed", "crossed promenade"];
+export const STANCE_NAMES: readonly StanceName[] = [
+  "closed",
+  "crossed promenade",
+];
 
 type ShortFoot = "L" | "R";
 
@@ -89,7 +92,10 @@ const OTHER: Record<Foot, Foot> = { left: "right", right: "left" };
 
 /** Feet positions of a named stance, with each partner standing on the
  *  given foot. */
-function stancePose(stance: StanceName, standing: Record<Partner, Foot>): Pose {
+export function stancePose(
+  stance: StanceName,
+  standing: Record<Partner, Foot>,
+): Pose {
   const half = STANCE_WIDTH / 2;
   const weight = (partner: Partner, foot: Foot) =>
     standing[partner] === foot ? 1 : 0;

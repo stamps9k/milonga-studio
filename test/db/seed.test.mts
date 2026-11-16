@@ -4,6 +4,7 @@ import type BetterSqlite3 from "better-sqlite3";
 
 import { openTestDatabase } from "../support/database.mts";
 import { loadFigures } from "../../db/figures/index.mts";
+import { STANCE_NAMES, stancePose } from "../../src/libs/dance/authoring.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
@@ -115,14 +116,25 @@ test("seed: every figure's start and end poses put a total weight of 1 on each p
   }
 });
 
-test("seed: every figure starts in its local frame with the lead facing line of dance", () => {
-  // Figures are authored at the origin facing 0 degrees (see
-  // sequence.mts); placement belongs to the sequence's transform.
+test("seed: every figure starts exactly in a named stance's own frame", () => {
+  // Figures are authored in the frame of the stance they start in (closed
+  // hold facing 0, crossed promenade facing 315; see stancePose and the
+  // dance AGENTS.md); placement belongs to the sequence's transform. The
+  // feet and facings must match one stance; weights may differ.
+  const stances = STANCE_NAMES.map((name) => ({
+    name,
+    pose: stancePose(name, { lead: "left", follow: "right" }),
+  }));
   for (const figure of figures) {
-    assert.equal(
-      figure.startPose.lead.orientation,
-      0,
-      `${figure.name}: lead starts facing ${figure.startPose.lead.orientation}`,
+    const match = stances.find(
+      ({ pose }) =>
+        maxFootDistance(figure.startPose, pose) < POSITION_EPSILON &&
+        pose.lead.orientation === figure.startPose.lead.orientation &&
+        pose.follow.orientation === figure.startPose.follow.orientation,
+    );
+    assert.ok(
+      match,
+      `${figure.name}: starts in no named stance (lead facing ${figure.startPose.lead.orientation})`,
     );
   }
 });
