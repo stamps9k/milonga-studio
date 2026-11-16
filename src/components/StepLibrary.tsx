@@ -77,10 +77,15 @@ const StepLibrary = ({
   // Grouped by style (tango/waltz/blues/...) -- the only categorical
   // field the data model actually has for figures.
   const groups = useMemo(() => {
+    // The search matches a figure's name or its style, case-insensitively,
+    // so typing a dance ("waltz") lists every figure of that dance even
+    // when none has the word in its name.
     const needle = query.trim().toLowerCase();
     const filtered = figures.filter(
       (figure) =>
-        (!needle || figure.name.toLowerCase().includes(needle)) &&
+        (!needle ||
+          figure.name.toLowerCase().includes(needle) ||
+          figure.style.toLowerCase().includes(needle)) &&
         !(hideMisfits && fitById.get(figure.id)?.fits === false),
     );
 
@@ -150,7 +155,7 @@ const StepLibrary = ({
           <input
             type="text"
             className="form-control bg-transparent border-secondary-subtle text-body"
-            placeholder="Search figures…"
+            placeholder="Search figures or dances…"
             value={query}
             onChange={(event) => setQuery(event.target.value)}></input>
         </div>
