@@ -20,6 +20,7 @@ import type { Foot, Partner } from "../libs/dance/step.mts";
 import type { Point2D } from "../libs/dance/pose.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
 import CanvasLegend from "./CanvasLegend";
+import PartnerToggle from "./PartnerToggle";
 import {
   BODY_FILL_OPACITY,
   COUNT_HALO_COLOR,
@@ -41,6 +42,11 @@ interface Canvas2DProps {
    *  sequence (see usePlayback) -- the pose rendered is the sequence
    *  interpolated at this instant, not just its final state. */
   currentBeat: number;
+  /** Which dancers to draw. A hidden dancer's trails, footprints, feet
+   *  and counts are all left out; the framing stays the same, so the
+   *  view doesn't jump when a dancer is shown or hidden. */
+  shown: Record<Partner, boolean>;
+  onToggleShown: (partner: Partner) => void;
 }
 
 const PARTNERS: readonly Partner[] = ["lead", "follow"];
@@ -120,7 +126,12 @@ function boundsOf(points: Point2D[]): Bounds {
   );
 }
 
-const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
+const Canvas2D = ({
+  entries,
+  currentBeat,
+  shown,
+  onToggleShown,
+}: Canvas2DProps) => {
   const forFold = useMemo(
     () =>
       entries.map((entry) => ({
@@ -208,13 +219,19 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
     [forFold, currentBeat],
   );
 
+  const visiblePartners = PARTNERS.filter((partner) => shown[partner]);
+
   const view =
     layout === null || currentPose === null
       ? null
       : {
           ...layout,
           currentPose,
-          ...withCounts(footprintsAtBeat(layout.footprints, currentBeat)),
+          ...withCounts(
+            footprintsAtBeat(layout.footprints, currentBeat).filter(
+              (state) => shown[state.footprint.partner],
+            ),
+          ),
         };
 
   return (
@@ -261,7 +278,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
 
           {/* Layer 1: each foot's path, dotted and faint, and dashed
               jumps where a figure doesn't join. */}
-          {PARTNERS.map((partner) => (
+          {visiblePartners.map((partner) => (
             <g key={`trails-${partner}`} stroke={PARTNER_COLOR[partner]}>
               {view.segments.flatMap((trails, entryIndex) =>
                 FEET.map((foot) => (
@@ -336,7 +353,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
 
           {/* Layer 3: where each foot is now. Solid outline; the
               standing foot filled, the free foot almost empty. */}
-          {PARTNERS.map((partner) =>
+          {visiblePartners.map((partner) =>
             FEET.map((foot) => {
               const partnerPose = view.currentPose[partner];
               const standing = isStandingFoot(partnerPose, foot);
@@ -365,7 +382,7 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
               (centerOfWeight), so a weight change shows as the body
               moving from one foot to the other. Lightly filled so the
               feet underneath show through. */}
-          {PARTNERS.map((partner) => {
+          {visiblePartners.map((partner) => {
             const partnerPose = view.currentPose[partner];
             const color = PARTNER_COLOR[partner];
             return (
@@ -430,6 +447,9 @@ const Canvas2D = ({ entries, currentBeat }: Canvas2DProps) => {
         </svg>
       )}
       {view !== null && <CanvasLegend />}
+      {view !== null && (
+        <PartnerToggle shown={shown} onToggle={onToggleShown} />
+      )}
     </div>
   );
 };
