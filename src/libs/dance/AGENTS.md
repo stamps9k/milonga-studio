@@ -183,7 +183,17 @@ the owner before building more on top of them.
 - The "promenade apart" stance is where the owner's Promenade Chassé
   ends: the same V and frame as crossed promenade, with each trailing
   foot `PROMENADE_SIDE_STEP` (40 cm) back along the line of travel and
-  stance width to the side, measured from the lead's left foot.
+  `PROMENADE_CLOSE_WIDTH` (10 cm) to the side, measured from the lead's
+  left foot.
+- `defineFigure` checks the whole movement of a figure (`checkFeet`,
+  sampled every sixteenth of a beat): in each dancer's frame the left
+  foot stays left of the right (the owner's rule, 2026-11-16) unless a
+  step is marked `cross: true` or the figure starts crossed, and no lead
+  foot comes within `PARTNER_FOOT_CLEARANCE` (15 cm, a judgement call) of
+  a follow foot. Figures known to be wrong opt out with `skipChecks` and a
+  note; at the time of writing that's the three old tango figures and Box
+  Turn (forward half), whose follow can't get round the lead without
+  passing his foot while closed hold puts her directly in front of him.
 
 ## Terminology
 

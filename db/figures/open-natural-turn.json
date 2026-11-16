@@ -3,18 +3,18 @@
   "name": "Open Natural Turn",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's description (2026-11-16): the box-turn-like figure after the Promenade Chassé. Steps as the box turn's forward half: forward on the right, side on the left, close the right (not the American-style open ending, which passes back on 3). The couple turns a quarter to the right from the line joining the partners, gradually across all three steps, and the partners turn to face each other on count 2; no rise. Three counts, ending in closed hold with another figure to follow. Named as the figure that takes a natural turn out of promenade; the closing on 3 is the owner's, as in the International Natural Turn. Turns: the couple's quarter is spread evenly, 30 degrees (1/12) a step; closing the V adds an eighth on count 2 (the lead right, the follow left). So the lead turns 1/12, 5/24 and 1/12 to the right (3/8 in all, from facing 315 to 90) and the follow 1/12 right, 1/24 left and 1/12 right (an eighth in all, from 225 to 270); they face each other from the end of count 2. Sizes: on count 1 the lead's right foot goes forward and across, landing 0.47 straight ahead of his left in his promenade facing (the promenade's CBMP); because he has started to turn, it ends only slightly across his body. (A first version sent it 1.0 along the line of travel, which crossed it 0.41 in front of the left foot and made the left foot loop round behind it on count 2; the owner caught this.) On count 2 his left foot travels \"around the front\": it sets off the way he faces and curves round in front of his body to land 0.4 to the left of his right foot once turned, then he closes. The follow is on the inside: her left goes 0.7 along the line of travel, her right lands to her side to stay in hold, and she closes. Offsets to the millimetre where the closed-hold check needs them.",
+  "notes": "Owner's description (2026-11-16): the box-turn-like figure after the Promenade Chassé. Steps as the box turn's forward half: forward on the right, side on the left, close the right (not the American-style open ending, which passes back on 3). The couple turns a quarter to the right from the line joining the partners, gradually across all three steps, and the partners turn to face each other on count 2; no rise. Three counts, ending in closed hold with another figure to follow. Named as the figure that takes a natural turn out of promenade; the closing on 3 is the owner's, as in the International Natural Turn. Turns: the couple's quarter is spread evenly, 30 degrees (1/12) a step; closing the V adds an eighth on count 2 (the lead right, the follow left). So the lead turns 1/12, 5/24 and 1/12 to the right (3/8 in all, from facing 315 to 90) and the follow 1/12 right, 1/24 left and 1/12 right (an eighth in all, from 225 to 270); they face each other from the end of count 2. Feet: the owner's rule is that the left foot stays to the left of the right foot except in explicitly crossed figures, and partners' feet keep 15 cm apart (both checked). On count 1 the lead's right foot comes from behind to land just in front of his left, in line with it at most (0.46 forward and 0.26 across from where it was, measured in his promenade facing), keeping clear of the follow's standing right foot. On count 2 his left foot lands 0.4 to the side of his right once turned, then he closes. The follow goes 0.4 forward along the line of travel on her left, then her right lands to stay in hold, then she closes. History: the first version sent the lead's right foot 1.0 along the line of travel, crossing it in front of his left; a second crossed it less and curved the left foot round the front; both broke the left-stays-left rule, which the owner pointed out. Offsets to the millimetre where the closed-hold check needs them.",
   "start": "promenade apart",
   "steps": [
     {
       "lead": {
-        "go": { "forward": 0.75, "right": -0.5 },
+        "go": { "forward": 0.46, "right": -0.26 },
         "turn": { "right": "1/12" },
-        "label": "forward and across, starting to turn"
+        "label": "forward, starting to turn"
       },
       "follow": {
         "go": "diagonal forward right",
-        "by": 0.7,
+        "by": 0.4,
         "turn": { "right": "1/12" },
         "label": "forward, starting to turn"
       },
@@ -22,13 +22,12 @@
     },
     {
       "lead": {
-        "go": { "forward": 0.782, "right": -0.352 },
+        "go": { "forward": 0.59, "right": -0.1 },
         "turn": { "right": "5/24" },
-        "path": "around the front",
-        "label": "side, around the front, facing partner"
+        "label": "side, facing partner"
       },
       "follow": {
-        "go": { "forward": 0.069, "right": 0.292 },
+        "go": { "forward": -0.183, "right": 0.1 },
         "turn": { "left": "1/24" },
         "label": "side, facing partner"
       },
@@ -43,7 +42,7 @@
   "expectBeats": 3,
   "expectEnd": {
     "stance": "closed",
-    "moved": { "forward": 0.564, "right": -0.542 },
+    "moved": { "forward": 0.444, "right": -0.249 },
     "turned": { "right": "1/4" },
     "leadStandingOn": "R"
   }

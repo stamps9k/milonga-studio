@@ -20,11 +20,13 @@
       "lead": {
         "go": { "forward": -0.141, "right": 0.612 },
         "turn": { "left": "1/8" },
+        "cross": true,
         "label": "cross behind, opening to promenade"
       },
       "follow": {
         "go": { "forward": -0.141, "right": -0.612 },
         "turn": { "right": "1/8" },
+        "cross": true,
         "label": "cross behind, opening to promenade"
       },
       "beat": 3

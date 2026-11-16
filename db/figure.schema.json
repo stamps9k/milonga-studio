@@ -51,6 +51,11 @@
       "exclusiveMinimum": 0,
       "description": "How many beats the figure should last, checked against the steps' timing."
     },
+    "skipChecks": {
+      "type": "array",
+      "items": { "enum": ["crossed feet", "partner spacing"] },
+      "description": "Checks to leave out, only for figures known to be wrong that are kept until rewritten. Say why in notes."
+    },
     "expectEnd": {
       "description": "Where the figure should finish, checked against the steps (within 1 mm).",
       "oneOf": [
@@ -135,6 +140,10 @@
       "type": "boolean",
       "description": "true for an airborne action (boleo, gancho): out and back, no weight."
     },
+    "cross": {
+      "type": "boolean",
+      "description": "true when the step crosses the feet on purpose (a whisk's cross behind). Without it a step may not put the left foot to the right of the right foot."
+    },
     "path": {
       "enum": ["around the front"],
       "description": "\"around the front\": the foot sets off the way the dancer faces and curves round to land where the step says, instead of a straight line."
@@ -161,6 +170,7 @@
             "weight": { "$ref": "#/definitions/weight" },
             "air": { "$ref": "#/definitions/air" },
             "path": { "$ref": "#/definitions/path" },
+            "cross": { "$ref": "#/definitions/cross" },
             "label": { "$ref": "#/definitions/label" }
           }
         }
@@ -203,7 +213,8 @@
         "rise": { "$ref": "#/definitions/rise" },
         "weight": { "$ref": "#/definitions/weight" },
         "air": { "$ref": "#/definitions/air" },
-        "path": { "$ref": "#/definitions/path" }
+        "path": { "$ref": "#/definitions/path" },
+        "cross": { "$ref": "#/definitions/cross" }
       }
     },
     "point": {
