@@ -325,6 +325,36 @@ export function figureDurationBeats(figure: Figure): number {
  * it, but it reads as a smooth, believable weight transfer rather than
  * a snap.
  */
+/**
+ * For a "late" step (see WeightTiming in step.mts), the share of the step
+ * the foot takes to arrive; the weight then changes over the rest. Two
+ * thirds leaves the last third of the count for the weight change, so on
+ * a close the feet visibly come together before the body moves across.
+ * Provisional: a judgement call, not a technique rule.
+ */
+export const LATE_WEIGHT_FOOT_SHARE = 2 / 3;
+
+/**
+ * How far through its travel the foot is, and how far through its weight
+ * change, at `progress` (0 to 1) through a step. For an "even" step both
+ * follow the step's own progress. For a "late" step the foot arrives at
+ * LATE_WEIGHT_FOOT_SHARE and stays, and only then does the weight move.
+ * Orientation and rise still follow the step's own progress.
+ */
+export function stepPhases(
+  step: Pick<DanceStep, "weightTiming">,
+  progress: number,
+): { foot: number; weight: number } {
+  if (step.weightTiming !== "late") return { foot: progress, weight: progress };
+  return {
+    foot: Math.min(1, progress / LATE_WEIGHT_FOOT_SHARE),
+    weight: Math.max(
+      0,
+      (progress - LATE_WEIGHT_FOOT_SHARE) / (1 - LATE_WEIGHT_FOOT_SHARE),
+    ),
+  };
+}
+
 export function poseAtBeat(figure: Figure, localBeat: number): Pose {
   const positions: Record<Partner, Record<Foot, Point2D>> = {
     lead: {
@@ -397,18 +427,22 @@ export function poseAtBeat(figure: Figure, localBeat: number): Pose {
     // simultaneous step for the other partner (or a foot's later step)
     // can still need processing at this same localBeat.
     const progress = (localBeat - stepStart) / step.duration;
+    const { foot: footProgress, weight: weightProgress } = stepPhases(
+      step,
+      progress,
+    );
     positions[step.partner][step.foot] = (
       step.contact === "air" ? airborneExcursionAt : movementPointAt
     )(
       positions[step.partner][step.foot],
       orientations[step.partner],
       step.movement,
-      progress,
+      footProgress,
     );
     weights[step.partner][step.foot] = lerp(
       weights[step.partner][step.foot],
       step.weight,
-      progress,
+      weightProgress,
     );
     weights[step.partner][otherFoot] = 1 - weights[step.partner][step.foot];
     orientations[step.partner] = lerpAngleDegrees(

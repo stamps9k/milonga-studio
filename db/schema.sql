@@ -147,6 +147,7 @@ CREATE TABLE dance_steps (
 	movement_id INTEGER NOT NULL REFERENCES movements(id),
 	contact     TEXT    NOT NULL CHECK (contact IN ('floor', 'air')),
 	weight      REAL    NOT NULL CHECK (weight >= 0 AND weight <= 1),
+	weight_timing TEXT  NOT NULL DEFAULT 'even' CHECK (weight_timing IN ('even', 'late')), -- WeightTiming in step.mts
 	orientation REAL    NOT NULL, -- degrees, absolute frame heading at end of step
 	rise        REAL    NOT NULL,
 	beat        REAL    NOT NULL, -- position within the measure

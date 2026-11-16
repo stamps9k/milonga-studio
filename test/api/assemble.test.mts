@@ -83,8 +83,8 @@ function insertFigure(name: string): number {
 
   const step = db.prepare(
     `INSERT INTO dance_steps
-     (figure_id, step_index, partner, foot, movement_id, contact, weight, orientation, rise, beat, duration, label)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, rise, beat, duration, label)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   // Second step inserted first, so only ORDER BY step_index can put
   // them back in order.
@@ -96,6 +96,7 @@ function insertFigure(name: string): number {
     straightMovement,
     "air",
     0,
+    "even",
     180,
     0,
     2,
@@ -110,6 +111,7 @@ function insertFigure(name: string): number {
     arcMovement,
     "floor",
     1,
+    "late",
     20,
     0.05,
     1,
@@ -172,6 +174,14 @@ test("assembleFigure: step ids are strings, a NULL label is omitted, and contact
   assert.equal(labelled.contact, "floor");
   assert.equal("label" in unlabelled, false);
   assert.equal(unlabelled.contact, "air");
+});
+
+test("assembleFigure: a late weight change is kept, and the default even timing is left out", () => {
+  const [late, even] = assemble.assembleFigure(
+    insertFigure("Weight Timing Test"),
+  ).steps;
+  assert.equal(late.weightTiming, "late");
+  assert.equal("weightTiming" in even, false);
 });
 
 test("assembleFigure: a missing figure throws a descriptive error", () => {

@@ -13,6 +13,8 @@ import {
   sequenceTrailSegments,
   sequenceEntrySpans,
   sequenceEntryIndexAtBeat,
+  stepPhases,
+  LATE_WEIGHT_FOOT_SHARE,
 } from "../../src/libs/dance/fold.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
@@ -848,4 +850,49 @@ test("sequenceEntryIndexAtBeat: matches the entry the pose is drawn from, includ
     sequenceCurrentStepsAtBeat(entries, 1)?.figureId,
     entries[sequenceEntryIndexAtBeat(entries, 1)!].figure.id,
   );
+});
+
+test("poseAtBeat: a late-weight step brings the foot in first, then moves the weight", () => {
+  // Lead's left foot moves 0.3 east (towards the right foot at (0.2, 0))
+  // over one beat, starting with all the weight on the right. With
+  // "late" timing the foot arrives at 2/3 of the beat, then the weight
+  // changes over the last third.
+  const figure = singleLeadStepFigure({
+    movement: { type: "straight", direction: 90, distance: 0.3 },
+    weightTiming: "late",
+  });
+
+  // Halfway: the foot is 3/4 of the way there, still without weight.
+  const half = poseAtBeat(figure, 0.5).lead;
+  pointClose(half.left.position, { x: 0.225, y: 0 });
+  assert.equal(half.left.weight, 0);
+  assert.equal(half.right.weight, 1);
+
+  // Five sixths: the foot has arrived and the weight is half across.
+  const late = poseAtBeat(figure, 5 / 6).lead;
+  pointClose(late.left.position, { x: 0.3, y: 0 });
+  assert.ok(Math.abs(late.left.weight - 0.5) < 1e-9);
+
+  // The same step with even timing has moved half the weight by then.
+  const even = poseAtBeat(
+    singleLeadStepFigure({
+      movement: { type: "straight", direction: 90, distance: 0.3 },
+    }),
+    0.5,
+  ).lead;
+  pointClose(even.left.position, { x: 0.15, y: 0 });
+  assert.ok(Math.abs(even.left.weight - 0.5) < 1e-9);
+});
+
+test("stepPhases: even follows the step; late splits it at LATE_WEIGHT_FOOT_SHARE", () => {
+  assert.deepEqual(stepPhases({}, 0.4), { foot: 0.4, weight: 0.4 });
+  assert.deepEqual(stepPhases({ weightTiming: "even" }, 0.4), {
+    foot: 0.4,
+    weight: 0.4,
+  });
+  const at = (progress: number) =>
+    stepPhases({ weightTiming: "late" }, progress);
+  assert.deepEqual(at(0), { foot: 0, weight: 0 });
+  assert.deepEqual(at(LATE_WEIGHT_FOOT_SHARE), { foot: 1, weight: 0 });
+  assert.deepEqual(at(1), { foot: 1, weight: 1 });
 });

@@ -26,6 +26,19 @@ export type Foot = "left" | "right";
 export type Contact = "floor" | "air";
 
 /**
+ * When, within a step, the weight moves onto the stepping foot:
+ * - "even": the weight moves across the whole step, at the same rate as
+ *   the foot travels (the body goes through with the step);
+ * - "late": the foot travels first with no weight on it, and the weight
+ *   changes at the end of the step. This is how a close is danced: the
+ *   feet come together, then the weight changes.
+ *
+ * Provisional: where "late" splits the step is LATE_WEIGHT_FOOT_SHARE in
+ * fold.mts, a judgement call rather than a technique rule.
+ */
+export type WeightTiming = "even" | "late";
+
+/**
  * How a foot travels from its previous position to this one.
  * A pivot (foot stationary, body/frame rotates) is just a movement with
  * zero distance/arcLength and a changed `orientation` on the step — it
@@ -69,6 +82,11 @@ export interface DanceStep {
   /** 0–1: how much weight is on this foot at the end of the step.
    *  0 for pure embellishments/airborne actions. */
   weight: number;
+
+  /** How the weight moves during the step (see WeightTiming). Left out
+   *  for "even", so steps stored before this field existed play as
+   *  they always did. */
+  weightTiming?: WeightTiming;
 
   /** Absolute frame/torso heading at the end of this step, in degrees.
    *  Storing this directly (rather than only a delta) makes pivots trivial
