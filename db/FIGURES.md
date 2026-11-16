@@ -91,6 +91,12 @@ across the floor, with the same distance, timing and turn. Facing each other,
 the lead's forward is her back, his side left is her side right, and his
 diagonal forward right is her diagonal back left.
 
+On a step that turns, the follow stays in the same place relative to the lead,
+so the couple turns together. Her step then differs from his: whoever is on
+the outside of the turn travels further. Put a `both` turn on a travelling
+step. A turn on a `both` close, in place or pivot is an error, because each
+partner would turn on their own standing foot and the hold would come apart.
+
 A partner can be written as just an action (`"lead": "forward"`, using the
 options on the row), or as an object with its own options:
 

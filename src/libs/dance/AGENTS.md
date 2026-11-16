@@ -146,7 +146,9 @@ the owner before building more on top of them.
   rules.
 - `defineFigure`'s closed stance (feet 20 cm apart, partners 40 cm apart,
   follow directly in front of the lead), its mirroring (the follow uses the
-  other foot and travels the same floor direction), "close" (beside the
+  other foot and travels the same floor direction; on a turning step she
+  keeps her position relative to the lead, so the couple turns together,
+  and a `both` turn on a close, in place or pivot is rejected), "close" (beside the
   standing foot at stance width, across the facing after the turn) and its
   default starting weight (lead on his right, follow on her left) are
   agreed defaults, not technique.
