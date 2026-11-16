@@ -1,0 +1,51 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Open Natural Turn",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Owner's description (2026-11-16): the box-turn-like figure after the Promenade Chassé. Steps as the box turn's forward half: forward on the right, side on the left, close the right (not the American-style open ending, which passes back on 3). The couple turns a quarter to the right from the line joining the partners, gradually across all three steps, and the partners turn to face each other on count 2; no rise. Three counts, ending in closed hold with another figure to follow. Named as the figure that takes a natural turn out of promenade; the closing on 3 is the owner's, as in the International Natural Turn. Count 1 (owner, 2026-11-16): a full stride across the body, continuing the chassé's direction of travel, with the lead turning about an eighth. Written as the chassé writes its steps, diagonal forward left from his promenade facing, 0.9 (the trailing right foot passes his left and lands 0.43 beyond it), so it crosses his feet on purpose (`cross`); turning an eighth he faces up the original line of dance with the right foot across in front of the left. The 0.9 is provisional: a full stride from 0.4 behind the left foot, about as far past it as the chassé's 0.5 first step. Count 2: his left foot comes round in front of the right (it uncrosses halfway through the count) to land 0.4 to the side of it once turned. Turns: the lead turns 1/8, 1/6 and 1/12 to the right (3/8 in all, from facing 315 to 90); the follow keeps the couple's quarter spread evenly, 1/12 right, 1/24 left (closing the V) and 1/12 right (an eighth in all, from 225 to 270); they face each other from the end of count 2. The follow goes 0.4 forward along the line of travel on her left, then her right lands to stay in hold, then she closes. Partners' feet keep 15 cm apart (checked). History: earlier versions stepped the right foot up the floor instead of across; the owner wants it across, along the line of travel. Offsets to the millimetre where the closed-hold check needs them.",
+  "start": "promenade apart",
+  "steps": [
+    {
+      "lead": {
+        "go": "diagonal forward left",
+        "by": 0.9,
+        "turn": { "right": "1/8" },
+        "cross": true,
+        "label": "forward and across, starting to turn"
+      },
+      "follow": {
+        "go": "diagonal forward right",
+        "by": 0.4,
+        "turn": { "right": "1/12" },
+        "label": "forward, starting to turn"
+      },
+      "beat": 1
+    },
+    {
+      "lead": {
+        "go": { "forward": 0.417, "right": -0.629 },
+        "turn": { "right": "1/6" },
+        "label": "side, facing partner"
+      },
+      "follow": {
+        "go": { "forward": 0.253, "right": -0.061 },
+        "turn": { "left": "1/24" },
+        "label": "side, facing partner"
+      },
+      "beat": 2
+    },
+    {
+      "lead": { "go": "close", "turn": { "right": "1/12" } },
+      "follow": { "go": "close", "turn": { "right": "1/12" } },
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": { "forward": 0.317, "right": -0.629 },
+    "turned": { "right": "1/4" },
+    "leadStandingOn": "R"
+  }
+}

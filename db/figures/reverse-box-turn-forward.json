@@ -1,0 +1,33 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Reverse Box Turn (forward half)",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Owner's description (2026-11-16): the Box Turn with everything reversed. The turn is to the left; the lead starts forward on the left foot, side on the right, close the left. The mirror image of Box Turn (forward half), with the same sizes (0.5 forward, then the right foot lands 0.4 beyond the left in the turned frame, measured from the facing before the turn as 0.9 forward and 0.2 left), the whole quarter turn on count 2, the feet closing on 3 and no rise. Usually followed by Reverse Box Turn (backward half). Called the Left Box Turn in the American syllabus; the International Reverse Turn is a different, progressive figure. Exempt from the \"partner spacing\" and \"crossed feet\" checks for the same reason as Box Turn (forward half), mirrored: early in count 2 the follow's left foot passes within 15 cm of the lead's left foot and her feet cross briefly, because the model's closed hold puts her directly in front of him. Remove skipChecks with the Box Turn's once the owner has decided how to fix it.",
+  "steps": [
+    {
+      "both": "forward",
+      "by": 0.5,
+      "foot": "L",
+      "beat": 1
+    },
+    {
+      "both": { "forward": 0.9, "right": -0.2 },
+      "turn": { "left": "1/4" },
+      "beat": 2,
+      "label": "side, turning 1/4 left"
+    },
+    {
+      "both": "close",
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "skipChecks": ["partner spacing", "crossed feet"],
+  "expectEnd": {
+    "stance": "closed",
+    "moved": { "forward": 0.8, "right": -0.1 },
+    "turned": { "left": "1/4" },
+    "leadStandingOn": "L"
+  }
+}

@@ -73,6 +73,8 @@ const WITH_STANCE_END = {
         rise: 0,
         weight: true,
         air: false,
+        path: "around the front",
+        cross: false,
         label: "lead",
       },
       follow: "pivot",
@@ -99,6 +101,8 @@ const WITH_FEET_END = {
   name: "Feet",
   style: "test",
   time: "3/4",
+  start: "crossed promenade",
+  skipChecks: ["crossed feet", "partner spacing"],
   steps: [{ follow: { go: "close" }, length: "Q" }],
   expectEnd: {
     feet: {

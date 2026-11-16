@@ -1,0 +1,47 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Promenade Chassé",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Owner's description (2026-11-16): the chassé after the Whisk, travelling in promenade, with a full lift onto the toes as the feet come together on the half beat; the couple stays in promenade and turns to face in the next figure (an Open Natural Turn). Named after the American-style Promenade Chassé, which stays in promenade; the International Chassé from Promenade Position has the follow turn to face during the chassé instead. Timing 1, 2 & 3. Starts in crossed promenade and travels towards the open side of the V: diagonally forward left for the lead (facing 315), diagonally forward right for the follow (facing 225), so due -x in the figure's frame. Count 1: the lead's right foot forward and across, 0.5. Count 2: the crossed foot comes from behind to land 0.4 past the other along the line of travel, and 0.05 forward and 0.05 outward further, so the partners separate by about 7 cm each across the line (owner's request, 2026-11-16, to make room for the Open Natural Turn's first stride); written per partner because they come from opposite sides: 0.85 forward and 0.75 across. &: close to 0.1 apart (narrower than the usual 0.2, so the partners' inner feet stay 15 cm apart), taking weight late. Count 3: 0.4 along the line again. Sizes as the other waltz figures (0.5 first step, side steps 0.4), agreed by the owner. Rise: 'a full lift onto toes' written as 0.1 (the model only has a height), 0.06 by the end of 2, 0.1 on &, lowering through 3. The model moves rise evenly across each step, so the lowering is spread over count 3 rather than coming at its end. Ends in the \"promenade apart\" stance (the lead's left foot 1.319 along the line of travel from where the crossed promenade's frame puts the origin), lead on his left.",
+  "start": "crossed promenade",
+  "steps": [
+    {
+      "both": "diagonal forward left",
+      "by": 0.5,
+      "beat": 1,
+      "label": "forward and across, in promenade"
+    },
+    {
+      "lead": {
+        "go": { "forward": 0.85, "right": -0.75 },
+        "rise": 0.06,
+        "label": "side, in promenade"
+      },
+      "follow": {
+        "go": { "forward": 0.85, "right": 0.75 },
+        "rise": 0.06,
+        "label": "side, in promenade"
+      },
+      "beat": 2
+    },
+    {
+      "both": "close",
+      "by": 0.1,
+      "rise": 0.1,
+      "beat": 2.5
+    },
+    {
+      "both": "diagonal forward left",
+      "by": 0.4,
+      "beat": 3,
+      "label": "side, in promenade"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "promenade apart",
+    "moved": { "forward": -0.071, "right": -1.319 },
+    "leadStandingOn": "L"
+  }
+}

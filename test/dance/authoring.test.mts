@@ -13,11 +13,17 @@ import type {
   StepRow,
 } from "../../src/libs/dance/authoring.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
+import { poseAtBeat } from "../../src/libs/dance/fold.mts";
+import { assessJoin } from "../../src/libs/dance/join.mts";
 
 // Worked examples for defineFigure. Closed hold: lead's feet at
 // (-0.1, 0) and (0.1, 0) facing north (0), follow's at (0.1, 0.4) [left]
 // and (-0.1, 0.4) [right] facing south (180).
 
+// Most tests here check one calculation with one dancer moving on their
+// own, often onto the other or across their own feet, so the whole-figure
+// foot checks are off by default; the tests of those checks turn them on
+// with `skipChecks: []`.
 function figure(
   steps: StepRow[],
   extra: Partial<FigureDefinition> = {},
@@ -27,6 +33,7 @@ function figure(
     style: "test",
     time: "4/4",
     steps,
+    skipChecks: ["crossed feet", "partner spacing"],
     ...extra,
   });
 }
@@ -249,6 +256,228 @@ test("a close changes weight late; other steps, and a close without weight, don'
   );
 });
 
+// The whisk from the owner's class: forward, side, then the lead's left
+// foot crosses behind his right while both partners open an eighth into
+// promenade. Count 3's offsets (to the millimetre) land the crossing
+// feet where "crossed promenade" puts them.
+const WHISK_STEPS: StepRow[] = [
+  { both: "forward", by: 0.5, foot: "L", beat: 1 },
+  { both: { forward: 0.5, right: 0.2 }, beat: 2 },
+  {
+    lead: {
+      go: { forward: -0.141, right: 0.612 },
+      turn: { left: "1/8" },
+      cross: true,
+    },
+    follow: {
+      go: { forward: -0.141, right: -0.612 },
+      turn: { right: "1/8" },
+      cross: true,
+    },
+    beat: 3,
+  },
+];
+
+test("crossed promenade: a whisk ends in it, measured from where the lead's right foot went", () => {
+  assert.doesNotThrow(() =>
+    figure(WHISK_STEPS, {
+      time: "3/4",
+      skipChecks: [],
+      expectEnd: {
+        stance: "crossed promenade",
+        moved: { forward: 0.5, right: 0.3 },
+        leadStandingOn: "L",
+      },
+    }),
+  );
+});
+
+test("crossed promenade: a figure can start in it, opened an eighth each with the crossing feet behind", () => {
+  // Lead's right foot at the origin, facing 315; his left 0.25 behind and
+  // 0.05 to the right in that facing: 0.3 * (sin 45, -cos 45) =
+  // (0.2121, -0.1414). Follow's left at (0, 0.4) facing 225; her right
+  // the mirror image, at (0.2121, 0.5414). Both stand on the crossed
+  // foot, so the lead's first step is with his right.
+  const { startPose, steps } = figure(
+    [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
+    { start: "crossed promenade" },
+  );
+  const s = Math.SQRT1_2;
+  pointClose(startPose.lead.right.position, [0, 0]);
+  pointClose(startPose.lead.left.position, [0.3 * s, -0.2 * s]);
+  pointClose(startPose.follow.left.position, [0, 0.4]);
+  pointClose(startPose.follow.right.position, [0.3 * s, 0.4 + 0.2 * s]);
+  assert.equal(startPose.lead.orientation, 315);
+  assert.equal(startPose.follow.orientation, 225);
+  assert.equal(startPose.lead.left.weight, 1);
+  assert.equal(startPose.follow.right.weight, 1);
+  assert.equal(steps[0].foot, "right");
+});
+
+test("promenade apart: the leading feet at the front of the V, the trailing ones closed behind", () => {
+  // Lead's left at the origin facing 315; his right 0.4 back along the
+  // line of travel (+x) and 0.1 to his right, (s, s) * 0.1:
+  // (0.4 + 0.1s, 0.1s). The partners have separated by 0.05 * sqrt 2
+  // each, so the follow's right is at (0, 0.4 + 0.1 * sqrt 2), facing
+  // 225; her left 0.4 back and 0.1 to her left, (s, -s) * 0.1.
+  const { startPose, steps } = figure(
+    [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
+    { start: "promenade apart" },
+  );
+  const s = Math.SQRT1_2;
+  pointClose(startPose.lead.left.position, [0, 0]);
+  pointClose(startPose.lead.right.position, [0.4 + 0.1 * s, 0.1 * s]);
+  const gap = 0.4 + 0.1 * Math.SQRT2;
+  pointClose(startPose.follow.right.position, [0, gap]);
+  pointClose(startPose.follow.left.position, [0.4 + 0.1 * s, gap - 0.1 * s]);
+  assert.equal(startPose.lead.orientation, 315);
+  assert.equal(startPose.follow.orientation, 225);
+  assert.equal(startPose.lead.left.weight, 1);
+  assert.equal(startPose.follow.right.weight, 1);
+  assert.equal(steps[0].foot, "right");
+});
+
+test("crossed promenade: a figure starting in it follows a whisk with no gap", () => {
+  const whisk = figure(WHISK_STEPS, { time: "3/4" });
+  const after = figure(
+    [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
+    { start: "crossed promenade" },
+  );
+  const join = assessJoin(whisk.endPose, {
+    ...after,
+    id: "after",
+    steps: after.steps.map((step, index) => ({ ...step, id: String(index) })),
+  });
+  assert.equal(join.fits, true, JSON.stringify(join.issues));
+  assert.ok(join.maxFootGap < 1e-3);
+});
+
+test("path around the front: the foot sets off forward and curves round to land where the step says", () => {
+  // Lead's left foot at (-0.1, 0), facing north, goes 0.3 forward and 0.3
+  // right. Setting off north, the only circle through the landing spot
+  // is a quarter circle of radius 0.3 curving right, centred on (0.2, 0):
+  // it ends at (0.2, 0.3), and halfway round it is at
+  // (0.2 - 0.3 cos 45°, 0.3 sin 45°).
+  const authored = defineFigure({
+    name: "Curve",
+    style: "test",
+    time: "4/4",
+    skipChecks: ["crossed feet", "partner spacing"],
+    steps: [
+      {
+        lead: { go: { forward: 0.3, right: 0.3 }, path: "around the front" },
+        length: "Q",
+      },
+    ],
+  });
+  const step = authored.steps[0];
+  assert.equal(step.movement.type, "arc");
+  if (step.movement.type === "arc") {
+    assert.ok(Math.abs(step.movement.curvature - 1 / 0.3) < 1e-9);
+    assert.ok(Math.abs(step.movement.arcLength - (0.3 * Math.PI) / 2) < 1e-9);
+  }
+  pointClose(authored.endPose.lead.left.position, [0.2, 0.3]);
+  const curve = { ...authored, id: "c", steps: [{ ...step, id: "0" }] };
+  const halfway = poseAtBeat(curve, 0.5).lead.left.position;
+  pointClose(halfway, [0.2 - 0.3 * Math.SQRT1_2, 0.3 * Math.SQRT1_2]);
+});
+
+test("path around the front: straight ahead stays straight; it needs a travelling step and a spot in front", () => {
+  const straight = figure([
+    { lead: { go: "forward", by: 0.4, path: "around the front" }, length: "Q" },
+  ]);
+  assert.equal(straight.steps[0].movement.type, "straight");
+  assert.throws(
+    () =>
+      figure([
+        { lead: { go: "in place", path: "around the front" }, length: "Q" },
+      ]),
+    /step 1 \(lead\): "path" needs a step that travels along the floor/,
+  );
+  assert.throws(
+    () =>
+      figure([
+        {
+          lead: { go: "back", by: 0.4, path: "around the front" },
+          length: "Q",
+        },
+      ]),
+    /"around the front" can't reach a spot 180° round/,
+  );
+});
+
+test("close with by: the feet end that far apart instead of stance width", () => {
+  // Lead: left forward 0.4 to (-0.1, 0.4), then the right closes to 0.1
+  // beside it: (0, 0.4).
+  const { endPose } = figure([
+    { lead: "forward", by: 0.4, length: "Q" },
+    { lead: { go: "close", by: 0.1 }, length: "Q" },
+  ]);
+  pointClose(endPose.lead.right.position, [0, 0.4]);
+});
+
+test("crossed feet: a step may not put the left foot right of the right foot unless it says cross", () => {
+  // Lead's left foot from (-0.1, 0) to 0.2 right of his right foot.
+  const crossing: StepRow[] = [
+    { lead: { go: { forward: 0.1, right: 0.4 } }, length: "Q" },
+  ];
+  assert.throws(
+    () => figure(crossing, { skipChecks: [] }),
+    /the lead's left foot is 0\.\d\d to the right of the right foot, so the feet are crossed\. If that's meant, add "cross": true/,
+  );
+  assert.doesNotThrow(() =>
+    figure(
+      [
+        {
+          lead: { go: { forward: 0.1, right: 0.4 }, cross: true },
+          length: "Q",
+        },
+      ],
+      { skipChecks: ["partner spacing"] },
+    ),
+  );
+  assert.doesNotThrow(() => figure(crossing, { skipChecks: ["crossed feet"] }));
+});
+
+test("crossed feet: a figure starting crossed may stay crossed until the feet uncross, but not cross again unannounced", () => {
+  // From crossed promenade the lead's right foot steps 0.3 to his right,
+  // which uncrosses the feet; then his left crosses back over without
+  // saying so.
+  assert.doesNotThrow(() =>
+    figure([{ lead: { go: "side right", by: 0.3 }, length: "Q" }], {
+      start: "crossed promenade",
+      skipChecks: ["partner spacing"],
+    }),
+  );
+  assert.throws(
+    () =>
+      figure(
+        [
+          { lead: { go: "side right", by: 0.3 }, length: "Q" },
+          { lead: { go: { forward: 0, right: 0.8 } }, length: "Q" },
+        ],
+        { start: "crossed promenade", skipChecks: ["partner spacing"] },
+      ),
+    /step 2\) the lead's left foot is .* so the feet are crossed/,
+  );
+});
+
+test("partner spacing: a lead foot may not come within 15 cm of a follow foot", () => {
+  // The lead's left foot goes 0.35 forward, onto the follow's right foot
+  // at (-0.1, 0.4) (she doesn't move). The check reports the first moment
+  // it gets too close: three quarters of the way, 0.14 short of her foot.
+  const treading: StepRow[] = [
+    { lead: { go: "forward", by: 0.35 }, length: "Q" },
+  ];
+  assert.throws(
+    () => figure(treading, { skipChecks: [] }),
+    /at beat 1\.75 the lead's left foot and the follow's right foot are 0\.14 apart, centre to centre \(at least 0\.15 needed\)/,
+  );
+  assert.doesNotThrow(() =>
+    figure(treading, { skipChecks: ["partner spacing"] }),
+  );
+});
+
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
   const { endPose } = figure([
     { both: "forward", by: 0.4, length: "Q" },
@@ -406,10 +635,6 @@ test("mistakes are reported with the figure and step, not silently corrected", (
     [[{ lead: "pivot", length: "Q" }], /a pivot needs a `turn`/],
     [[{ both: "forward", length: "Q" }], /needs a positive `by`/],
     [
-      [{ both: "close", by: 0.2, length: "Q" }],
-      /"close" finds its own distance/,
-    ],
-    [
       [
         { both: "forward", by: 0.3, beat: 1 },
         { both: "forward", by: 0.3, length: "Q" },
@@ -523,6 +748,43 @@ function problemsOf(value: unknown): string {
   }
   assert.fail("expected parseFigureDefinition to reject the file");
 }
+
+test("parseFigureDefinition: cross is true or false, and skipChecks names known checks", () => {
+  assert.match(
+    problemsOf({
+      ...VALID_FILE,
+      steps: [{ both: "forward", by: 0.3, cross: "yes", beat: 1 }],
+    }),
+    /steps\[0\]\.cross: should be true or false/,
+  );
+  assert.match(
+    problemsOf({ ...VALID_FILE, skipChecks: ["crossed feet", "everything"] }),
+    /skipChecks\[1\]: should be one of: "crossed feet", "partner spacing"/,
+  );
+});
+
+test('parseFigureDefinition: path is only "around the front"', () => {
+  assert.match(
+    problemsOf({
+      ...VALID_FILE,
+      steps: [{ both: "forward", by: 0.3, path: "around the back", beat: 1 }],
+    }),
+    /steps\[0\]\.path: should be one of: "around the front"/,
+  );
+});
+
+test("parseFigureDefinition: stances are closed or crossed promenade", () => {
+  assert.doesNotThrow(() =>
+    parseFigureDefinition(
+      { ...VALID_FILE, start: "crossed promenade" },
+      "rock-step.json",
+    ),
+  );
+  assert.match(
+    problemsOf({ ...VALID_FILE, start: "promenade" }),
+    /start: should be one of: "closed", "crossed promenade", "promenade apart"/,
+  );
+});
 
 test("parseFigureDefinition: a well-formed file is accepted unchanged and works with defineFigure", () => {
   const parsed = parseFigureDefinition(

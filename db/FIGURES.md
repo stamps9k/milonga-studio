@@ -46,35 +46,38 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 ```json
 {
   "$schema": "../figure.schema.json",
-  "name": "Forward Waltz",
+  "name": "LF Closed Change",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Forward, side, close.",
+  "notes": "Forward on the left foot, side on the right, close.",
   "steps": [
-    { "both": "forward", "by": 0.4, "beat": 1 },
-    { "both": "diagonal forward right", "by": 0.5657, "beat": 2, "rise": 0.05 },
+    { "both": "forward", "by": 0.5, "foot": "L", "beat": 1 },
+    { "both": { "forward": 0.5, "right": 0.2 }, "beat": 2, "label": "side" },
     { "both": "close", "beat": 3 }
   ],
+  "expectBeats": 3,
   "expectEnd": {
     "stance": "closed",
-    "moved": { "forward": 0.4, "right": 0.4 }
+    "moved": { "forward": 0.5, "right": 0.2 },
+    "leadStandingOn": "L"
   }
 }
 ```
 
 ## The figure
 
-| Field         | Meaning                                                                                                |
-| ------------- | ------------------------------------------------------------------------------------------------------ |
-| `name`        | Shown in the library. Must be unique across the figure files.                                          |
-| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                            |
-| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                    |
-| `start`       | Starting stance. Only `"closed"` so far, which is the default.                                         |
-| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.          |
-| `steps`       | The steps, in time order.                                                                              |
-| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                  |
-| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                 |
-| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app. |
+| Field         | Meaning                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| `name`        | Shown in the library. Must be unique across the figure files.                                           |
+| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                             |
+| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                     |
+| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"` or `"promenade apart"`. See "Stances". |
+| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.           |
+| `steps`       | The steps, in time order.                                                                               |
+| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                   |
+| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                  |
+| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".   |
+| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.  |
 
 Closed stance: the lead stands at the origin facing line of dance, feet 20 cm
 apart; the follow faces him 40 cm away.
@@ -107,15 +110,15 @@ options on the row), or as an object with its own options:
 
 ### Actions
 
-| Action                                               | Meaning                                                                                |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `"forward"`, `"back"`, `"side left"`, `"side right"` | Travel that way, relative to the dancer's own facing. Needs `by`.                      |
-| `"diagonal forward left"` and the other diagonals    | The same, at 45°.                                                                      |
-| a number, such as `10` or `-10`                      | Degrees clockwise from forward, for angles in between. Needs `by`.                     |
-| `{ "forward": 0.9, "right": 0.2 }`                   | Travel this far forward and right, in metres. No `by`. See below.                      |
-| `"close"`                                            | Bring the free foot beside the standing foot (stance width apart), then change weight. |
-| `"in place"`                                         | Change weight onto the free foot without moving it (a recover).                        |
-| `"pivot"`                                            | Turn on the standing foot without moving it. Needs `turn`.                             |
+| Action                                               | Meaning                                                                                               |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `"forward"`, `"back"`, `"side left"`, `"side right"` | Travel that way, relative to the dancer's own facing. Needs `by`.                                     |
+| `"diagonal forward left"` and the other diagonals    | The same, at 45°.                                                                                     |
+| a number, such as `10` or `-10`                      | Degrees clockwise from forward, for angles in between. Needs `by`.                                    |
+| `{ "forward": 0.9, "right": 0.2 }`                   | Travel this far forward and right, in metres. No `by`. See below.                                     |
+| `"close"`                                            | Bring the free foot beside the standing foot (stance width apart, or `by` apart), then change weight. |
+| `"in place"`                                         | Change weight onto the free foot without moving it (a recover).                                       |
+| `"pivot"`                                            | Turn on the standing foot without moving it. Needs `turn`.                                            |
 
 The four diagonals are `"diagonal forward left"`, `"diagonal forward right"`,
 `"diagonal back left"` and `"diagonal back right"`. Directions are measured
@@ -151,15 +154,17 @@ object with its own options. The default label describes the offset, such as
 Write these on the row, where they apply to `both` and to a partner written as
 just an action, or inside a partner object.
 
-| Option            | Meaning                                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `"by"`            | Distance in metres.                                                                                                                   |
-| `"turn"`          | `{ "right": "1/8" }` (clockwise, natural) or `{ "left": "3/8" }` (anticlockwise, reverse). A plain number such as `0.125` also works. |
-| `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                       |
-| `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                      |
-| `"weight": false` | A step without weight, such as a tap: the foot moves, the weight stays.                                                               |
-| `"air": true`     | An airborne action (boleo, gancho): the free leg goes out and back, carrying no weight.                                               |
-| `"label"`         | Text shown for the step. One string, or `{ "lead": …, "follow": … }`. Default: generated.                                             |
+| Option            | Meaning                                                                                                                                                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"by"`            | Distance in metres.                                                                                                                                                                                                                                                             |
+| `"turn"`          | `{ "right": "1/8" }` (clockwise, natural) or `{ "left": "3/8" }` (anticlockwise, reverse). A plain number such as `0.125` also works.                                                                                                                                           |
+| `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                                                                                                                                                                 |
+| `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                                                                                                                                                                |
+| `"weight": false` | A step without weight, such as a tap: the foot moves, the weight stays.                                                                                                                                                                                                         |
+| `"air": true`     | An airborne action (boleo, gancho): the free leg goes out and back, carrying no weight.                                                                                                                                                                                         |
+| `"cross": true`   | The step crosses the feet on purpose (a whisk's cross behind). Without it, a step may not put the left foot to the right of the right foot. See "What gets checked".                                                                                                            |
+| `"path"`          | `"around the front"`: the foot curves instead of going straight. It sets off the way the dancer faces (before the step's turn) and curves round to land where the step says, for a foot that swings round in front of the body on a turning step. At most 120° from the facing. |
+| `"label"`         | Text shown for the step. One string, or `{ "lead": …, "follow": … }`. Default: generated.                                                                                                                                                                                       |
 
 ### Which foot
 
@@ -220,6 +225,49 @@ mid-stride finish), with `facing` optional:
 Coordinates are in metres in the figure's own frame: the lead starts at the
 origin facing +y (line of dance), with +x to his right.
 
+## Stances
+
+A stance is a named position for both partners, used by `start` and by
+`expectEnd`'s `stance`.
+
+- **`"closed"`**: closed hold. The midpoint of the lead's feet is at the origin,
+  feet 20 cm apart. The lead faces line of dance and the follow faces him, 40 cm
+  in front. By default the lead stands on his right and the follow on her left.
+- **`"crossed promenade"`**: where a whisk ends. From closed hold, each partner
+  has opened an eighth (the lead to his left, the follow to her right) into a V
+  that opens to the lead's left. The crossing foot (the lead's left, the
+  follow's right) is 25 cm behind the other foot and 5 cm across it, in the
+  opened facing. The lead's right foot is at the origin, the follow's left foot
+  is 40 cm in front of it, and before opening the lead faced line of dance. So
+  the lead faces 315° and the follow 225°. By default each partner stands on
+  the crossed foot.
+
+- **`"promenade apart"`**: where the Promenade Chassé ends. It's the same V, in
+  the same frame (the lead faces 315°, the follow 225°, and the line of travel
+  runs towards −x), but with the feet apart. The lead's left foot is at the
+  origin, the follow's right is about 54 cm from it across the line (the
+  chassé separates the partners by about 7 cm each to make room for the next
+  stride), and each
+  partner's other foot is 40 cm back along the line and 10 cm to the side,
+  where it closed. By default each partner stands on the leading foot (the
+  lead's left, the follow's right).
+
+`"crossed promenade"` measures from the lead's right foot rather than the
+middle of his feet, so a whisk's ending reads as where that foot went:
+
+```json
+"expectEnd": {
+  "stance": "crossed promenade",
+  "moved": { "forward": 0.5, "right": 0.3 },
+  "leadStandingOn": "L"
+}
+```
+
+A figure that starts in a stance is placed after the previous figure by
+matching the stances, so a figure starting in `"crossed promenade"` follows a
+whisk with no gap. It's called "crossed" because a feet-apart promenade, such
+as tango's, starts differently and would be a separate stance.
+
 ## Checking the length: `expectBeats`
 
 The figure's length in beats is also worked out from the steps: the latest
@@ -246,7 +294,19 @@ The reset stops, listing every problem with its file and location, if:
   order;
 - one partner has two steps starting at the same time;
 - the steps don't end where `expectEnd` says, or don't last as many beats as
-  `expectBeats` says.
+  `expectBeats` says;
+- at any moment, a dancer's left foot is to the right of their right foot, in
+  their own frame (the feet are crossed). Crossing is allowed during a step
+  marked `"cross": true` and until the feet uncross afterwards, or from the
+  start of a figure that starts in `"crossed promenade"` until they first
+  uncross;
+- at any moment, one of the lead's feet comes within 15 cm of one of the
+  follow's feet, centre to centre, so one would tread on the other.
+
+The last two are checked through the whole figure, not just at its end. A
+figure known to be wrong can skip them until it's rewritten, with
+`"skipChecks": ["crossed feet", "partner spacing"]` (either or both). Say why in
+`notes`, and remove it once the figure is fixed.
 
 The sample dances in `db/seed.mts` refer to figures by name. If one of their
 figures is missing (because a file was renamed or removed), that sample is
@@ -254,6 +314,6 @@ skipped with a warning, and the rest of the seed carries on.
 
 ## Not supported yet
 
-Curved paths (all steps travel in straight lines), crossing positions
-(`"cross"`), and stances other than closed hold. These will be added when a
-figure needs them.
+Curved paths other than `"around the front"`, and stances other than closed
+hold and the two promenades. These
+will be added when a figure needs them.

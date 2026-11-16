@@ -1,0 +1,41 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Whisk",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Standard name (International Style waltz); the owner's class doesn't name it. Owner's description (2026-11-16, corrected after watching a video): the same as LF Closed Change for the first two steps (forward on the left, side on the right landing level with it, no turn), then a crossing finish: the lead's left foot crosses behind his right, the legs end crossed and the shoulders open, ready for a promenade figure next. This was first written as a Back Whisk following the box turn's backward half; the owner corrected the steps, and the standard name for the corrected figure is the Whisk. On count 3 both partners open an eighth (lead to his left, follow to her right) into a V: promenade position, opening to the lead's left. The crossing foot ends about 0.25 behind and 0.05 across the standing foot, measured in the opened (final) facing, so the legs are crossed relative to the body; the offsets are to the millimetre so the feet land within the 1 mm check of the stance. Count 3 has separate lead and follow rows because the partners turn opposite ways It ends in the \"crossed promenade\" stance, measured from where the lead's right foot went.",
+  "steps": [
+    {
+      "both": "forward",
+      "by": 0.5,
+      "foot": "L",
+      "beat": 1
+    },
+    {
+      "both": { "forward": 0.5, "right": 0.2 },
+      "beat": 2,
+      "label": "side"
+    },
+    {
+      "lead": {
+        "go": { "forward": -0.141, "right": 0.612 },
+        "turn": { "left": "1/8" },
+        "cross": true,
+        "label": "cross behind, opening to promenade"
+      },
+      "follow": {
+        "go": { "forward": -0.141, "right": -0.612 },
+        "turn": { "right": "1/8" },
+        "cross": true,
+        "label": "cross behind, opening to promenade"
+      },
+      "beat": 3
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "crossed promenade",
+    "moved": { "forward": 0.5, "right": 0.3 },
+    "leadStandingOn": "L"
+  }
+}

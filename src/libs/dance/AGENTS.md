@@ -92,9 +92,14 @@ and usable by any renderer.
 
 ## Frames, placement and derived data
 
-- Every figure is authored in its own local frame, starting at the origin
-  and facing 0 degrees. Where a figure actually sits on the floor belongs to
-  its `SequenceEntry.transform`, never to the figure.
+- Every figure is authored in its own local frame: the frame of the named
+  stance it starts in (`stancePose` in `authoring.mts`). For closed hold
+  that is the lead's feet centred on the origin, facing 0 degrees. For
+  the two promenade stances it is the closed hold the couple opened from,
+  so the lead starts facing 315 (owner's decision, 2026-11-16, to keep promenade
+  figures' numbers readable). Where a figure actually sits on the floor
+  belongs to its `SequenceEntry.transform`, never to the figure; chaining
+  lines up the lead's facing whatever it starts at.
 - `FloorTransform` rotates about the origin first, then translates.
 - `fitTransform` chains figures by placing a figure's `startPose` onto the
   previous entry's `resolvedEndPose`: the rotation lines up the lead's
@@ -126,8 +131,11 @@ technique. Keep them labelled as provisional in comments, and raise them with
 the owner before building more on top of them.
 
 - An arc's initial tangent is the partner's frame orientation immediately
-  before the step (`arcEndpoint` in `fold.mts`). No seeded figure uses arcs
-  yet, for this reason.
+  before the step (`arcEndpoint` in `fold.mts`). `defineFigure` builds
+  arcs only for `path: "around the front"` (`curveAroundTheFront`), which
+  relies on exactly this: the foot sets off the way the dancer faces and
+  curves round to its landing spot. No seeded figure uses an arc at the
+  moment. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
   The exception is a step with `weightTiming: "late"`: its foot arrives at
@@ -166,6 +174,28 @@ the owner before building more on top of them.
   standing foot at stance width, across the facing after the turn) and its
   default starting weight (lead on his right, follow on her left) are
   agreed defaults, not technique.
+- The "crossed promenade" stance (`authoring.mts`) is the owner's whisk
+  ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
+  (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured
+  from the lead's right foot. Its default starting weight is on the
+  crossed feet. Standard technique has the follow make most of the
+  opening; the even split is the owner's.
+- The "promenade apart" stance is where the owner's Promenade Chassé
+  ends: the same V and frame as crossed promenade, with each trailing
+  foot `PROMENADE_SIDE_STEP` (40 cm) back along the line of travel and
+  `PROMENADE_CLOSE_WIDTH` (10 cm) to the side, measured from the lead's
+  left foot. The partners are `PROMENADE_SEPARATION` (about 7 cm) further
+  apart each than in crossed promenade, to leave room for the Open
+  Natural Turn's first stride (owner's request).
+- `defineFigure` checks the whole movement of a figure (`checkFeet`,
+  sampled every sixteenth of a beat): in each dancer's frame the left
+  foot stays left of the right (the owner's rule, 2026-11-16) unless a
+  step is marked `cross: true` or the figure starts crossed, and no lead
+  foot comes within `PARTNER_FOOT_CLEARANCE` (15 cm, a judgement call) of
+  a follow foot. Figures known to be wrong opt out with `skipChecks` and a
+  note; at the time of writing that's the three old tango figures and Box
+  Turn (forward half), whose follow can't get round the lead without
+  passing his foot while closed hold puts her directly in front of him.
 
 ## Terminology
 

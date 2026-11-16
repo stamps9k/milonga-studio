@@ -14,6 +14,7 @@ import type {
   DanceStep,
   Figure,
   Foot,
+  Movement,
   Partner,
   TimeSignature,
 } from "./step.mts";
@@ -56,9 +57,59 @@ export const STANCE_WIDTH = 0.2;
  *  hold. Both values can change independently. */
 export const PARTNER_DISTANCE = 0.4;
 
-/** Named starting positions. Only closed hold so far: lead at the
- *  origin facing line of dance (0), follow facing him (180). */
-export type StanceName = "closed";
+/**
+ * Named positions a figure can start or end in (`start`, and
+ * `expectEnd.stance`):
+ * - "closed": closed hold. The midpoint of the lead's feet is at the
+ *   origin, the lead faces line of dance (0) and the follow faces him
+ *   (180), PARTNER_DISTANCE in front.
+ * - "crossed promenade": the position a whisk ends in. Each partner has
+ *   opened an eighth from closed hold (the lead to his left, the follow
+ *   to her right) into a V that opens to the lead's left, and has the
+ *   crossing foot (the lead's left, the follow's right) behind the
+ *   other one. See crossedPromenadePose for the exact geometry. Named
+ *   "crossed" so plain "promenade" stays free for a feet-apart version
+ *   (tango's promenade starts differently; owner's decision,
+ *   2026-11-16).
+ * - "promenade apart": the same V, but with the feet apart, where the
+ *   Promenade Chassé ends: each partner's leading foot (the lead's left,
+ *   the follow's right) has gone PROMENADE_SIDE_STEP along the line of
+ *   travel past where the trailing foot closed. See
+ *   promenadeApartPose. Named by the owner (2026-11-16).
+ */
+export type StanceName = "closed" | "crossed promenade" | "promenade apart";
+
+/** In "crossed promenade", how far the crossing foot is behind the
+ *  other foot, and how far across it, in metres, measured in the
+ *  opened facing. Provisional: from the owner's description of the
+ *  whisk ("toe just behind the right heel"), not technique. */
+export const CROSS_BEHIND = 0.25;
+export const CROSS_ACROSS = 0.05;
+
+/** In "promenade apart", how far the leading foot is past the trailing
+ *  foot along the line of travel, in metres: the chassé's side step.
+ *  Provisional: the owner's agreed side-step size for the waltz
+ *  figures, not technique. */
+export const PROMENADE_SIDE_STEP = 0.4;
+
+/** In "promenade apart", how far apart the feet are across the dancer's
+ *  facing: the chassé closes to 0.1 rather than STANCE_WIDTH so the
+ *  partners' inner feet stay PARTNER_FOOT_CLEARANCE apart. */
+export const PROMENADE_CLOSE_WIDTH = 0.1;
+
+/** In "promenade apart", how far each partner has moved out from the
+ *  lines they started the chassé on (away from the other), in metres:
+ *  the chassé's count 2 lands each leading foot this much wider, which
+ *  makes room for the Open Natural Turn's first stride (owner's request,
+ *  2026-11-16). The chassé writes it as 0.05 forward and 0.05 outward
+ *  in each dancer's opened facing, 0.05 * sqrt 2 across the line. */
+export const PROMENADE_SEPARATION = 0.05 * Math.SQRT2;
+
+export const STANCE_NAMES: readonly StanceName[] = [
+  "closed",
+  "crossed promenade",
+  "promenade apart",
+];
 
 type ShortFoot = "L" | "R";
 
@@ -67,11 +118,18 @@ const OTHER: Record<Foot, Foot> = { left: "right", right: "left" };
 
 /** Feet positions of a named stance, with each partner standing on the
  *  given foot. */
-function stancePose(stance: StanceName, standing: Record<Partner, Foot>): Pose {
+export function stancePose(
+  stance: StanceName,
+  standing: Record<Partner, Foot>,
+): Pose {
   const half = STANCE_WIDTH / 2;
   const weight = (partner: Partner, foot: Foot) =>
     standing[partner] === foot ? 1 : 0;
   switch (stance) {
+    case "crossed promenade":
+      return crossedPromenadePose(weight);
+    case "promenade apart":
+      return promenadeApartPose(weight);
     case "closed":
       return {
         lead: {
@@ -102,6 +160,118 @@ function stancePose(stance: StanceName, standing: Record<Partner, Foot>): Pose {
       };
   }
 }
+
+/**
+ * "crossed promenade", in the frame of the closed hold the couple opened
+ * from: the lead's right foot (the one he doesn't cross) is at the
+ * origin, and before opening he faced 0 with the follow facing him.
+ * Measuring from his right foot keeps a figure's `moved` readable: for a
+ * whisk it's simply where that foot went.
+ *
+ * - Lead: right foot at (0, 0); faces 315 (opened an eighth to his
+ *   left); left foot CROSS_BEHIND behind the right and CROSS_ACROSS to
+ *   its right, in that opened facing.
+ * - Follow: left foot PARTNER_DISTANCE in front of the lead's right
+ *   foot, at (0, 0.4), where it was in hold; faces 225 (opened an eighth
+ *   to her right); right foot CROSS_BEHIND behind her left and
+ *   CROSS_ACROSS to its left (the mirror image).
+ *
+ * The weights come from `weight`, normally on the crossed feet, which
+ * is how a whisk ends.
+ */
+function crossedPromenadePose(
+  weight: (partner: Partner, foot: Foot) => number,
+): Pose {
+  const crossed = (standingFoot: Point2D, facing: number, across: number) =>
+    addPoints(
+      addPoints(
+        standingFoot,
+        scalePoint(headingToUnitVector(facing), -CROSS_BEHIND),
+      ),
+      scalePoint(headingToUnitVector(facing + 90), across),
+    );
+  const leadRight = { x: 0, y: 0 };
+  const followLeft = { x: 0, y: PARTNER_DISTANCE };
+  return {
+    lead: {
+      left: {
+        position: crossed(leadRight, 315, CROSS_ACROSS),
+        weight: weight("lead", "left"),
+      },
+      right: { position: leadRight, weight: weight("lead", "right") },
+      orientation: 315,
+      rise: 0,
+    },
+    follow: {
+      left: { position: followLeft, weight: weight("follow", "left") },
+      right: {
+        // Across to her left: the mirror of the lead's cross.
+        position: crossed(followLeft, 225, -CROSS_ACROSS),
+        weight: weight("follow", "right"),
+      },
+      orientation: 225,
+      rise: 0,
+    },
+  };
+}
+
+/**
+ * "promenade apart", in the same frame as "crossed promenade" (the
+ * closed hold the couple opened from, so the lead faces 315 and the
+ * follow 225, and the line of travel is towards -x), but measured from
+ * the lead's left foot, the one he stands on:
+ *
+ * - Lead: left foot at (0, 0). His right foot is where it closed in the
+ *   chassé: PROMENADE_SIDE_STEP back along the line of travel, then
+ *   PROMENADE_CLOSE_WIDTH to his right across his opened facing.
+ * - Follow: right foot at (0, 0.4), PARTNER_DISTANCE from the lead's left
+ *   across the line of travel. Her left foot is the mirror image:
+ *   PROMENADE_SIDE_STEP back along the line, then PROMENADE_CLOSE_WIDTH
+ *   to her left.
+ *
+ * The weights come from `weight`, normally on the leading feet (the
+ * lead's left, the follow's right).
+ */
+function promenadeApartPose(
+  weight: (partner: Partner, foot: Foot) => number,
+): Pose {
+  // Back along the line of travel (-x) is +x.
+  const back = { x: PROMENADE_SIDE_STEP, y: 0 };
+  const trailing = (leading: Point2D, facing: number, side: 90 | -90) =>
+    addPoints(
+      addPoints(leading, back),
+      scalePoint(headingToUnitVector(facing + side), PROMENADE_CLOSE_WIDTH),
+    );
+  const leadLeft = { x: 0, y: 0 };
+  const followRight = { x: 0, y: PARTNER_DISTANCE + 2 * PROMENADE_SEPARATION };
+  return {
+    lead: {
+      left: { position: leadLeft, weight: weight("lead", "left") },
+      right: {
+        position: trailing(leadLeft, 315, 90),
+        weight: weight("lead", "right"),
+      },
+      orientation: 315,
+      rise: 0,
+    },
+    follow: {
+      left: {
+        position: trailing(followRight, 225, -90),
+        weight: weight("follow", "left"),
+      },
+      right: { position: followRight, weight: weight("follow", "right") },
+      orientation: 225,
+      rise: 0,
+    },
+  };
+}
+
+/** The checks a figure can skip (FigureDefinition.skipChecks). */
+export type FootCheck = "crossed feet" | "partner spacing";
+export const FOOT_CHECKS: readonly FootCheck[] = [
+  "crossed feet",
+  "partner spacing",
+];
 
 // ---------------------------------------------------------------------
 // Input types
@@ -247,6 +417,17 @@ export interface MoveOptions {
   /** An airborne action (boleo, gancho, ...): the free leg goes out
    *  along the direction and back, carrying no weight. */
   air?: boolean;
+  /** "around the front": the foot travels on a curve instead of a
+   *  straight line. It sets off the way the dancer faces before the
+   *  step's turn and curves round to land exactly where the step says,
+   *  so on a turning step it swings round in front of the body instead
+   *  of cutting across behind the standing foot. Owner's request
+   *  (2026-11-16), for the Open Natural Turn. */
+  path?: "around the front";
+  /** true when this step crosses the feet on purpose (a whisk's cross
+   *  behind). Without it, defineFigure refuses a step that puts the left
+   *  foot to the right of the right foot (see checkFeet). */
+  cross?: boolean;
   label?: string;
 }
 
@@ -316,6 +497,10 @@ export interface FigureDefinition {
    *  worked out from the steps (figureDurationBeats), as an independent
    *  check on the timing, the way expectEnd checks the end position. */
   expectBeats?: number;
+  /** Checks to leave out for this figure, for figures known to be wrong
+   *  that are kept until they're rewritten (say why in `notes`):
+   *  "crossed feet" and "partner spacing" (see checkFeet). */
+  skipChecks?: FootCheck[];
   /** Free text for whoever reads or edits the figure file: sources,
    *  caveats, open questions. Not stored in the database. */
   notes?: string;
@@ -407,6 +592,8 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     rise: row.rise,
     weight: row.weight,
     air: row.air,
+    path: row.path,
+    cross: row.cross,
   };
   const labelFor = (partner: Partner) =>
     typeof row.label === "string" ? row.label : row.label?.[partner];
@@ -534,17 +721,17 @@ function applyMove(
   let direction = 0;
   let distance = 0;
   if (move.go === "close") {
-    if (move.by !== undefined) {
-      throw new FigureError(`${where}: "close" finds its own distance`);
-    }
-    // Beside the standing foot at stance width, across the dancer's
-    // facing after the turn: a left foot closes to the standing foot's
-    // left (facing - 90), a right foot to its right (facing + 90).
+    // Beside the standing foot, across the dancer's facing after the
+    // turn: a left foot closes to the standing foot's left (facing - 90),
+    // a right foot to its right (facing + 90). The feet end STANCE_WIDTH
+    // apart, centre to centre, unless `by` gives the gap: in promenade a
+    // close is narrower (0.1), or the closing foot would reach towards
+    // the partner's feet.
     const standingFoot = OTHER[foot];
     const side = headingToUnitVector(after + (foot === "left" ? -90 : 90));
     const target = addPoints(
       state.position[standingFoot],
-      scalePoint(side, STANCE_WIDTH),
+      scalePoint(side, move.by ?? STANCE_WIDTH),
     );
     const delta = subPoints(target, start);
     distance = Math.hypot(delta.x, delta.y);
@@ -570,7 +757,19 @@ function applyMove(
     distance = move.by;
   }
 
+  let movement: Movement = { type: "straight", direction, distance };
+  if (move.path === "around the front") {
+    if (air || distance === 0) {
+      throw new FigureError(
+        `${where}: "path" needs a step that travels along the floor`,
+      );
+    }
+    movement = curveAroundTheFront(before, direction, distance, where);
+  }
+
   if (!air && distance > 0) {
+    // The curve, if there is one, ends at the same spot as the straight
+    // step would (see curveAroundTheFront).
     state.position[foot] = addPoints(
       start,
       scalePoint(headingToUnitVector(direction), distance),
@@ -585,7 +784,7 @@ function applyMove(
   return {
     partner,
     foot,
-    movement: { type: "straight", direction, distance },
+    movement,
     contact: air ? "air" : "floor",
     // A pivot keeps the weight on the pivoting foot.
     weight: takesWeight || move.go === "pivot" ? 1 : 0,
@@ -601,6 +800,143 @@ function applyMove(
   };
 }
 
+/** How far (metres) the left foot may stray to the right of the right
+ *  foot, across the dancer's facing, before the feet count as crossed. */
+const CROSSED_FEET_TOLERANCE = 0.02;
+
+/** The closest a lead's foot and a follow's foot may come, centre to
+ *  centre, in metres: a foot is about 9 cm wide (figureShapes.mts), so
+ *  this leaves a few centimetres between them. Provisional (owner's
+ *  agreement, 2026-11-16). */
+export const PARTNER_FOOT_CLEARANCE = 0.15;
+
+/** How finely checkFeet samples a figure, in beats. */
+const FOOT_CHECK_STEP = 1 / 16;
+
+/**
+ * Two checks on the whole of a figure's movement, not just its end,
+ * sampled every FOOT_CHECK_STEP beats and at every step's end:
+ *
+ * - Crossed feet: in each dancer's own frame, the left foot stays to the
+ *   left of the right foot (owner's rule, 2026-11-16). Crossing is only
+ *   allowed during a step marked `cross: true` and afterwards until the
+ *   feet uncross, or from the start of a figure that starts crossed
+ *   ("crossed promenade") until they first uncross.
+ * - Partner spacing: no lead foot comes within PARTNER_FOOT_CLEARANCE of
+ *   a follow foot, centre to centre, so neither steps on the other.
+ *
+ * Steps index `marks` in the figure's step order (the order defineFigure
+ * produced them in).
+ */
+function checkFeet(
+  name: string,
+  figure: Figure,
+  marks: { cross: boolean; where: string }[],
+  startsCrossed: boolean,
+  skip: Set<FootCheck>,
+): void {
+  const duration = figureDurationBeats(figure);
+  const beats = new Set<number>();
+  for (let beat = 0; beat <= duration + 1e-9; beat += FOOT_CHECK_STEP) {
+    beats.add(Math.min(beat, duration));
+  }
+  for (const step of figure.steps) beats.add(step.beat - 1 + step.duration);
+  const ordered = [...beats].sort((a, b) => a - b);
+
+  const allowed: Record<Partner, boolean> = {
+    lead: startsCrossed,
+    follow: startsCrossed,
+  };
+  for (const beat of ordered) {
+    const pose = poseAtBeat(figure, beat);
+    for (const partner of ["lead", "follow"] as const) {
+      // This partner's step under way at `beat` (or just finished).
+      const current = figure.steps.findIndex(
+        (step) =>
+          step.partner === partner &&
+          step.beat - 1 <= beat + 1e-9 &&
+          beat <= step.beat - 1 + step.duration + 1e-9,
+      );
+      const crossing = current >= 0 && marks[current].cross;
+      if (crossing) allowed[partner] = true;
+
+      const { left, right, orientation } = pose[partner];
+      const across = subPoints(left.position, right.position);
+      const toTheRight =
+        across.x * headingToUnitVector(orientation + 90).x +
+        across.y * headingToUnitVector(orientation + 90).y;
+      if (toTheRight <= CROSSED_FEET_TOLERANCE) {
+        if (!crossing) allowed[partner] = false;
+      } else if (!allowed[partner] && !skip.has("crossed feet")) {
+        const where = current >= 0 ? ` (${marks[current].where})` : "";
+        throw new FigureError(
+          `${name}: at beat ${Number((beat + 1).toFixed(3))}${where} the ${partner}'s left foot is ${toTheRight.toFixed(2)} to the right of the right foot, so the feet are crossed. If that's meant, add "cross": true to the step that crosses them`,
+        );
+      }
+    }
+
+    if (skip.has("partner spacing")) continue;
+    for (const leadFoot of ["left", "right"] as const) {
+      for (const followFoot of ["left", "right"] as const) {
+        const gap = subPoints(
+          pose.lead[leadFoot].position,
+          pose.follow[followFoot].position,
+        );
+        const distance = Math.hypot(gap.x, gap.y);
+        if (distance < PARTNER_FOOT_CLEARANCE - 1e-9) {
+          throw new FigureError(
+            `${name}: at beat ${Number((beat + 1).toFixed(3))} the lead's ${leadFoot} foot and the follow's ${followFoot} foot are ${distance.toFixed(2)} apart, centre to centre (at least ${PARTNER_FOOT_CLEARANCE} needed), so one would tread on the other`,
+          );
+        }
+      }
+    }
+  }
+}
+
+/** How far a curve "around the front" may turn away from the dancer's
+ *  facing to reach its landing spot. Beyond this the foot would swing
+ *  round behind the body, which isn't "around the front". */
+const MAX_CURVE_DEGREES = 120;
+
+/**
+ * The circular arc for a step with `path: "around the front"`.
+ *
+ * The model draws an arc from where the foot is, setting off along the
+ * dancer's facing before the step (arcEndpoint in fold.mts), bending
+ * with a constant curvature. There is exactly one such arc through the
+ * landing spot: if the landing spot is `theta` degrees round from the
+ * facing (clockwise positive) and `chord` metres away, the arc turns
+ * through 2 * theta, so
+ *   curvature = 2 sin(theta) / chord   (positive curves right)
+ *   arcLength = chord * theta / sin(theta)   (theta in radians).
+ * Setting off forward means the foot passes in front of the body before
+ * it curves to land, which is what the owner described for the left
+ * foot on count 2 of the Open Natural Turn.
+ */
+function curveAroundTheFront(
+  facing: number,
+  direction: number,
+  chord: number,
+  where: string,
+): Movement {
+  const theta = normalizeDegrees(direction - facing + 180) - 180;
+  if (Math.abs(theta) < 1e-9) {
+    // The landing spot is straight ahead: the curve is a straight line.
+    return { type: "straight", direction, distance: chord };
+  }
+  if (Math.abs(theta) > MAX_CURVE_DEGREES) {
+    throw new FigureError(
+      `${where}: "around the front" can't reach a spot ${Math.round(Math.abs(theta))}° round from the way the dancer faces (at most ${MAX_CURVE_DEGREES}°)`,
+    );
+  }
+  const radians = theta / RAD_TO_DEG;
+  return {
+    type: "arc",
+    curvature: (2 * Math.sin(radians)) / chord,
+    arcLength: (chord * radians) / Math.sin(radians),
+  };
+}
+
 function parseTime(time: string, name: string): TimeSignature {
   const match = /^(\d+)\/(\d+)$/.exec(time);
   if (!match) throw new FigureError(`${name}: time must look like "3/4"`);
@@ -612,7 +948,22 @@ function parseTime(time: string, name: string): TimeSignature {
  *  partner stands on the other one; a pivot is on the standing foot. A
  *  partner with no foot given on their first step starts standing on
  *  the usual foot: the lead on his right, the follow on her left. */
-function inferStanding(rows: StepRow[], name: string): Record<Partner, Foot> {
+/** Who stands on which foot before a stance's first step, when the step
+ *  doesn't say: in closed hold the lead is on his right (stepping off
+ *  the left) and the follow on her left; in crossed promenade each is
+ *  on the crossed foot, which is how a whisk ends. */
+const DEFAULT_STANDING: Record<StanceName, Record<Partner, Foot>> = {
+  closed: { lead: "right", follow: "left" },
+  "crossed promenade": { lead: "left", follow: "right" },
+  "promenade apart": { lead: "left", follow: "right" },
+};
+
+function inferStanding(
+  rows: StepRow[],
+  name: string,
+  stance: StanceName,
+): Record<Partner, Foot> {
+  const defaults = DEFAULT_STANDING[stance];
   const standing: Partial<Record<Partner, Foot>> = {};
   for (const [index, row] of rows.entries()) {
     for (const { partner, move } of movesOfRow(
@@ -625,16 +976,18 @@ function inferStanding(rows: StepRow[], name: string): Record<Partner, Foot> {
         foot = OTHER[FOOT[row.foot]];
       }
       if (foot === undefined) {
-        // Nothing to infer from: the usual starting weight, lead on his
-        // right (stepping off the left), follow on her left.
-        standing[partner] = partner === "lead" ? "right" : "left";
+        // Nothing to infer from: the stance's usual starting weight.
+        standing[partner] = defaults[partner];
       } else {
         standing[partner] = move.go === "pivot" ? foot : OTHER[foot];
       }
     }
     if (standing.lead && standing.follow) break;
   }
-  return { lead: standing.lead ?? "right", follow: standing.follow ?? "left" };
+  return {
+    lead: standing.lead ?? defaults.lead,
+    follow: standing.follow ?? defaults.follow,
+  };
 }
 
 function checkExpectedEnd(
@@ -752,10 +1105,8 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     }
   });
 
-  const startPose = stancePose(
-    definition.start ?? "closed",
-    inferStanding(rows, name),
-  );
+  const start = definition.start ?? "closed";
+  const startPose = stancePose(start, inferStanding(rows, name, start));
   const state: Record<Partner, PartnerState> = {
     lead: {
       position: {
@@ -790,6 +1141,10 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     step: Omit<DanceStep, "id" | "beat" | "duration">;
     start: number; // 0-based beat
     length?: number;
+    /** For checkFeet: whether the step crosses the feet on purpose, and
+     *  which row it came from ("step 2"). */
+    cross: boolean;
+    where: string;
   }[] = [];
 
   rows.forEach((row, index) => {
@@ -918,7 +1273,13 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
           move.air === true,
         );
       }
-      resolved.push({ step, start, length });
+      resolved.push({
+        step,
+        start,
+        length,
+        cross: partnerMove.cross === true,
+        where: `step ${index + 1}`,
+      });
     }
   });
 
@@ -966,6 +1327,14 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     endPose: startPose,
   };
   const endPose = poseAtBeat(figure, figureDurationBeats(figure));
+
+  checkFeet(
+    name,
+    figure,
+    resolved.map(({ cross, where }) => ({ cross, where })),
+    start === "crossed promenade",
+    new Set(definition.skipChecks ?? []),
+  );
 
   if (definition.expectEnd) {
     checkExpectedEnd(name, definition.expectEnd, endPose);
@@ -1147,7 +1516,16 @@ export function parseFigureDefinition(
     }
   }
 
-  const MOVE_OPTIONS = ["foot", "by", "turn", "rise", "weight", "air"] as const;
+  const MOVE_OPTIONS = [
+    "foot",
+    "by",
+    "turn",
+    "rise",
+    "weight",
+    "air",
+    "path",
+    "cross",
+  ] as const;
   function checkMoveOptions(path: string, object: Record<string, unknown>) {
     checkOneOf(`${path}foot`, object.foot, ["L", "R"]);
     checkNumber(`${path}by`, object.by, { positive: true });
@@ -1155,6 +1533,8 @@ export function parseFigureDefinition(
     checkNumber(`${path}rise`, object.rise);
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
+    checkOneOf(`${path}path`, object.path, ["around the front"]);
+    checkBoolean(`${path}cross`, object.cross);
   }
 
   function checkPartner(path: string, v: unknown) {
@@ -1186,7 +1566,7 @@ export function parseFigureDefinition(
     }
     if ("stance" in v) {
       checkKeys(path, v, ["stance", "moved", "turned", "leadStandingOn"]);
-      checkOneOf(`${path}.stance`, v.stance, ["closed"]);
+      checkOneOf(`${path}.stance`, v.stance, STANCE_NAMES);
       if (v.moved !== undefined) {
         if (!isObject(v.moved)) problem(`${path}.moved`, "should be an object");
         else {
@@ -1243,6 +1623,7 @@ export function parseFigureDefinition(
     "steps",
     "expectEnd",
     "expectBeats",
+    "skipChecks",
     "notes",
   ]);
   checkString("name", value.name, true);
@@ -1251,9 +1632,18 @@ export function parseFigureDefinition(
   else if (typeof value.time !== "string" || !/^\d+\/\d+$/.test(value.time)) {
     problem("time", 'should look like "3/4" or "4/4"');
   }
-  checkOneOf("start", value.start, ["closed"]);
+  checkOneOf("start", value.start, STANCE_NAMES);
   checkNumber("slow", value.slow, { positive: true });
   checkNumber("expectBeats", value.expectBeats, { positive: true });
+  if (value.skipChecks !== undefined) {
+    if (!Array.isArray(value.skipChecks)) {
+      problem("skipChecks", "should be a list");
+    } else {
+      value.skipChecks.forEach((check, index) =>
+        checkOneOf(`skipChecks[${index}]`, check, FOOT_CHECKS),
+      );
+    }
+  }
   checkString("notes", value.notes);
   if (value.$schema !== undefined && typeof value.$schema !== "string") {
     problem("$schema", "should be text (the path to figure.schema.json)");

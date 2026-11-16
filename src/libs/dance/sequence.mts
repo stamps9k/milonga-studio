@@ -2,8 +2,9 @@ import type { Figure } from "./step.mts";
 import type { Pose, Point2D } from "./pose.mts";
 
 /**
- * Rigid transform placing a Figure's local frame (which always starts at
- * the origin, facing 0°) onto an actual spot on the floor. Figures are
+ * Rigid transform placing a Figure's local frame (the frame of the stance
+ * it starts in: for closed hold, the origin facing 0°; see stancePose in
+ * authoring.mts) onto an actual spot on the floor. Figures are
  * authored once and reused anywhere, so this transform — not the figure
  * itself — carries where and which way the couple is actually facing for
  * one specific occurrence in a sequence.
