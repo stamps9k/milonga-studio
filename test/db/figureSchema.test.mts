@@ -79,6 +79,12 @@ const WITH_STANCE_END = {
       length: "S",
       label: { lead: "a", follow: "b" },
     },
+    { both: { forward: 0.9, right: 0.2 }, length: "Q" },
+    {
+      lead: { right: -0.2 },
+      follow: { go: { forward: -0.1 }, foot: "L" },
+      length: "Q",
+    },
   ],
   expectBeats: 4,
   expectEnd: {

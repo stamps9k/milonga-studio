@@ -77,6 +77,56 @@ test("both: the follow mirrors with the other foot, travelling the same way on t
   assert.equal(follow.label, "back");
 });
 
+test("an offset step lands that far forward and right, the same as a direction and by", () => {
+  // Lead's left foot from (-0.1, 0): 0.3 forward and 0.4 right lands at
+  // (0.3, 0.3), a 0.5 step about 53.13 degrees right of forward.
+  const offset = figure([{ both: { forward: 0.3, right: 0.4 }, length: "Q" }]);
+  const angled = figure([
+    {
+      both: (Math.atan2(0.4, 0.3) * 180) / Math.PI,
+      by: 0.5,
+      length: "Q",
+    },
+  ]);
+  pointClose(offset.endPose.lead.left.position, [0.3, 0.3]);
+  for (const partner of ["lead", "follow"] as const) {
+    for (const foot of ["left", "right"] as const) {
+      const { x, y } = angled.endPose[partner][foot].position;
+      pointClose(offset.endPose[partner][foot].position, [x, y]);
+    }
+  }
+  // Labels come from the offset as written; the follow's is reversed.
+  assert.equal(offset.steps[0].label, "0.3 forward, 0.4 right");
+  assert.equal(offset.steps[1].label, "0.3 back, 0.4 left");
+});
+
+test("an offset can be written for one partner, plainly or as `go`, and either part left out", () => {
+  const { endPose, steps } = figure([
+    {
+      lead: { right: -0.2 },
+      follow: { go: { forward: -0.3 }, turn: { right: "1/8" } },
+      length: "Q",
+    },
+  ]);
+  // Lead's left foot 0.2 to his left; follow's right foot 0.3 back
+  // from her facing (south), so north.
+  pointClose(endPose.lead.left.position, [-0.3, 0]);
+  pointClose(endPose.follow.right.position, [-0.1, 0.7]);
+  assert.equal(steps[0].label, "0.2 left");
+  assert.equal(steps[1].label, "0.3 back, turning 1/8 right");
+});
+
+test("an offset with `by`, or one that doesn't move the foot, is an error", () => {
+  assert.throws(
+    () => figure([{ both: { forward: 0.3 }, by: 0.3, length: "Q" }]),
+    /step 1: a step written as \{ forward, right \} finds its own distance/,
+  );
+  assert.throws(
+    () => figure([{ both: { forward: 0, right: 0 }, length: "Q" }]),
+    /step 1: \{ forward, right \} doesn't move the foot; use "in place"/,
+  );
+});
+
 test("both: side and diagonal steps mirror to the same floor direction", () => {
   const side = figure([{ both: "side left", by: 0.3, length: "Q" }]);
   pointClose(side.endPose.lead.left.position, [-0.4, 0]);
@@ -464,6 +514,27 @@ test("parseFigureDefinition: a well-formed file is accepted unchanged and works 
   assert.doesNotThrow(() => defineFigure(parsed));
 });
 
+test("parseFigureDefinition: an offset needs forward or right in metres, and nothing else", () => {
+  const withStep = (step: unknown) =>
+    problemsOf({ ...VALID_FILE, steps: [step] });
+  assert.match(
+    withStep({ both: {}, beat: 1 }),
+    /steps\[0\]\.both: needs "forward", "right" or both, in metres/,
+  );
+  assert.match(
+    withStep({ both: { forward: "far" }, beat: 1 }),
+    /steps\[0\]\.both\.forward: should be a number/,
+  );
+  assert.match(
+    withStep({ lead: { right: 0.2, up: 1 }, beat: 1 }),
+    /steps\[0\]\.lead\.up: unknown field \(expected one of: forward, right\)/,
+  );
+  assert.match(
+    withStep({ follow: { go: { left: 0.2 } }, beat: 1 }),
+    /steps\[0\]\.follow\.go\.left: unknown field/,
+  );
+});
+
 test("parseFigureDefinition: turns can be written as fractions of a turn in text", () => {
   const authored = defineFigure(
     parseFigureDefinition(
@@ -500,7 +571,7 @@ test("parseFigureDefinition: reports every problem at once, each with the file a
   for (const expected of [
     /time: should look like "3\/4"/,
     /stpes: unknown field/,
-    /steps\[0\]\.both: should be a number of degrees or one of: .*"forward"/,
+    /steps\[0\]\.both: should be a number of degrees, \{ "forward": …, "right": … \}, or one of: .*"forward"/,
     /steps\[0\]\.by: should be a positive number/,
     /steps\[0\]\.beats: unknown field/,
     /steps\[1\]\.lead\.turn: should be \{ "right": … \} or \{ "left": … \}/,
