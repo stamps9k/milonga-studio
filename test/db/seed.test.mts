@@ -14,11 +14,13 @@ import type { Sequence } from "../../src/libs/dance/sequence.mts";
 // freshly seeded temporary database and read back through the same
 // assembly code the API uses.
 //
-// The seed is hand-typed: each figure stores both its steps and its
-// start/end poses, and nothing but these tests forces the two to agree.
-// When they don't, the 2D view (which draws the folded steps) and
-// sequence chaining (which fits the next figure onto the stored
-// endPose) disagree about where the couple is.
+// Seeded figures are written with defineFigure (db/figures/), which
+// calculates each stored endPose by folding the steps and checks the
+// figure's expectEnd. The fold check below still guards the round trip
+// through the database: if the stored endPose and the stored steps ever
+// disagree, the 2D view (which draws the folded steps) and sequence
+// chaining (which fits the next figure onto the stored endPose) would
+// disagree about where the couple is.
 
 /** Figure lengths in beats, as documented in db/seed.mts's header. */
 const DOCUMENTED_DURATIONS: Record<string, number> = {
@@ -34,12 +36,6 @@ const DOCUMENTED_DURATIONS: Record<string, number> = {
 
 /** Exact-match tolerance for values the code derives itself. */
 const POSITION_EPSILON = 1e-6;
-/** Tolerance when comparing a fold against hand-typed seed poses. The
- *  seed types derived positions (such as the Ocho's diagonal steps) to
- *  3 decimal places, i.e. to the nearest millimetre at the metre scale
- *  the seed uses, so a 1 mm tolerance accepts rounding but still catches
- *  real mismatches, which are tens of centimetres. */
-const HAND_TYPED_EPSILON = 1e-3;
 
 let db: BetterSqlite3.Database;
 let cleanup: () => void;
@@ -146,7 +142,7 @@ test("seed: folding each figure's steps reproduces its stored endPose", async (t
       const folded = poseAtBeat(figure, figureDurationBeats(figure));
       const distance = maxFootDistance(folded, figure.endPose);
       assert.ok(
-        distance < HAND_TYPED_EPSILON,
+        distance < POSITION_EPSILON,
         `folded feet are up to ${distance.toFixed(3)} away from the stored endPose`,
       );
       for (const partner of ["lead", "follow"] as const) {
