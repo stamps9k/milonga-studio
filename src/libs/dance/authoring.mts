@@ -133,7 +133,19 @@ export type Action = RelativeDirection | "close" | "in place" | "pivot";
 /** A turn, as a fraction of a full turn: `{ right: 1 / 8 }` is 45
  *  degrees clockwise (a natural turn), `{ left: 3 / 8 }` is 135 degrees
  *  anticlockwise (a reverse turn). */
-export type Turn = { right: number } | { left: number };
+export type Turn = { right: TurnAmount } | { left: TurnAmount };
+
+/** A fraction of a full turn: a number (0.125) or a fraction written as
+ *  text ("1/8"), which reads better in JSON figure files. */
+export type TurnAmount = number | `${number}/${number}`;
+
+/** The size of a turn amount as a fraction of a full turn. Assumes the
+ *  amount has been validated (see parseFigureDefinition). */
+function turnFraction(amount: TurnAmount): number {
+  if (typeof amount === "number") return amount;
+  const [numerator, denominator] = amount.split("/").map(Number);
+  return numerator / denominator;
+}
 
 /** Options that can be given for both partners on a row, or per
  *  partner. */
@@ -219,6 +231,9 @@ export interface FigureDefinition {
   slow?: number;
   steps: StepRow[];
   expectEnd?: ExpectedEnd;
+  /** Free text for whoever reads or edits the figure file: sources,
+   *  caveats, open questions. Not stored in the database. */
+  notes?: string;
 }
 
 /** The model's data for a figure, ready to store (no ids yet). */
@@ -254,12 +269,16 @@ class FigureError extends Error {}
 
 function turnDegrees(turn: Turn | undefined): number {
   if (turn === undefined) return 0;
-  return "right" in turn ? turn.right * 360 : -turn.left * 360;
+  return "right" in turn
+    ? turnFraction(turn.right) * 360
+    : -turnFraction(turn.left) * 360;
 }
 
 function describeTurn(turn: Turn): string {
   const [direction, amount] =
-    "right" in turn ? ["right", turn.right] : ["left", turn.left];
+    "right" in turn
+      ? ["right", turnFraction(turn.right)]
+      : ["left", turnFraction(turn.left)];
   // Show common fractions as fractions (1/8, 3/8, 1/4, ...).
   for (const denominator of [8, 4, 2, 16]) {
     const numerator = amount * denominator;
@@ -803,3 +822,274 @@ function mirrorName(action: Action): Action {
 }
 
 export { FigureError };
+
+// ---------------------------------------------------------------------
+// Validating figure files
+// ---------------------------------------------------------------------
+
+/**
+ * Checks that `value` (typically parsed from a JSON figure file) has
+ * the shape of a FigureDefinition, and returns it typed.
+ *
+ * TypeScript can't check JSON, so this is what catches typos and wrong
+ * types in figure files: unknown keys ("beats" instead of "beat"),
+ * misspelt directions, a number where text is expected, a malformed
+ * turn. Every problem in the file is reported at once, each with its
+ * location (for example `steps[2].follow.turn`), prefixed with
+ * `source` (the file name). It checks shape only; whether the steps
+ * make sense as dancing is checked by defineFigure.
+ */
+export function parseFigureDefinition(
+  value: unknown,
+  source: string,
+): FigureDefinition {
+  const problems: string[] = [];
+  const problem = (path: string, message: string) =>
+    problems.push(`${path}: ${message}`);
+
+  const isObject = (v: unknown): v is Record<string, unknown> =>
+    typeof v === "object" && v !== null && !Array.isArray(v);
+  const isNumber = (v: unknown): v is number =>
+    typeof v === "number" && Number.isFinite(v);
+
+  function checkKeys(
+    path: string,
+    object: Record<string, unknown>,
+    allowed: readonly string[],
+  ) {
+    for (const key of Object.keys(object)) {
+      if (!allowed.includes(key)) {
+        problem(
+          path ? `${path}.${key}` : key,
+          `unknown field (expected one of: ${allowed.join(", ")})`,
+        );
+      }
+    }
+  }
+
+  function checkString(path: string, v: unknown, required = false) {
+    if (v === undefined) {
+      if (required) problem(path, "is required");
+      return;
+    }
+    if (typeof v !== "string" || v.length === 0) {
+      problem(path, "should be non-empty text");
+    }
+  }
+
+  function checkNumber(
+    path: string,
+    v: unknown,
+    { positive = false }: { positive?: boolean } = {},
+  ) {
+    if (v === undefined) return;
+    if (!isNumber(v) || (positive && !(v > 0))) {
+      problem(
+        path,
+        positive ? "should be a positive number" : "should be a number",
+      );
+    }
+  }
+
+  function checkBoolean(path: string, v: unknown) {
+    if (v !== undefined && typeof v !== "boolean") {
+      problem(path, "should be true or false");
+    }
+  }
+
+  function checkOneOf(path: string, v: unknown, options: readonly string[]) {
+    if (v !== undefined && !options.includes(v as string)) {
+      problem(
+        path,
+        `should be one of: ${options.map((o) => JSON.stringify(o)).join(", ")}`,
+      );
+    }
+  }
+
+  const ACTION_NAMES = [
+    ...Object.keys(DIRECTION_DEGREES),
+    "close",
+    "in place",
+    "pivot",
+  ];
+  function checkAction(path: string, v: unknown) {
+    if (isNumber(v)) return;
+    if (typeof v === "string" && ACTION_NAMES.includes(v)) return;
+    problem(
+      path,
+      `should be a number of degrees or one of: ${ACTION_NAMES.map((a) => JSON.stringify(a)).join(", ")}`,
+    );
+  }
+
+  function checkTurn(path: string, v: unknown) {
+    if (v === undefined) return;
+    const keys = isObject(v) ? Object.keys(v) : [];
+    if (
+      !isObject(v) ||
+      keys.length !== 1 ||
+      !["right", "left"].includes(keys[0])
+    ) {
+      problem(path, 'should be { "right": … } or { "left": … }');
+      return;
+    }
+    const amount = v[keys[0]];
+    const fraction =
+      typeof amount === "string" && /^\d+\s*\/\s*\d+$/.test(amount)
+        ? Number(amount.split("/")[0]) / Number(amount.split("/")[1])
+        : amount;
+    if (!isNumber(fraction) || !(fraction > 0)) {
+      problem(
+        `${path}.${keys[0]}`,
+        'should be a positive fraction of a turn, such as 0.125 or "1/8"',
+      );
+    }
+  }
+
+  const MOVE_OPTIONS = ["foot", "by", "turn", "rise", "weight", "air"] as const;
+  function checkMoveOptions(path: string, object: Record<string, unknown>) {
+    checkOneOf(`${path}foot`, object.foot, ["L", "R"]);
+    checkNumber(`${path}by`, object.by, { positive: true });
+    checkTurn(`${path}turn`, object.turn);
+    checkNumber(`${path}rise`, object.rise);
+    checkBoolean(`${path}weight`, object.weight);
+    checkBoolean(`${path}air`, object.air);
+  }
+
+  function checkPartner(path: string, v: unknown) {
+    if (v === undefined) return;
+    if (isObject(v)) {
+      checkKeys(path, v, ["go", ...MOVE_OPTIONS, "label"]);
+      if (v.go === undefined) problem(`${path}.go`, "is required");
+      else checkAction(`${path}.go`, v.go);
+      checkMoveOptions(`${path}.`, v);
+      checkString(`${path}.label`, v.label);
+    } else {
+      checkAction(path, v);
+    }
+  }
+
+  function checkPoint(path: string, v: unknown) {
+    if (!Array.isArray(v) || v.length !== 2 || !v.every(isNumber)) {
+      problem(path, "should be [x, y] in metres");
+    }
+  }
+
+  function checkExpectEnd(path: string, v: unknown) {
+    if (v === undefined) return;
+    if (!isObject(v)) {
+      problem(path, "should be an object");
+      return;
+    }
+    if ("stance" in v) {
+      checkKeys(path, v, ["stance", "moved", "turned", "leadStandingOn"]);
+      checkOneOf(`${path}.stance`, v.stance, ["closed"]);
+      if (v.moved !== undefined) {
+        if (!isObject(v.moved)) problem(`${path}.moved`, "should be an object");
+        else {
+          checkKeys(`${path}.moved`, v.moved, ["forward", "right"]);
+          checkNumber(`${path}.moved.forward`, v.moved.forward);
+          checkNumber(`${path}.moved.right`, v.moved.right);
+        }
+      }
+      checkTurn(`${path}.turned`, v.turned);
+      checkOneOf(`${path}.leadStandingOn`, v.leadStandingOn, ["L", "R"]);
+    } else if ("feet" in v) {
+      checkKeys(path, v, ["feet", "facing"]);
+      if (!isObject(v.feet)) problem(`${path}.feet`, "should be an object");
+      else {
+        checkKeys(`${path}.feet`, v.feet, ["lead", "follow"]);
+        for (const partner of ["lead", "follow"]) {
+          const feet = v.feet[partner];
+          if (!isObject(feet)) {
+            problem(
+              `${path}.feet.${partner}`,
+              'should be { "L": [x, y], "R": [x, y] }',
+            );
+            continue;
+          }
+          checkKeys(`${path}.feet.${partner}`, feet, ["L", "R"]);
+          checkPoint(`${path}.feet.${partner}.L`, feet.L);
+          checkPoint(`${path}.feet.${partner}.R`, feet.R);
+        }
+      }
+      if (v.facing !== undefined) {
+        if (!isObject(v.facing))
+          problem(`${path}.facing`, "should be an object");
+        else {
+          checkKeys(`${path}.facing`, v.facing, ["lead", "follow"]);
+          checkNumber(`${path}.facing.lead`, v.facing.lead);
+          checkNumber(`${path}.facing.follow`, v.facing.follow);
+        }
+      }
+    } else {
+      problem(path, 'needs either "stance" or "feet"');
+    }
+  }
+
+  if (!isObject(value)) {
+    throw new FigureError(`${source}: should contain a single JSON object`);
+  }
+  checkKeys("", value, [
+    "name",
+    "style",
+    "time",
+    "start",
+    "slow",
+    "steps",
+    "expectEnd",
+    "notes",
+  ]);
+  checkString("name", value.name, true);
+  checkString("style", value.style, true);
+  if (value.time === undefined) problem("time", "is required");
+  else if (typeof value.time !== "string" || !/^\d+\/\d+$/.test(value.time)) {
+    problem("time", 'should look like "3/4" or "4/4"');
+  }
+  checkOneOf("start", value.start, ["closed"]);
+  checkNumber("slow", value.slow, { positive: true });
+  checkString("notes", value.notes);
+  if (!Array.isArray(value.steps) || value.steps.length === 0) {
+    problem("steps", "should be a list with at least one step");
+  } else {
+    value.steps.forEach((row: unknown, index: number) => {
+      const path = `steps[${index}]`;
+      if (!isObject(row)) {
+        problem(path, "should be an object");
+        return;
+      }
+      checkKeys(path, row, [
+        "both",
+        "lead",
+        "follow",
+        "beat",
+        "length",
+        "label",
+        ...MOVE_OPTIONS,
+      ]);
+      if (row.both !== undefined) checkAction(`${path}.both`, row.both);
+      checkPartner(`${path}.lead`, row.lead);
+      checkPartner(`${path}.follow`, row.follow);
+      checkMoveOptions(`${path}.`, row);
+      checkNumber(`${path}.beat`, row.beat, { positive: true });
+      checkOneOf(`${path}.length`, row.length, ["S", "Q"]);
+      if (row.label !== undefined && typeof row.label !== "string") {
+        if (!isObject(row.label)) {
+          problem(
+            `${path}.label`,
+            'should be text or { "lead": …, "follow": … }',
+          );
+        } else {
+          checkKeys(`${path}.label`, row.label, ["lead", "follow"]);
+          checkString(`${path}.label.lead`, row.label.lead);
+          checkString(`${path}.label.follow`, row.label.follow);
+        }
+      }
+    });
+  }
+  checkExpectEnd("expectEnd", value.expectEnd);
+
+  if (problems.length > 0) {
+    throw new FigureError(`${source}:\n  ${problems.join("\n  ")}`);
+  }
+  return value as unknown as FigureDefinition;
+}

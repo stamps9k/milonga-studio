@@ -28,8 +28,9 @@ frontend and a small Express + SQLite API.
   frontend never sees table structure.
 - `db/schema.sql` is the source of truth for the database and mirrors the
   types in `src/libs/dance/`. `db/seed.mts` loads sample figures and
-  sequences. Figures are written one per file in `db/figures/` with
-  `defineFigure`; `db/FIGURES.md` explains how. Generated `db/*.sqlite`
+  sequences. Figures are JSON files in `db/figures/`, one per figure; every
+  file there is loaded and checked by the seed, and `db/FIGURES.md`
+  explains the format. Generated `db/*.sqlite`
   files are not committed.
 - `test/` holds `node:test` suites that mirror `src/` paths (for example
   `test/dance/fold.test.mts` covers `src/libs/dance/fold.mts`).

@@ -5,15 +5,16 @@
  * of real technique -- numbers are chosen to look reasonable, not to
  * match a syllabus.
  *
- * Figures live in db/figures/, one file each, written with defineFigure
- * (src/libs/dance/authoring.mts): steps are described relative to the
- * dancer ("forward 0.4", "close", "pivot 1/8 left"), and the helper works
+ * Figures live in db/figures/, one JSON file each, and every *.json file
+ * there is seeded -- adding or removing a figure needs no code change.
+ * Steps are described relative to the dancer ("forward 0.4", "close",
+ * "pivot 1/8 left"); defineFigure (src/libs/dance/authoring.mts) works
  * out the model's absolute headings, feet, weights, timing and end pose,
  * and checks each figure's expectEnd. db/FIGURES.md is the guide.
  * Movements are straight lines only (including zero-distance weight
  * changes and pivots); arcs aren't authored yet.
  *
- * Figures:
+ * Figures currently in db/figures/:
  *   - Walking Step   (1 beat, tango)    -- a single forward/back step
  *   - Side Step      (1 beat, tango)    -- both partners step sideways together
  *   - Cruzada        (2 beats, tango)   -- forward/back step, then follow crosses
@@ -24,7 +25,7 @@
  *   - Cha-Cha Basic  (4 beats, cha-cha) -- forward break, recover, cha-cha-cha back into place
  *   - Side Basic     (4 beats, cha-cha) -- side break, recover, cha-cha-cha back into place
  *
- * Sequences:
+ * Sample sequences (SAMPLE_DANCES below; skipped if a figure is missing):
  *   - Practice: single walk   -- Walking Step
  *   - Basic Combination       -- Walking Step, Side Step, Cruzada
  *   - Ocho Combination        -- Walking Step, Ocho
@@ -48,7 +49,7 @@ import { existsSync } from "node:fs";
 import Database from "better-sqlite3";
 import type { AuthoredFigure } from "../src/libs/dance/authoring.mts";
 import { applyTransform, fitTransform } from "../src/libs/dance/floor.mts";
-import { figures } from "./figures/index.mts";
+import { loadFigures } from "./figures/index.mts";
 import type { Pose } from "../src/libs/dance/pose.mts";
 import type { FloorTransform } from "../src/libs/dance/sequence.mts";
 
@@ -256,59 +257,90 @@ function seedDance(
   insertDance.run(name, tempo, null, notes, now, now, 1, sequenceId);
 }
 
+// Every *.json file in db/figures/ is loaded, checked and seeded --
+// nothing here needs editing when figures are added or removed. A
+// mistake in any file stops the seed before the database is touched.
+// FIGURES_DIR points at a different folder of figure files, for trying
+// out a set of figures without touching db/figures/ (and for tests).
+const figures = loadFigures(process.env.FIGURES_DIR || undefined);
+
+/** Sample sequences and the dances built on them, by figure name. A
+ *  sequence whose figures aren't all present (a figure file was renamed
+ *  or removed) is skipped with a warning rather than failing the seed,
+ *  so editing figure files never requires a code change here. */
+const SAMPLE_DANCES: {
+  sequence: string;
+  figures: string[];
+  dance: string;
+  tempo: number;
+  notes: string;
+}[] = [
+  {
+    sequence: "Practice: single walk",
+    figures: ["Walking Step"],
+    dance: "My first walk",
+    tempo: 72,
+    notes: "Seeded test data",
+  },
+  {
+    sequence: "Basic Combination",
+    figures: ["Walking Step", "Side Step", "Cruzada"],
+    dance: "Basic tango combo",
+    tempo: 68,
+    notes: "Salida into side step and cross",
+  },
+  {
+    sequence: "Ocho Combination",
+    figures: ["Walking Step", "Ocho"],
+    dance: "Ocho practice",
+    tempo: 66,
+    notes: "Working on back ochos",
+  },
+  {
+    sequence: "Waltz Basics",
+    figures: ["Forward Waltz", "Balance Step"],
+    dance: "Waltz box practice",
+    tempo: 90,
+    notes: "Forward waltz into a balance step",
+  },
+  {
+    sequence: "Cha-Cha Basics",
+    figures: ["Cha-Cha Basic", "Side Basic"],
+    dance: "Cha-cha basics practice",
+    tempo: 120,
+    notes: "Forward basic into side basic",
+  },
+];
+
+let seededSequences = 0;
+
 const seedAll = db.transaction(() => {
-  // Figures are written with defineFigure, one per file in db/figures/
-  // (see db/FIGURES.md); each file's expectEnd has already been checked
-  // by the time it's imported.
-  const walkingStep = seedFigure(figures.walkingStep);
-  const sideStep = seedFigure(figures.sideStep);
-  const cruzada = seedFigure(figures.cruzada);
-  const ocho = seedFigure(figures.ocho);
-  const forwardWaltz = seedFigure(figures.forwardWaltz);
-  const balanceStep = seedFigure(figures.balanceStep);
-  const chaChaBasic = seedFigure(figures.chaChaBasic);
-  const sideBasic = seedFigure(figures.sideBasic);
+  const seededByName = new Map<string, SeededFigure>();
+  for (const figure of figures) {
+    seededByName.set(figure.name, seedFigure(figure));
+  }
 
-  // -----------------------------------------------------------------
-  // Sequences and dances
-  // -----------------------------------------------------------------
-  const singleWalkSequence = seedSequence("Practice: single walk", [
-    walkingStep,
-  ]);
-  seedDance("My first walk", 72, "Seeded test data", singleWalkSequence);
-
-  const basicCombination = seedSequence("Basic Combination", [
-    walkingStep,
-    sideStep,
-    cruzada,
-  ]);
-  seedDance(
-    "Basic tango combo",
-    68,
-    "Salida into side step and cross",
-    basicCombination,
-  );
-
-  const ochoCombination = seedSequence("Ocho Combination", [walkingStep, ocho]);
-  seedDance("Ocho practice", 66, "Working on back ochos", ochoCombination);
-
-  const waltzBasics = seedSequence("Waltz Basics", [forwardWaltz, balanceStep]);
-  seedDance(
-    "Waltz box practice",
-    90,
-    "Forward waltz into a balance step",
-    waltzBasics,
-  );
-
-  const chaChaBasics = seedSequence("Cha-Cha Basics", [chaChaBasic, sideBasic]);
-  seedDance(
-    "Cha-cha basics practice",
-    120,
-    "Forward basic into side basic",
-    chaChaBasics,
-  );
+  for (const sample of SAMPLE_DANCES) {
+    const missing = sample.figures.filter((name) => !seededByName.has(name));
+    if (missing.length > 0) {
+      console.warn(
+        `Skipping sample sequence "${sample.sequence}": no figure named ${missing
+          .map((name) => `"${name}"`)
+          .join(", ")} in db/figures/.`,
+      );
+      continue;
+    }
+    const sequenceId = seedSequence(
+      sample.sequence,
+      sample.figures.map((name) => seededByName.get(name)!),
+    );
+    seedDance(sample.dance, sample.tempo, sample.notes, sequenceId);
+    seededSequences++;
+  }
 });
 
 seedAll();
-console.info("Seed complete: 8 figures, 5 sequences, 5 dances.");
+console.info(
+  `Seed complete: ${figures.length} figures, ${seededSequences} sequences, ${seededSequences} dances.`,
+);
 db.close();

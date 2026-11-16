@@ -6,6 +6,7 @@ import {
   PARTNER_DISTANCE,
   STANCE_WIDTH,
   defineFigure,
+  parseFigureDefinition,
 } from "../../src/libs/dance/authoring.mts";
 import type {
   FigureDefinition,
@@ -359,5 +360,129 @@ test("the end pose is the folded steps, ready to store", () => {
   assert.equal(
     authored.steps.every((step) => !("id" in step)),
     true,
+  );
+});
+
+// ---------------------------------------------------------------------
+// parseFigureDefinition: checking the shape of figure files (JSON)
+// ---------------------------------------------------------------------
+
+const VALID_FILE = {
+  name: "Rock Step",
+  style: "cha-cha",
+  time: "4/4",
+  notes: "A test figure.",
+  steps: [
+    {
+      both: "forward",
+      by: 0.3,
+      beat: 1,
+      label: { lead: "rock", follow: "rock back" },
+    },
+    { both: "in place", beat: 2 },
+    { both: "close", beat: 3 },
+  ],
+  expectEnd: { stance: "closed", leadStandingOn: "L" },
+};
+
+function problemsOf(value: unknown): string {
+  try {
+    parseFigureDefinition(value, "rock-step.json");
+  } catch (error) {
+    assert.ok(error instanceof FigureError);
+    return error.message;
+  }
+  assert.fail("expected parseFigureDefinition to reject the file");
+}
+
+test("parseFigureDefinition: a well-formed file is accepted unchanged and works with defineFigure", () => {
+  const parsed = parseFigureDefinition(
+    JSON.parse(JSON.stringify(VALID_FILE)),
+    "rock-step.json",
+  );
+  assert.deepEqual(parsed, VALID_FILE);
+  assert.doesNotThrow(() => defineFigure(parsed));
+});
+
+test("parseFigureDefinition: turns can be written as fractions of a turn in text", () => {
+  const authored = defineFigure(
+    parseFigureDefinition(
+      {
+        name: "Pivot",
+        style: "tango",
+        time: "4/4",
+        steps: [
+          { follow: { go: "pivot", turn: { left: "1/8" } }, length: "Q" },
+        ],
+      },
+      "pivot.json",
+    ),
+  );
+  // "1/8" left from facing 180.
+  assert.equal(authored.steps[0].orientation, 135);
+  assert.equal(authored.steps[0].label, "pivot 1/8 left");
+});
+
+test("parseFigureDefinition: reports every problem at once, each with the file and where it is", () => {
+  const message = problemsOf({
+    name: "Rock Step",
+    style: "cha-cha",
+    time: "four four",
+    stpes: [],
+    steps: [
+      { both: "forwards", by: "0.3", beats: 1 },
+      { lead: { go: "pivot", turn: { clockwise: 0.25 } }, length: "M" },
+      { follow: { by: 0.2 }, beat: 2, foot: "left" },
+    ],
+    expectEnd: { stance: "open" },
+  });
+  assert.match(message, /^rock-step\.json:/);
+  for (const expected of [
+    /time: should look like "3\/4"/,
+    /stpes: unknown field/,
+    /steps\[0\]\.both: should be a number of degrees or one of: .*"forward"/,
+    /steps\[0\]\.by: should be a positive number/,
+    /steps\[0\]\.beats: unknown field/,
+    /steps\[1\]\.lead\.turn: should be \{ "right": … \} or \{ "left": … \}/,
+    /steps\[1\]\.length: should be one of: "S", "Q"/,
+    /steps\[2\]\.follow\.go: is required/,
+    /steps\[2\]\.foot: should be one of: "L", "R"/,
+    /expectEnd\.stance: should be one of: "closed"/,
+  ]) {
+    assert.match(message, expected);
+  }
+});
+
+test("parseFigureDefinition: required fields, bad fractions and incomplete expectEnd are caught", () => {
+  const message = problemsOf({
+    steps: [{ both: "pivot", turn: { left: "one eighth" }, length: "Q" }],
+    expectEnd: { moved: { forward: 1 } },
+  });
+  assert.match(message, /name: is required/);
+  assert.match(message, /style: is required/);
+  assert.match(message, /time: is required/);
+  assert.match(
+    message,
+    /steps\[0\]\.turn\.left: should be a positive fraction of a turn/,
+  );
+  assert.match(message, /expectEnd: needs either "stance" or "feet"/);
+
+  assert.match(
+    problemsOf({ name: "X", style: "y", time: "4/4", steps: [] }),
+    /steps: should be a list with at least one step/,
+  );
+  assert.match(
+    problemsOf({
+      name: "X",
+      style: "y",
+      time: "4/4",
+      steps: [{ both: "forward", by: 0.3, beat: 1 }],
+      expectEnd: { feet: { lead: { L: [0, 0], R: [0] }, follow: {} } },
+    }),
+    /expectEnd\.feet\.lead\.R: should be \[x, y\] in metres/,
+  );
+  assert.match(
+    problemsOf([1, 2]),
+    /rock-step\.json: should contain a single JSON object/,
   );
 });

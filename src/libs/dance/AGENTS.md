@@ -29,8 +29,9 @@ implementation's choice, not a confirmed dance rule.
   and which foot is the standing foot.
 - `authoring.mts`: `defineFigure`, which turns a dancer-level description
   (relative directions, mirrored steps, counts) into a figure's steps and
-  poses and checks it. Used by the seed figures in `db/figures/`; the
-  guide is `db/FIGURES.md`.
+  poses and checks it, and `parseFigureDefinition`, which checks the shape
+  of a JSON figure file. Used by the seed figures in `db/figures/*.json`;
+  the guide is `db/FIGURES.md`.
 
 Everything here is plain data and pure functions with no React, DOM or
 network dependencies. Keep it that way so it stays testable under `node:test`

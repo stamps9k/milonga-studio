@@ -109,3 +109,46 @@ test("the seed script points to db:reset when there's no database", () => {
   assert.match(result.stderr, /No database at/);
   assert.match(result.stderr, /npm run db:reset/);
 });
+
+test("db:reset seeds whatever figure files are in the folder, skipping sample sequences that need a missing figure", () => {
+  const figuresDir = mkdtempSync(join(directory, "figures-"));
+  writeFileSync(
+    join(figuresDir, "walking-step.json"),
+    JSON.stringify({
+      name: "Walking Step",
+      style: "tango",
+      time: "4/4",
+      steps: [{ both: "forward", by: 0.6, length: "Q" }],
+    }),
+  );
+  writeFileSync(
+    join(figuresDir, "my-figure.json"),
+    JSON.stringify({
+      name: "My Figure",
+      style: "tango",
+      time: "4/4",
+      steps: [{ both: "side left", by: 0.3, length: "Q" }],
+    }),
+  );
+
+  const result = spawnSync(
+    process.execPath,
+    ["--import", "tsx", join(repoRoot, "db/reset.mts")],
+    {
+      cwd: repoRoot,
+      env: { ...process.env, DB_PATH: dbPath, FIGURES_DIR: figuresDir },
+      encoding: "utf8",
+    },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(countRows("figures"), 2);
+  // Only "Practice: single walk" uses nothing but Walking Step; the
+  // other four sample sequences need figures that aren't there.
+  assert.equal(countRows("sequences"), 1);
+  assert.equal(countRows("dances"), 1);
+  assert.match(result.stderr, /Skipping sample sequence "Basic Combination"/);
+  assert.match(
+    result.stdout,
+    /Seed complete: 2 figures, 1 sequences, 1 dances\./,
+  );
+});
