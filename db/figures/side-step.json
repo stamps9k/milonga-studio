@@ -15,6 +15,7 @@
       }
     }
   ],
+  "expectBeats": 1,
   "expectEnd": {
     "feet": {
       "lead": {

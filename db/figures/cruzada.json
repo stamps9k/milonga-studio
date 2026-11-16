@@ -22,6 +22,7 @@
       "label": "cross left behind right"
     }
   ],
+  "expectBeats": 2,
   "expectEnd": {
     "feet": {
       "lead": {

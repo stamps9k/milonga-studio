@@ -14,16 +14,9 @@
  * Movements are straight lines only (including zero-distance weight
  * changes and pivots); arcs aren't authored yet.
  *
- * Figures currently in db/figures/:
- *   - Walking Step   (1 beat, tango)    -- a single forward/back step
- *   - Side Step      (1 beat, tango)    -- both partners step sideways together
- *   - Cruzada        (2 beats, tango)   -- forward/back step, then follow crosses
- *   - Ocho           (4 beats, tango)   -- follow pivots and zigzags, lead holds
- *                                          mostly still with two small adjusting steps
- *   - Forward Waltz  (3 beats, waltz)   -- forward, side, close (rise on the side step)
- *   - Balance Step   (3 beats, waltz)   -- side, close, side (a waltz balance/chasse)
- *   - Cha-Cha Basic  (4 beats, cha-cha) -- forward break, recover, cha-cha-cha back into place
- *   - Side Basic     (4 beats, cha-cha) -- side break, recover, cha-cha-cha back into place
+ * The figures are whatever files are in db/figures/. Each file's
+ * expectBeats and expectEnd state its length and where it finishes, and
+ * the tests count the files rather than keeping their own list.
  *
  * Sample sequences (SAMPLE_DANCES below; skipped if a figure is missing):
  *   - Practice: single walk   -- Walking Step

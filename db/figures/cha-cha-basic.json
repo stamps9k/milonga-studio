@@ -39,6 +39,7 @@
       "label": "cha: in place"
     }
   ],
+  "expectBeats": 4,
   "expectEnd": {
     "stance": "closed",
     "leadStandingOn": "L"
