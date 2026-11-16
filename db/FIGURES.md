@@ -112,6 +112,7 @@ options on the row), or as an object with its own options:
 | `"forward"`, `"back"`, `"side left"`, `"side right"` | Travel that way, relative to the dancer's own facing. Needs `by`.  |
 | `"diagonal forward left"` and the other diagonals    | The same, at 45°.                                                  |
 | a number, such as `10` or `-10`                      | Degrees clockwise from forward, for angles in between. Needs `by`. |
+| `{ "forward": 0.9, "right": 0.2 }`                   | Travel this far forward and right, in metres. No `by`. See below.  |
 | `"close"`                                            | Bring the free foot beside the standing foot (stance width apart). |
 | `"in place"`                                         | Change weight onto the free foot without moving it (a recover).    |
 | `"pivot"`                                            | Turn on the standing foot without moving it. Needs `turn`.         |
@@ -119,6 +120,26 @@ options on the row), or as an object with its own options:
 The four diagonals are `"diagonal forward left"`, `"diagonal forward right"`,
 `"diagonal back left"` and `"diagonal back right"`. Directions are measured
 from the way the dancer faces **before** the step's turn.
+
+An **offset** says where the moving foot goes: so many metres forward and so
+many to the right of where it is now, with negative numbers for back and left.
+Either part can be left out. It's the same step as a number of degrees with
+`by`, but reads as the move you have in mind and avoids long decimals:
+
+```json
+{
+  "both": { "forward": 0.9, "right": 0.2 },
+  "turn": { "right": "1/4" },
+  "beat": 2
+}
+```
+
+is the same as `"both": 12.5288…, "by": 0.9220…`. Like the other directions, it's
+measured from the facing before the step's turn. With `both`, the follow
+mirrors it (his 0.9 forward is her 0.9 back). A partner can be written as an
+offset directly (`"lead": { "right": -0.2 }`) or as `"go"` inside a partner
+object with its own options. The default label describes the offset, such as
+"0.9 forward, 0.2 right, turning 1/4 right".
 
 ### Options
 
