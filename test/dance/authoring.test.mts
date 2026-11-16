@@ -13,6 +13,7 @@ import type {
   StepRow,
 } from "../../src/libs/dance/authoring.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
+import { assessJoin } from "../../src/libs/dance/join.mts";
 
 // Worked examples for defineFigure. Closed hold: lead's feet at
 // (-0.1, 0) and (0.1, 0) facing north (0), follow's at (0.1, 0.4) [left]
@@ -247,6 +248,70 @@ test("a close changes weight late; other steps, and a close without weight, don'
     steps.filter((step) => step.partner === "follow")[1].weightTiming,
     "late",
   );
+});
+
+// The whisk from the owner's class: forward, side, then the lead's left
+// foot crosses behind his right while both partners open an eighth into
+// promenade. Count 3's offsets (to the millimetre) land the crossing
+// feet where "crossed promenade" puts them.
+const WHISK_STEPS: StepRow[] = [
+  { both: "forward", by: 0.5, foot: "L", beat: 1 },
+  { both: { forward: 0.5, right: 0.2 }, beat: 2 },
+  {
+    lead: { go: { forward: -0.141, right: 0.612 }, turn: { left: "1/8" } },
+    follow: { go: { forward: -0.141, right: -0.612 }, turn: { right: "1/8" } },
+    beat: 3,
+  },
+];
+
+test("crossed promenade: a whisk ends in it, measured from where the lead's right foot went", () => {
+  assert.doesNotThrow(() =>
+    figure(WHISK_STEPS, {
+      time: "3/4",
+      expectEnd: {
+        stance: "crossed promenade",
+        moved: { forward: 0.5, right: 0.3 },
+        leadStandingOn: "L",
+      },
+    }),
+  );
+});
+
+test("crossed promenade: a figure can start in it, opened an eighth each with the crossing feet behind", () => {
+  // Lead's right foot at the origin, facing 315; his left 0.25 behind and
+  // 0.05 to the right in that facing: 0.3 * (sin 45, -cos 45) =
+  // (0.2121, -0.1414). Follow's left at (0, 0.4) facing 225; her right
+  // the mirror image, at (0.2121, 0.5414). Both stand on the crossed
+  // foot, so the lead's first step is with his right.
+  const { startPose, steps } = figure(
+    [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
+    { start: "crossed promenade" },
+  );
+  const s = Math.SQRT1_2;
+  pointClose(startPose.lead.right.position, [0, 0]);
+  pointClose(startPose.lead.left.position, [0.3 * s, -0.2 * s]);
+  pointClose(startPose.follow.left.position, [0, 0.4]);
+  pointClose(startPose.follow.right.position, [0.3 * s, 0.4 + 0.2 * s]);
+  assert.equal(startPose.lead.orientation, 315);
+  assert.equal(startPose.follow.orientation, 225);
+  assert.equal(startPose.lead.left.weight, 1);
+  assert.equal(startPose.follow.right.weight, 1);
+  assert.equal(steps[0].foot, "right");
+});
+
+test("crossed promenade: a figure starting in it follows a whisk with no gap", () => {
+  const whisk = figure(WHISK_STEPS, { time: "3/4" });
+  const after = figure(
+    [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
+    { start: "crossed promenade" },
+  );
+  const join = assessJoin(whisk.endPose, {
+    ...after,
+    id: "after",
+    steps: after.steps.map((step, index) => ({ ...step, id: String(index) })),
+  });
+  assert.equal(join.fits, true, JSON.stringify(join.issues));
+  assert.ok(join.maxFootGap < 1e-3);
 });
 
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
@@ -523,6 +588,19 @@ function problemsOf(value: unknown): string {
   }
   assert.fail("expected parseFigureDefinition to reject the file");
 }
+
+test("parseFigureDefinition: stances are closed or crossed promenade", () => {
+  assert.doesNotThrow(() =>
+    parseFigureDefinition(
+      { ...VALID_FILE, start: "crossed promenade" },
+      "rock-step.json",
+    ),
+  );
+  assert.match(
+    problemsOf({ ...VALID_FILE, start: "promenade" }),
+    /start: should be one of: "closed", "crossed promenade"/,
+  );
+});
 
 test("parseFigureDefinition: a well-formed file is accepted unchanged and works with defineFigure", () => {
   const parsed = parseFigureDefinition(

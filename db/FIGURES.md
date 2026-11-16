@@ -71,7 +71,7 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 | `name`        | Shown in the library. Must be unique across the figure files.                                          |
 | `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                            |
 | `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                    |
-| `start`       | Starting stance. Only `"closed"` so far, which is the default.                                         |
+| `start`       | Starting stance: `"closed"` (the default) or `"crossed promenade"`. See "Stances" below.               |
 | `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.          |
 | `steps`       | The steps, in time order.                                                                              |
 | `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                  |
@@ -222,6 +222,39 @@ mid-stride finish), with `facing` optional:
 Coordinates are in metres in the figure's own frame: the lead starts at the
 origin facing +y (line of dance), with +x to his right.
 
+## Stances
+
+A stance is a named position for both partners, used by `start` and by
+`expectEnd`'s `stance`.
+
+- **`"closed"`**: closed hold. The midpoint of the lead's feet is at the origin,
+  feet 20 cm apart. The lead faces line of dance and the follow faces him, 40 cm
+  in front. By default the lead stands on his right and the follow on her left.
+- **`"crossed promenade"`**: where a whisk ends. From closed hold, each partner
+  has opened an eighth (the lead to his left, the follow to her right) into a V
+  that opens to the lead's left. The crossing foot (the lead's left, the
+  follow's right) is 25 cm behind the other foot and 5 cm across it, in the
+  opened facing. The lead's right foot is at the origin, the follow's left foot
+  is 40 cm in front of it, and before opening the lead faced line of dance. So
+  the lead faces 315° and the follow 225°. By default each partner stands on
+  the crossed foot.
+
+`"crossed promenade"` measures from the lead's right foot rather than the
+middle of his feet, so a whisk's ending reads as where that foot went:
+
+```json
+"expectEnd": {
+  "stance": "crossed promenade",
+  "moved": { "forward": 0.5, "right": 0.3 },
+  "leadStandingOn": "L"
+}
+```
+
+A figure that starts in a stance is placed after the previous figure by
+matching the stances, so a figure starting in `"crossed promenade"` follows a
+whisk with no gap. It's called "crossed" because a feet-apart promenade, such
+as tango's, starts differently and would be a separate stance.
+
 ## Checking the length: `expectBeats`
 
 The figure's length in beats is also worked out from the steps: the latest
@@ -257,5 +290,5 @@ skipped with a warning, and the rest of the seed carries on.
 ## Not supported yet
 
 Curved paths (all steps travel in straight lines), crossing positions
-(`"cross"`), and stances other than closed hold. These will be added when a
-figure needs them.
+(`"cross"`), and stances other than closed hold and crossed promenade. These
+will be added when a figure needs them.

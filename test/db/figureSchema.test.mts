@@ -99,6 +99,7 @@ const WITH_FEET_END = {
   name: "Feet",
   style: "test",
   time: "3/4",
+  start: "crossed promenade",
   steps: [{ follow: { go: "close" }, length: "Q" }],
   expectEnd: {
     feet: {
