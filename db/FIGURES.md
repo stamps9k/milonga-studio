@@ -153,15 +153,16 @@ object with its own options. The default label describes the offset, such as
 Write these on the row, where they apply to `both` and to a partner written as
 just an action, or inside a partner object.
 
-| Option            | Meaning                                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `"by"`            | Distance in metres.                                                                                                                   |
-| `"turn"`          | `{ "right": "1/8" }` (clockwise, natural) or `{ "left": "3/8" }` (anticlockwise, reverse). A plain number such as `0.125` also works. |
-| `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                       |
-| `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                      |
-| `"weight": false` | A step without weight, such as a tap: the foot moves, the weight stays.                                                               |
-| `"air": true`     | An airborne action (boleo, gancho): the free leg goes out and back, carrying no weight.                                               |
-| `"label"`         | Text shown for the step. One string, or `{ "lead": …, "follow": … }`. Default: generated.                                             |
+| Option            | Meaning                                                                                                                                                                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"by"`            | Distance in metres.                                                                                                                                                                                                                                                             |
+| `"turn"`          | `{ "right": "1/8" }` (clockwise, natural) or `{ "left": "3/8" }` (anticlockwise, reverse). A plain number such as `0.125` also works.                                                                                                                                           |
+| `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                                                                                                                                                                 |
+| `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                                                                                                                                                                |
+| `"weight": false` | A step without weight, such as a tap: the foot moves, the weight stays.                                                                                                                                                                                                         |
+| `"air": true`     | An airborne action (boleo, gancho): the free leg goes out and back, carrying no weight.                                                                                                                                                                                         |
+| `"path"`          | `"around the front"`: the foot curves instead of going straight. It sets off the way the dancer faces (before the step's turn) and curves round to land where the step says, for a foot that swings round in front of the body on a turning step. At most 120° from the facing. |
+| `"label"`         | Text shown for the step. One string, or `{ "lead": …, "follow": … }`. Default: generated.                                                                                                                                                                                       |
 
 ### Which foot
 

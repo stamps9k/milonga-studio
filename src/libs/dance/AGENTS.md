@@ -131,8 +131,11 @@ technique. Keep them labelled as provisional in comments, and raise them with
 the owner before building more on top of them.
 
 - An arc's initial tangent is the partner's frame orientation immediately
-  before the step (`arcEndpoint` in `fold.mts`). No seeded figure uses arcs
-  yet, for this reason.
+  before the step (`arcEndpoint` in `fold.mts`). `defineFigure` builds
+  arcs only for `path: "around the front"` (`curveAroundTheFront`), which
+  relies on exactly this: the foot sets off the way the dancer faces and
+  curves round to its landing spot. The Open Natural Turn's count 2 is the
+  first seeded arc. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
   The exception is a step with `weightTiming: "late"`: its foot arrives at
