@@ -305,9 +305,35 @@ test("solveSkeleton: in closed hold his right hand lies across her back; the joi
   assert.ok(hisRight.x < -0.9, `fingers ${JSON.stringify(hisRight)}`);
   assert.ok(hisRight.z < 0 && hisRight.z > -0.5);
   assert.ok(Math.abs(hisRight.y) < 0.1);
-  // The joined hands point straight up.
-  assert.ok(pointing(him, "left").z > 0.99);
-  assert.ok(pointing(her, "right").z > 0.99);
+  // The joined hands point upwards, crossed: each leans 20° from
+  // upright, his out to the west (away from the couple) and hers in.
+  const hisJoined = pointing(him, "left");
+  const herJoined = pointing(her, "right");
+  for (const hand of [hisJoined, herJoined]) {
+    close(hand.z, Math.cos((20 * Math.PI) / 180), 1e-6);
+  }
+  assert.ok(hisJoined.x < -0.3 && herJoined.x > 0.3);
+  // They clasp palm to palm: his palm faces north towards her hand, hers
+  // south towards his, and both close their fingers round the other.
+  assert.ok(him.palms.left.y > 0.9 && her.palms.right.y < -0.9);
+  assert.equal(him.grips.left, 0.6);
+  assert.equal(her.grips.right, 0.6);
+  // His right palm is on her back (facing south, the way she faces);
+  // her left palm is down on his arm. Both hands stay nearly open.
+  assert.ok(him.palms.right.y < -0.9);
+  assert.ok(her.palms.left.z < -0.8);
+  assert.equal(him.grips.right, 0.15);
+  assert.equal(her.grips.left, 0.15);
+  // Every palm is a unit vector at right angles to the way its hand
+  // points.
+  for (const skeleton of [him, her]) {
+    for (const side of ["left", "right"] as const) {
+      const palm = skeleton.palms[side];
+      const hand = pointing(skeleton, side);
+      close(Math.hypot(palm.x, palm.y, palm.z), 1, 1e-9);
+      close(palm.x * hand.x + palm.y * hand.y + palm.z * hand.z, 0, 1e-9);
+    }
+  }
   // Her left hand lies along his upper arm, fingers towards his
   // shoulder: from her wrist the fingers go up and back (south), and
   // the fingertips stay outside his shoulder, not in on his neck.
@@ -353,6 +379,10 @@ test("solveSkeleton: the hold changes smoothly from closed to promenade and back
           ) < 0.03,
           `${partner} ${side} fingertip jumps at beat ${beat}`,
         );
+        assert.ok(
+          gap(previous[partner].palms[side], now[partner].palms[side]) < 0.1,
+          `${partner} ${side} palm turns suddenly at beat ${beat}`,
+        );
       }
     }
     assert.ok(
@@ -376,8 +406,12 @@ test("solveSkeleton: partners out of reach let go, back to the solo hold shape",
   for (const joint of ["leftHand", "rightHand"] as const) {
     assert.ok(gap(together.lead.joints[joint], alone.joints[joint]) < 1e-9);
   }
-  // The hands point straight on from the forearms again, as when alone.
+  // The hands point straight on from the forearms again, palms in and
+  // open, as when alone.
   for (const side of ["left", "right"] as const) {
+    assert.ok(gap(together.lead.palms[side], alone.palms[side]) < 1e-9);
+    assert.equal(together.lead.grips[side], 0);
+    assert.equal(alone.grips[side], 0);
     assert.ok(
       gap(together.lead.fingertips[side], alone.fingertips[side]) < 1e-9,
     );

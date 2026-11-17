@@ -75,6 +75,34 @@ export const MODEL_BONES = {
 
 type LimbBones = Record<keyof (typeof MODEL_BONES)["left"], THREE.Object3D>;
 
+/**
+ * The fingers we curl, each a chain of three bones from the knuckle
+ * (`index_01_l` ... `index_03_l`, Unreal-style names). The thumb is left
+ * as modelled. Index and little finger also give the hand's width, which
+ * with the way it points says which side the palm is on (palmOf).
+ */
+const FINGERS = ["index", "middle", "ring", "pinky"] as const;
+type Finger = (typeof FINGERS)[number];
+
+/**
+ * How far each finger joint bends (radians) at a grip of 1, from the
+ * knuckle out: about a loose fist. A grip of 0.6 (the joined hands) is
+ * 0.6 of each. Provisional (2026-11-17).
+ */
+const CURL = [1.4, 1.6, 1.1] as const;
+
+/**
+ * The thumb (`thumb_01_l` ... `thumb_03_l`) closes too, by THUMB_CURL
+ * (radians, at a grip of 1) at each joint. Its base swings in towards the
+ * fingers (the way the hand points), along the side of the hand held;
+ * its outer joints bend towards the palm. Bending the base towards the
+ * palm instead swung the thumb out in front of the hand. Each joint's
+ * axis is worked out from wherever it points, since the thumb's bending
+ * axis differs from the fingers' and from model to model. Provisional
+ * (2026-11-17).
+ */
+const THUMB_CURL = [0.6, 0.4, 0.4] as const;
+
 /** Floor space (x, y, height) from Three.js's axes: toThree reversed. */
 function toFloor(v: THREE.Vector3): Point3D {
   return vec(v.x, -v.z, v.y);
@@ -114,6 +142,48 @@ function aim(
   bone.updateWorldMatrix(false, true);
 }
 
+/** Turns `bone` (keeping its position) by `turn`, a rotation in world
+ *  space, on top of its current orientation. */
+function turnWorld(bone: THREE.Object3D, turn: THREE.Quaternion) {
+  bone.updateWorldMatrix(true, false);
+  const world = bone.getWorldQuaternion(new THREE.Quaternion());
+  const parentWorld = bone.parent
+    ? bone.parent.getWorldQuaternion(new THREE.Quaternion())
+    : new THREE.Quaternion();
+  bone.quaternion.copy(
+    parentWorld.invert().multiply(turn.clone().multiply(world)),
+  );
+  bone.updateWorldMatrix(false, true);
+}
+
+/**
+ * Which way a model's hand points (`along`, wrist to middle knuckle) and
+ * which way its palm faces (`palm`, at right angles to that), worked out
+ * from where its knuckles are, in world space. Across the knuckles from
+ * the little finger to the index finger is towards the thumb; for a
+ * right hand pointing away from you with the thumb to the left, the palm
+ * faces down, which is (towards the thumb) x (along); a left hand is the
+ * mirror image, (along) x (towards the thumb). Anatomy rather than the
+ * model's bone axes, so it holds for any model with these bones.
+ */
+function palmOf(
+  side: Foot,
+  hand: THREE.Object3D,
+  fingers: Record<Finger, THREE.Object3D[]>,
+): { along: THREE.Vector3; palm: THREE.Vector3 } {
+  const wrist = worldPosition(hand);
+  const along = worldPosition(fingers.middle[0]).sub(wrist).normalize();
+  const thumbwards = worldPosition(fingers.index[0]).sub(
+    worldPosition(fingers.pinky[0]),
+  );
+  const palm =
+    side === "right"
+      ? new THREE.Vector3().crossVectors(thumbwards, along)
+      : new THREE.Vector3().crossVectors(along, thumbwards);
+  palm.addScaledVector(along, -palm.dot(along)).normalize();
+  return { along, palm };
+}
+
 /** Finds a bone by name, or explains which model lacks it. */
 function bone(model: THREE.Object3D, name: string): THREE.Object3D {
   const found = model.getObjectByName(name);
@@ -137,6 +207,8 @@ export class CharacterRig {
   readonly object = new THREE.Group();
   private readonly pelvis: THREE.Object3D;
   private readonly limbs: Record<Foot, LimbBones>;
+  private readonly fingers: Record<Foot, Record<Finger, THREE.Object3D[]>>;
+  private readonly thumbs: Record<Foot, THREE.Object3D[]>;
   /** Every bone we turn, with its rest orientation, to start each frame
    *  from the rest pose (so nothing drifts from frame to frame). */
   private readonly rest = new Map<THREE.Object3D, THREE.Quaternion>();
@@ -163,10 +235,34 @@ export class CharacterRig {
       };
     };
     this.limbs = { left: limb("left"), right: limb("right") };
+    const fingers = (side: Foot) => {
+      const suffix = side === "left" ? "l" : "r";
+      return Object.fromEntries(
+        FINGERS.map((finger) => [
+          finger,
+          [1, 2, 3].map((joint) =>
+            bone(model, `${finger}_0${joint}_${suffix}`),
+          ),
+        ]),
+      ) as Record<Finger, THREE.Object3D[]>;
+    };
+    this.fingers = { left: fingers("left"), right: fingers("right") };
+    const thumb = (side: Foot) =>
+      [1, 2, 3, 4].map((joint) =>
+        bone(
+          model,
+          `thumb_0${joint}${joint === 4 ? "_leaf" : ""}_${side === "left" ? "l" : "r"}`,
+        ),
+      );
+    this.thumbs = { left: thumb("left"), right: thumb("right") };
     for (const object of [
       this.pelvis,
       ...Object.values(this.limbs.left),
       ...Object.values(this.limbs.right),
+      ...Object.values(this.fingers.left).flat(),
+      ...Object.values(this.fingers.right).flat(),
+      ...this.thumbs.left,
+      ...this.thumbs.right,
     ]) {
       this.rest.set(object, object.quaternion.clone());
     }
@@ -281,6 +377,66 @@ export class CharacterRig {
       // it. Only the direction is set: the smallest turn that does it,
       // so the palm keeps the forearm's twist.
       aim(l.hand, l.middle, three(skeleton.fingertips[side]));
+      this.shapeHand(side, skeleton);
+    }
+  }
+  /**
+   * Turns a hand (already pointing at the skeleton's fingertip) about
+   * the way it points until its palm faces the skeleton's palm, then
+   * curls its fingers by the skeleton's grip. Together these make the
+   * joined hands clasp, palm to palm with the fingers round each other,
+   * instead of standing open side by side.
+   */
+  private shapeHand(side: Foot, skeleton: PartnerSkeleton): void {
+    const hand = this.limbs[side].hand;
+    const fingers = this.fingers[side];
+    const along = palmOf(side, hand, fingers).along;
+    const wanted = new THREE.Vector3(...toThree(skeleton.palms[side]));
+    wanted.addScaledVector(along, -wanted.dot(along));
+    if (wanted.lengthSq() < 1e-12) return;
+    wanted.normalize();
+    // Roll: the signed angle from the model's palm to the wanted one,
+    // about the way the hand points. (A plain shortest turn between the
+    // two could pick another axis when they are opposite.)
+    const palm = palmOf(side, hand, fingers).palm;
+    const angle = Math.atan2(
+      new THREE.Vector3().crossVectors(palm, wanted).dot(along),
+      palm.dot(wanted),
+    );
+    turnWorld(hand, new THREE.Quaternion().setFromAxisAngle(along, angle));
+
+    // Curl: every joint turns the same way, about the axis that carries
+    // the way the hand points towards the palm (along x palm), so the
+    // fingers close onto the palm side.
+    const grip = Math.min(1, Math.max(0, skeleton.grips[side]));
+    if (grip === 0) return;
+    const axis = new THREE.Vector3().crossVectors(along, wanted).normalize();
+    for (const chain of Object.values(fingers)) {
+      chain.forEach((joint, index) => {
+        turnWorld(
+          joint,
+          new THREE.Quaternion().setFromAxisAngle(axis, grip * CURL[index]),
+        );
+      });
+    }
+    const thumb = this.thumbs[side];
+    for (let index = 0; index < 3; index++) {
+      const joint = thumb[index];
+      const pointing = worldPosition(thumb[index + 1])
+        .sub(worldPosition(joint))
+        .normalize();
+      const axis = new THREE.Vector3().crossVectors(
+        pointing,
+        index === 0 ? along : wanted,
+      );
+      if (axis.lengthSq() < 1e-12) continue;
+      turnWorld(
+        joint,
+        new THREE.Quaternion().setFromAxisAngle(
+          axis.normalize(),
+          grip * THUMB_CURL[index],
+        ),
+      );
     }
   }
 }

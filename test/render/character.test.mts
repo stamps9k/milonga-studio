@@ -45,11 +45,49 @@ function testModel(): THREE.Object3D {
     const upperArm = make(`upperarm_${side}`, 0.2 * sign, 0, 0);
     const lowerArm = make(`lowerarm_${side}`, 0.27 * sign, 0, 0);
     const hand = make(`hand_${side}`, 0.24 * sign, 0, 0);
-    const middle = make(`middle_01_${side}`, 0.1 * sign, 0, 0.01);
     spine.add(upperArm);
     upperArm.add(lowerArm);
     lowerArm.add(hand);
-    hand.add(middle);
+    // Four fingers of three bones, palm down in the T-pose: the index
+    // finger towards the front (+Z, where the thumb is), the little
+    // finger towards the back.
+    for (const [finger, across] of [
+      ["index", 0.03],
+      ["middle", 0.01],
+      ["ring", -0.01],
+      ["pinky", -0.03],
+    ] as const) {
+      let parent: THREE.Object3D = hand;
+      [0.1, 0.035, 0.03].forEach((length, index) => {
+        const joint = make(
+          `${finger}_0${index + 1}_${side}`,
+          length * sign,
+          0,
+          index === 0 ? across : 0,
+        );
+        parent.add(joint);
+        parent = joint;
+      });
+    }
+    // The thumb, from the base of the palm out towards the front.
+    let parent: THREE.Object3D = hand;
+    (
+      [
+        [0.03, 0.04],
+        [0.03, 0.02],
+        [0.03, 0],
+        [0.025, 0],
+      ] as const
+    ).forEach(([out, forward], index) => {
+      const joint = make(
+        `thumb_0${index + 1}${index === 3 ? "_leaf" : ""}_${side}`,
+        out * sign,
+        0,
+        forward,
+      );
+      parent.add(joint);
+      parent = joint;
+    });
   }
   return armature;
 }
@@ -154,6 +192,42 @@ test("CharacterRig: the hands point at the skeleton's fingertips", () => {
       .normalize();
     const finger = at(rig, `middle_01_${side}`).sub(wrist).normalize();
     assert.ok(finger.angleTo(toward) < 1e-6, `${side} hand`);
+  }
+});
+
+test("CharacterRig: each palm faces the skeleton's palm, and a grip curls the fingers onto it", () => {
+  const pose = stancePose("closed", { lead: "right", follow: "left" });
+  const { rig, skeleton } = posed(pose);
+  // The test model's hands point along their bones with the index finger
+  // towards the thumb, so the palm is worked out as for a real hand:
+  // (towards the thumb) x (along) for a right hand, the reverse for a
+  // left one.
+  for (const [side, foot] of [
+    ["l", "left"],
+    ["r", "right"],
+  ] as const) {
+    const wrist = at(rig, `hand_${side}`);
+    const along = at(rig, `middle_01_${side}`).sub(wrist).normalize();
+    const thumbwards = at(rig, `index_01_${side}`).sub(
+      at(rig, `pinky_01_${side}`),
+    );
+    const palm =
+      foot === "right"
+        ? new THREE.Vector3().crossVectors(thumbwards, along)
+        : new THREE.Vector3().crossVectors(along, thumbwards);
+    palm.addScaledVector(along, -palm.dot(along)).normalize();
+    const wanted = new THREE.Vector3(...toThree(skeleton.palms[foot]));
+    assert.ok(palm.angleTo(wanted) < 1e-6, `${side} palm`);
+    // The joined hand (his left) grips at 0.6: the tip of each finger is
+    // on the palm side of the knuckle, by about a finger's width or more.
+    if (foot === "left") {
+      for (const finger of ["index", "middle", "ring", "pinky"]) {
+        const tip = at(rig, `${finger}_03_${side}`).sub(
+          at(rig, `${finger}_01_${side}`),
+        );
+        assert.ok(tip.dot(palm) > 0.02, `${finger} curls onto the palm`);
+      }
+    }
   }
 });
 
