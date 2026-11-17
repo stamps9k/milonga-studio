@@ -30,6 +30,14 @@ frontend and a small Express + SQLite API.
   the 2D view's colours, shapes and scale bar, shared with the legend.
   React components create a renderer once and pass it new scenes; they do
   not draw the view themselves.
+- `src/libs/body/` is the body solver for the 3D view: plain functions that
+  turn a `Pose` into a full skeleton per dancer (`solveSkeleton` in
+  `skeleton.mts`; joints named as in the standard humanoid skeleton), from
+  body measurements in `proportions.mts` (lead 1.75 m, follow 1.70 m).
+  Points are 3D floor space: the model's x and y, plus z for height
+  (`vector3.mts`). It reads the dance model and nothing reads it but
+  renderers; `test/body/figures.test.mts` dances every figure file with
+  it and fails if a leg can't reach its foot or the hips sink too far.
 - `src/libs/api/` is the frontend's API client; `src/libs/browser/` holds
   browser-only helpers.
 - `api/` is the Express server. `api/assemble.mts` is the single place that
