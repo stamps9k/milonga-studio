@@ -50,7 +50,8 @@ export type Movement =
       /** Heading of travel, in degrees, measured on the floor (0 = facing
        *  line of dance / "north" — pick a fixed convention app-wide). */
       direction: number;
-      /** Distance travelled, in floor units (e.g. cm). */
+      /** Distance travelled, in metres (the floor unit; see Units in
+       *  AGENTS.md). */
       distance: number;
     }
   | {
@@ -94,7 +95,7 @@ export interface DanceStep {
   orientation: number;
 
   /** Vertical displacement of the body at this step, relative to a neutral
-   *  standing height (floor units). Structural for waltz-style rise and
+   *  standing height, in metres. Structural for waltz-style rise and
    *  fall, left at 0 for flat styles like most tango/blues. */
   rise: number;
 

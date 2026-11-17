@@ -24,8 +24,8 @@ import { normalizeDegrees } from "./heading.mts";
  * stops a join from being used. The UI decides what to do with it.
  */
 
-/** Largest foot gap, in floor units, still treated as a clean join.
- *  Provisional: 5 cm at the metre scale the seed uses, enough to absorb
+/** Largest foot gap, in metres, still treated as a clean join.
+ *  Provisional: 5 cm, enough to absorb
  *  hand-typed rounding while still flagging real stance mismatches,
  *  which start at about 15 cm in the seed data. */
 export const JOIN_FOOT_GAP_TOLERANCE = 0.05;
@@ -41,7 +41,7 @@ export type JoinIssue =
       kind: "foot-gap";
       partner: Partner;
       foot: Foot;
-      /** Distance in floor units. */
+      /** Distance in metres. */
       distance: number;
     }
   | {
@@ -62,7 +62,7 @@ export interface JoinAssessment {
   /** Where the next figure is placed -- the same transform the sequence
    *  builder would use. */
   transform: FloorTransform;
-  /** The largest distance any foot jumps at the join, in floor units. */
+  /** The largest distance any foot jumps at the join, in metres. */
   maxFootGap: number;
   /** Signed facing change per partner at the join, in degrees. */
   facingChange: Record<Partner, number>;

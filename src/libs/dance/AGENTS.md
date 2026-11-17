@@ -68,13 +68,12 @@ and usable by any renderer.
 
 ## Units
 
-- Lengths (`distance`, `arcLength`, positions, `rise`) are in floor units.
-  The `Movement` type comment suggests centimetres as an example, but the
-  seed data and tests use metre-scale values (a walking step is `0.6`). Treat
-  metres as the working convention. The unit is not yet formally fixed, so
-  flag any change that depends on it, and update the `step.mts` comment if
-  the owner confirms a unit.
-- Curvature is 1 / radius in the same floor units.
+- The floor unit is the metre (owner's decision, 2026-11-17, ahead of the
+  3D view, which needs real body sizes). Lengths (`distance`, `arcLength`,
+  positions, `rise`) are all in metres: a walking step is about `0.5`, the
+  closed stance's feet are `0.2` apart. Write "metres" rather than "floor
+  units" in new comments.
+- Curvature is 1 / radius, in 1/metres.
 - `weight` is 0 to 1: the share of the partner's weight on that foot at the
   end of the step. 0 for airborne actions and pure embellishments.
 - `rise` is vertical displacement from neutral standing height, used for

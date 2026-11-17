@@ -242,7 +242,7 @@ export interface TrailGap {
   foot: Foot;
   from: Point2D;
   to: Point2D;
-  /** Distance in floor units. */
+  /** Distance in metres. */
   distance: number;
 }
 
