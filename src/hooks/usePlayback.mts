@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/** Beats per second while playing. There's no real tempo to drive this
- *  yet -- tempo lives on a Dance (bpm), and nothing here is wired to
- *  one -- so this is a fixed placeholder until that connection exists. */
-const PLACEHOLDER_BEATS_PER_SECOND = 1;
-
 /**
  * Where playback should start when play is pressed at `current`: from
  * the beginning if the position is already at (or past) the end of the
@@ -28,11 +23,15 @@ interface UsePlaybackResult {
 
 /**
  * Owns a scrub/playback position (in beats) over a sequence of the
- * given total length. Doesn't know anything about dance data itself --
+ * given total length, advancing at `bpm` beats a minute while playing
+ * (see useTempo). Doesn't know anything about dance data itself --
  * Canvas2D/ActiveStep turn `beat` into an actual Pose via
  * sequencePoseAtBeat (see fold.mts).
  */
-export function usePlayback(totalBeats: number): UsePlaybackResult {
+export function usePlayback(
+  totalBeats: number,
+  bpm: number,
+): UsePlaybackResult {
   const [beat, setBeat] = useState(0);
   const [playing, setPlaying] = useState(false);
   const frameRef = useRef<number | null>(null);
@@ -53,7 +52,7 @@ export function usePlayback(totalBeats: number): UsePlaybackResult {
       if (lastTimeRef.current !== null) {
         const deltaSeconds = (time - lastTimeRef.current) / 1000;
         setBeat((current) => {
-          const next = current + deltaSeconds * PLACEHOLDER_BEATS_PER_SECOND;
+          const next = current + (deltaSeconds * bpm) / 60;
           if (next >= totalBeats) {
             setPlaying(false);
             return clamp(totalBeats);
@@ -71,7 +70,10 @@ export function usePlayback(totalBeats: number): UsePlaybackResult {
         cancelAnimationFrame(frameRef.current);
       }
     };
-  }, [playing, totalBeats, clamp]);
+    // A tempo change restarts the loop so the new tempo applies from the
+    // next frame. lastTimeRef keeps the previous frame's time across the
+    // restart, so no playing time is lost or counted twice.
+  }, [playing, totalBeats, clamp, bpm]);
 
   const play = useCallback(() => {
     if (totalBeats <= 0) return;
