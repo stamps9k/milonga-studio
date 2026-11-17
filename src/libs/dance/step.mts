@@ -62,6 +62,14 @@ export type Movement =
       curvature: number;
       /** Length of the path along the arc (not the straight-line chord). */
       arcLength: number;
+      /** Which way the foot sets off, in degrees clockwise from the
+       *  dancer's facing just before the step (so 180 sets off straight
+       *  back, -135 diagonally back to the left). Left out for 0: the
+       *  foot sets off the way the dancer faces, as every arc did before
+       *  this field existed. Relative to the facing rather than an
+       *  absolute heading, so placing a figure on the floor (a
+       *  FloorTransform) needs no change to it. */
+      setOff?: number;
     };
 
 export interface DanceStep {

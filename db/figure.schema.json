@@ -150,8 +150,8 @@
       "description": "true when the step crosses the feet on purpose (a whisk's cross behind). Without it a step may not put the left foot to the right of the right foot."
     },
     "path": {
-      "enum": ["around the front"],
-      "description": "\"around the front\": the foot sets off the way the dancer faces and curves round to land where the step says, instead of a straight line."
+      "enum": ["around the front", "around the back"],
+      "description": "The foot curves instead of going straight, landing where the step says. \"around the front\": it sets off the way the dancer faces. \"around the back\": it sets off diagonally back towards the side it lands on, to uncross feet the way they crossed."
     },
     "label": {
       "type": "string",

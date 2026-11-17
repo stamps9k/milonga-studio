@@ -97,7 +97,7 @@ const insertMovementStraight = db.prepare(
   "INSERT INTO movement_straight (movement_id, direction, distance) VALUES (?, ?, ?)",
 );
 const insertMovementArc = db.prepare(
-  "INSERT INTO movement_arc (movement_id, curvature, arc_length) VALUES (?, ?, ?)",
+  "INSERT INTO movement_arc (movement_id, curvature, arc_length, set_off) VALUES (?, ?, ?, ?)",
 );
 const insertFigure = db.prepare(
   `INSERT INTO figures (name, style, beats_per_measure, beat_unit, start_pose_id, end_pose_id)
@@ -180,7 +180,7 @@ function seedFigure(figure: AuthoredFigure): SeededFigure {
 
   figure.steps.forEach((step, index) => {
     // Straight movements (including zero-distance ones), or arcs from
-    // steps with `path: "around the front"`.
+    // steps with `path: "around the front"` or `"around the back"`.
     const movementId = insertMovement.run(step.movement.type)
       .lastInsertRowid as number;
     if (step.movement.type === "straight") {
@@ -194,6 +194,7 @@ function seedFigure(figure: AuthoredFigure): SeededFigure {
         movementId,
         step.movement.curvature,
         step.movement.arcLength,
+        step.movement.setOff ?? 0,
       );
     }
     insertStep.run(

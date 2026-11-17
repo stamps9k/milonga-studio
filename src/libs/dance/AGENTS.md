@@ -139,12 +139,14 @@ These are implementation choices that have not been checked against real
 technique. Keep them labelled as provisional in comments, and raise them with
 the owner before building more on top of them.
 
-- An arc's initial tangent is the partner's frame orientation immediately
-  before the step (`arcEndpoint` in `fold.mts`). `defineFigure` builds
-  arcs only for `path: "around the front"` (`curveAroundTheFront`), which
-  relies on exactly this: the foot sets off the way the dancer faces and
-  curves round to its landing spot. No seeded figure uses an arc at the
-  moment. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
+- An arc sets off along the partner's frame orientation immediately
+  before the step, turned by the arc's optional `setOff` (degrees, 0 when
+  left out; `arcHeading` in `fold.mts`). `defineFigure` builds arcs only
+  for a step's `path` (`curveAround`): `"around the front"` sets off the
+  way the dancer faces, `"around the back"` diagonally back towards the
+  landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
+  Turn's and the Closed Promenade's uncrossing steps use `"around the
+back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
   The exception is a step with `weightTiming: "late"`: its foot arrives at
@@ -205,8 +207,10 @@ the owner before building more on top of them.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a
-  step is marked `cross: true` or the figure starts crossed, and no lead
-  foot comes within `PARTNER_FOOT_CLEARANCE` (15 cm, a judgement call) of
+  step is marked `cross: true` or the figure starts crossed; while the
+  feet are crossed the foot in front stays in front, so legs never pass
+  through each other (added 2026-11-17, part of the "crossed feet"
+  check); and no lead foot comes within `PARTNER_FOOT_CLEARANCE` (15 cm, a judgement call) of
   a follow foot. Figures known to be wrong opt out with `skipChecks` and a
   note; at the time of writing that's the three old tango figures and Box
   Turn (forward half), whose follow can't get round the lead without
