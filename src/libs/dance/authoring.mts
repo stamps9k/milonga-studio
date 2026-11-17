@@ -1,6 +1,7 @@
 import { applyTransform } from "./floor.mts";
 import { figureDurationBeats, poseAtBeat } from "./fold.mts";
 import {
+  DEG_TO_RAD,
   RAD_TO_DEG,
   addPoints,
   headingToUnitVector,
@@ -28,7 +29,8 @@ import type {
  * left" -- and the helper works out everything the model needs:
  *
  * - which foot moves (the free one), and the starting weight;
- * - the follow's step when you write `both` (the mirror of the lead's);
+ * - the follow's step when you write `both` (the mirror of the lead's),
+ *   and on a turning step both partners' steps round the turning centre;
  * - each step's absolute floor direction, from the dancer's facing;
  * - where a "close" lands (beside the standing foot at stance width);
  * - weight, facing and timing after each step;
@@ -52,17 +54,36 @@ import type {
 export const STANCE_WIDTH = 0.2;
 
 /** Distance between the lead's and follow's feet front to back in
- *  closed hold. Provisional: the follow stands directly in front of the
- *  lead, without the slight offset to the lead's right of real closed
- *  hold. Both values can change independently. */
+ *  closed hold. Provisional. */
 export const PARTNER_DISTANCE = 0.4;
+
+/**
+ * How far the follow stands to the lead's right in closed hold, in
+ * metres, measured across his facing between the centres of the two
+ * partners' feet. Standard closed hold is offset, each partner a little
+ * to the other's right, and "never toes to toes": when the lead walks
+ * forward his right foot goes between her feet (owner's request,
+ * 2026-11-17; Smooth and Standard references put it at up to half a
+ * body width).
+ *
+ * Half the stance width is exactly the shift that puts the lead's right
+ * foot in line with the gap between her feet, so that's the value used.
+ * Provisional: tango's offset is larger in real technique, but the
+ * model has no style-specific stances, so every dance uses this one.
+ *
+ * The promenade stances keep the same offset in the closed frame they
+ * opened from. Because their line of travel runs towards -x, the
+ * follow's +x shift puts her slightly behind the lead along the line,
+ * as in real promenade (the V's point at his right hip and her left).
+ */
+export const HOLD_OFFSET = STANCE_WIDTH / 2;
 
 /**
  * Named positions a figure can start or end in (`start`, and
  * `expectEnd.stance`):
  * - "closed": closed hold. The midpoint of the lead's feet is at the
  *   origin, the lead faces line of dance (0) and the follow faces him
- *   (180), PARTNER_DISTANCE in front.
+ *   (180), PARTNER_DISTANCE in front and HOLD_OFFSET to his right.
  * - "crossed promenade": the position a whisk ends in. Each partner has
  *   opened an eighth from closed hold (the lead to his left, the follow
  *   to her right) into a V that opens to the lead's left, and has the
@@ -160,14 +181,17 @@ export function stancePose(
           orientation: 0,
           rise: 0,
         },
-        // Facing the lead, so her left foot is on the east (+x) side.
+        // Facing the lead, so her left foot is on the east (+x) side,
+        // and HOLD_OFFSET to his right: her right foot is straight in
+        // front of the middle of his feet, so his right foot is in
+        // line with the gap between hers.
         follow: {
           left: {
-            position: { x: half, y: PARTNER_DISTANCE },
+            position: { x: HOLD_OFFSET + half, y: PARTNER_DISTANCE },
             weight: weight("follow", "left"),
           },
           right: {
-            position: { x: -half, y: PARTNER_DISTANCE },
+            position: { x: HOLD_OFFSET - half, y: PARTNER_DISTANCE },
             weight: weight("follow", "right"),
           },
           orientation: 180,
@@ -188,9 +212,11 @@ export function stancePose(
  *   left); left foot CROSS_BEHIND behind the right and CROSS_ACROSS to
  *   its right, in that opened facing.
  * - Follow: left foot PARTNER_DISTANCE in front of the lead's right
- *   foot, at (0, 0.4), where it was in hold; faces 225 (opened an eighth
- *   to her right); right foot CROSS_BEHIND behind her left and
- *   CROSS_ACROSS to its left (the mirror image).
+ *   foot and HOLD_OFFSET to its right, at (0.1, 0.4), where it was in
+ *   hold; faces 225 (opened an eighth to her right); right foot
+ *   CROSS_BEHIND behind her left and CROSS_ACROSS to its left (the
+ *   mirror image). The offset leaves her 0.1 behind him along the line
+ *   of travel (-x).
  *
  * The weights come from `weight`, normally on the crossed feet, which
  * is how a whisk ends.
@@ -207,7 +233,7 @@ function crossedPromenadePose(
       scalePoint(headingToUnitVector(facing + 90), across),
     );
   const leadRight = { x: 0, y: 0 };
-  const followLeft = { x: 0, y: PARTNER_DISTANCE };
+  const followLeft = { x: HOLD_OFFSET, y: PARTNER_DISTANCE };
   return {
     lead: {
       left: {
@@ -240,8 +266,10 @@ function crossedPromenadePose(
  * - Lead: left foot at (0, 0). His right foot is where it closed in the
  *   chassé: PROMENADE_SIDE_STEP back along the line of travel, then
  *   PROMENADE_CLOSE_WIDTH to his right across his opened facing.
- * - Follow: right foot at (0, 0.4), PARTNER_DISTANCE from the lead's left
- *   across the line of travel. Her left foot is the mirror image:
+ * - Follow: right foot PARTNER_DISTANCE plus twice PROMENADE_SEPARATION
+ *   from the lead's left across the line of travel, and HOLD_OFFSET
+ *   behind it along the line (+x), at (0.1, 0.6). Her left foot is the
+ *   mirror image:
  *   PROMENADE_SIDE_STEP back along the line, then PROMENADE_CLOSE_WIDTH
  *   to her left.
  *
@@ -259,7 +287,10 @@ function promenadeApartPose(
       scalePoint(headingToUnitVector(facing + side), PROMENADE_CLOSE_WIDTH),
     );
   const leadLeft = { x: 0, y: 0 };
-  const followRight = { x: 0, y: PARTNER_DISTANCE + 2 * PROMENADE_SEPARATION };
+  const followRight = {
+    x: HOLD_OFFSET,
+    y: PARTNER_DISTANCE + 2 * PROMENADE_SEPARATION,
+  };
   return {
     lead: {
       left: { position: leadLeft, weight: weight("lead", "left") },
@@ -290,12 +321,11 @@ function promenadeApartPose(
  *
  * - Lead: right foot at (0, 0); left foot TANGO_PROMENADE_WIDTH along
  *   the line of travel, at (-0.6, 0).
- * - Follow: left foot PARTNER_DISTANCE across the line, at (0, 0.4),
- *   where it was in closed hold; right foot TANGO_PROMENADE_WIDTH along
- *   the line, at (-0.6, 0.4).
+ * - Follow: left foot PARTNER_DISTANCE across the line and HOLD_OFFSET
+ *   behind along it, at (0.1, 0.4), where it was in closed hold; right
+ *   foot TANGO_PROMENADE_WIDTH along the line, at (-0.5, 0.4).
  *
- * Unlike "promenade apart", the outside feet are level with each other
- * along the line (as the owner's link leaves them) and the partners
+ * Unlike "promenade apart", the partners
  * keep closed hold's distance. The weights come from `weight`, normally
  * on the inside feet.
  */
@@ -304,7 +334,7 @@ function tangoPromenadePose(
 ): Pose {
   const out = { x: -TANGO_PROMENADE_WIDTH, y: 0 };
   const leadRight = { x: 0, y: 0 };
-  const followLeft = { x: 0, y: PARTNER_DISTANCE };
+  const followLeft = { x: HOLD_OFFSET, y: PARTNER_DISTANCE };
   return {
     lead: {
       left: {
@@ -464,6 +494,29 @@ function turnFraction(amount: TurnAmount): number {
   return numerator / denominator;
 }
 
+/**
+ * What a couple turns around on a turning `both` step (StepRow.turnCentre):
+ * - "lead": the lead takes the step as written and the follow travels
+ *   round him, keeping her place in the hold.
+ * - "follow": she takes the mirror of the written step and he travels
+ *   round her.
+ * - "between": the point halfway between their moving feet takes the
+ *   written step, and both travel round it, as in a pivot.
+ *
+ * Ballroom references agree that in an ordinary turn the partner going
+ * backward is on the inside of the turn and travels less, while the one
+ * going forward goes round them; only pivoting actions turn round a
+ * point between the partners. So when a row leaves it out, the centre
+ * is whoever the written step sends backward (defaultTurnCentre).
+ * Owner's decision, 2026-11-17.
+ */
+export type TurnCentre = "lead" | "follow" | "between";
+export const TURN_CENTRES: readonly TurnCentre[] = [
+  "lead",
+  "follow",
+  "between",
+];
+
 /** Options that can be given for both partners on a row, or per
  *  partner. */
 export interface MoveOptions {
@@ -521,6 +574,10 @@ export interface PartnerMove extends MoveOptions {
  */
 export interface StepRow extends Omit<MoveOptions, "label"> {
   both?: Action;
+  /** On a turning `both` step, what the couple turns around (see
+   *  TurnCentre). Default: whoever the step sends backward. Only
+   *  allowed with `both` and a `turn`. */
+  turnCentre?: TurnCentre;
   lead?: Action | PartnerMove;
   follow?: Action | PartnerMove;
   beat?: number;
@@ -615,6 +672,54 @@ function turnDegrees(turn: Turn | undefined): number {
   return "right" in turn
     ? turnFraction(turn.right) * 360
     : -turnFraction(turn.left) * 360;
+}
+
+/** How far along from the lead's moving foot to the follow's each
+ *  turning centre is (see the mirroring in defineFigure). */
+const TURN_CENTRE_FRACTION: Record<TurnCentre, number> = {
+  lead: 0,
+  follow: 1,
+  between: 0.5,
+};
+
+/** The turning centre of a `both` row that doesn't give one: the
+ *  partner the written step sends backward, who is on the inside of the
+ *  turn (the lead when his step goes back, the follow when it goes
+ *  forward and hers goes back). A step straight to the side sends
+ *  neither backward, so the couple turns round the point between them.
+ *  `move` is the lead's step with any offset already resolved to
+ *  degrees, measured from his facing before the turn. */
+function defaultTurnCentre(move: PlainMove): TurnCentre {
+  const degrees =
+    typeof move.go === "number"
+      ? move.go
+      : DIRECTION_DEGREES[move.go as keyof typeof DIRECTION_DEGREES];
+  const forward = Math.cos(degrees * DEG_TO_RAD);
+  if (forward > 1e-9) return "follow";
+  if (forward < -1e-9) return "lead";
+  return "between";
+}
+
+/** A copy of `move` that takes the foot from `from` to `target`, as a
+ *  direction (relative to `orientation`, the facing before the step's
+ *  turn, as `go` expects) and distance. */
+function moveTo(
+  move: PlainMove,
+  from: Point2D,
+  target: Point2D,
+  orientation: number,
+): PlainMove {
+  const delta = subPoints(target, from);
+  const distance = Math.hypot(delta.x, delta.y);
+  if (distance < 1e-12) return { ...move, go: "in place", by: undefined };
+  return {
+    ...move,
+    // Compass heading of the delta: 0 = +y, clockwise.
+    go: normalizeDegrees(
+      Math.atan2(delta.x, delta.y) * RAD_TO_DEG - orientation,
+    ),
+    by: distance,
+  };
 }
 
 function describeTurn(turn: Turn): string {
@@ -878,10 +983,15 @@ function applyMove(
 const CROSSED_FEET_TOLERANCE = 0.02;
 
 /** The closest a lead's foot and a follow's foot may come, centre to
- *  centre, in metres: a foot is about 9 cm wide (src/libs/render/figureShapes.mts), so
- *  this leaves a few centimetres between them. Provisional (owner's
- *  agreement, 2026-11-16). */
-export const PARTNER_FOOT_CLEARANCE = 0.15;
+ *  centre, in metres: a foot is about 9 cm wide
+ *  (src/libs/render/figureShapes.mts), so this keeps them from
+ *  overlapping, with about a centimetre to spare. Provisional. It was
+ *  15 cm (owner's agreement, 2026-11-16) while the follow stood
+ *  directly in front of the lead; with the offset hold (HOLD_OFFSET)
+ *  his right foot walks between her feet, passing 10 cm from each,
+ *  which is how real walks in hold go but no 20 cm stance can keep
+ *  15 cm clear of both sides (2026-11-17). */
+export const PARTNER_FOOT_CLEARANCE = 0.1;
 
 /** How finely checkFeet samples a figure, in beats. */
 const FOOT_CHECK_STEP = 1 / 16;
@@ -1317,12 +1427,28 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         `${where}: with \`both\`, a turn can't go on "${row.both}": each partner would turn on their own standing foot and the hold would come apart. Put the turn on a travelling step, or write \`lead\` and \`follow\` separately`,
       );
     }
+    if (row.turnCentre !== undefined) {
+      if (row.both === undefined) {
+        throw new FigureError(
+          `${where}: \`turnCentre\` only goes with \`both\`; with \`lead\` and \`follow\` written separately, each step already says where that partner goes`,
+        );
+      }
+      if (row.turn === undefined || turnDegrees(row.turn) === 0) {
+        throw new FigureError(
+          `${where}: \`turnCentre\` needs a \`turn\` on the row`,
+        );
+      }
+      if (row.air === true) {
+        throw new FigureError(
+          `${where}: \`turnCentre\` can't go on an airborne step, which doesn't move the couple`,
+        );
+      }
+    }
 
     let leadFoot: Foot | undefined;
-    // Where the lead's moving foot was and where it lands on this row,
-    // for mirroring a turning step (see below).
-    let leadFrom: Point2D | undefined;
-    let leadTo: Point2D | undefined;
+    // Where each partner's moving foot lands on a travelling `both` row,
+    // worked out together when the lead's step is reached (see below).
+    let targets: Record<Partner, Point2D> | undefined;
     for (const { partner, move, label } of movesOfRow(row, where)) {
       let explicit: Foot | undefined = move.foot ? FOOT[move.foot] : undefined;
       if (row.both !== undefined && partner === "follow") {
@@ -1336,48 +1462,73 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       );
       if (partner === "lead") leadFoot = foot;
 
-      // With `both`, the follow's travelling step is worked out from the
-      // lead's, so that she keeps the same position relative to him.
+      // With `both`, the partners keep their places in the hold: the
+      // couple moves and turns as one, round a turning centre.
       //
-      // Her moving foot starts at some offset from his moving foot (in
-      // closed hold, 40 cm along his facing). The step turns the couple
-      // by the step's turn, so that offset turns with it: her foot lands
-      // at his foot's landing point plus the offset rotated by the turn.
+      // Take the point C a fraction t of the way from the lead's moving
+      // foot to the follow's (t = 0, 1 or 1/2 for a centre of "lead",
+      // "follow" or "between"). C makes the step as written: it moves by
+      // the lead's written displacement d. The couple turns round C by
+      // the step's turn R, so each moving foot P lands at
       //
-      // Without a turn this is the plain mirror: the same floor
-      // direction and distance as the lead. With a turn the partners
-      // swing round each other and their steps differ: whoever is on the
-      // outside of the turn travels further. (Previously she took the
-      // lead's floor direction and distance and turned on the spot,
-      // which left her beside him rather than in front after a turn.)
+      //   C + d + R(P - C).
+      //
+      // With t = 0 the lead's foot lands exactly where his step says
+      // and the follow swings round him; with t = 1 her foot lands where
+      // the mirror of his step says (the same floor displacement) and
+      // he swings round her. Whoever is further from C travels further:
+      // the outside of the turn. Without a turn R does nothing and both
+      // simply take the written step, the plain mirror, whatever the
+      // centre.
       //
       // Airborne steps don't place a foot, so they keep the plain
       // mirror: the same floor direction as the lead.
       let partnerMove = move;
       const travels =
         typeof move.go === "number" || move.go in DIRECTION_DEGREES;
-      if (row.both !== undefined && partner === "follow" && travels) {
-        if (move.air !== true && leadFrom && leadTo) {
-          const offset = subPoints(state.follow.position[foot], leadFrom);
-          const target = addPoints(
-            leadTo,
-            rotatePoint(offset, turnDegrees(move.turn)),
+      if (
+        row.both !== undefined &&
+        partner === "lead" &&
+        travels &&
+        move.air !== true
+      ) {
+        const leadFrom = state.lead.position[foot];
+        const followFrom = state.follow.position[OTHER[foot]];
+        // Where the written step would put his foot, without changing
+        // his state yet.
+        const scratch = structuredClone(state.lead);
+        applyMove("lead", move, foot, scratch, label, where);
+        const displacement = subPoints(scratch.position[foot], leadFrom);
+        const centre = row.turnCentre ?? defaultTurnCentre(move);
+        const t = TURN_CENTRE_FRACTION[centre];
+        const pivot = addPoints(
+          leadFrom,
+          scalePoint(subPoints(followFrom, leadFrom), t),
+        );
+        const degrees = turnDegrees(move.turn);
+        const land = (from: Point2D) =>
+          addPoints(
+            addPoints(pivot, displacement),
+            rotatePoint(subPoints(from, pivot), degrees),
           );
-          const delta = subPoints(target, state.follow.position[foot]);
-          const distance = Math.hypot(delta.x, delta.y);
-          // Compass heading of the delta (0 = +y, clockwise), relative
-          // to her facing before the turn, as `go` expects.
-          partnerMove =
-            distance < 1e-12
-              ? { ...move, go: "in place", by: undefined }
-              : {
-                  ...move,
-                  go: normalizeDegrees(
-                    Math.atan2(delta.x, delta.y) * RAD_TO_DEG -
-                      state.follow.orientation,
-                  ),
-                  by: distance,
-                };
+        targets = { lead: land(leadFrom), follow: land(followFrom) };
+        if (t !== 0 && degrees !== 0) {
+          partnerMove = moveTo(
+            move,
+            leadFrom,
+            targets.lead,
+            state.lead.orientation,
+          );
+        }
+      }
+      if (row.both !== undefined && partner === "follow" && travels) {
+        if (targets) {
+          partnerMove = moveTo(
+            move,
+            state.follow.position[foot],
+            targets.follow,
+            state.follow.orientation,
+          );
         } else {
           const leadRelative =
             typeof move.go === "number"
@@ -1391,7 +1542,6 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
           };
         }
       }
-      if (partner === "lead") leadFrom = state.lead.position[foot];
       const step = applyMove(
         partner,
         partnerMove,
@@ -1400,11 +1550,12 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         label,
         `${where} (${partner})`,
       );
-      if (partner === "lead") leadTo = state.lead.position[foot];
       if (partnerMove !== move && !label) {
-        // Describe the follow's mirrored step in her own terms.
+        // Describe the step in the dancer's own terms, as written (the
+        // follow's as the mirror of the lead's), not as the worked-out
+        // direction in degrees.
         step.label = defaultLabel(
-          mirrorName(move.go),
+          partner === "follow" ? mirrorName(move.go) : move.go,
           move.turn,
           move.air === true,
         );
@@ -1795,6 +1946,7 @@ export function parseFigureDefinition(
       }
       checkKeys(path, row, [
         "both",
+        "turnCentre",
         "lead",
         "follow",
         "beat",
@@ -1803,6 +1955,7 @@ export function parseFigureDefinition(
         ...MOVE_OPTIONS,
       ]);
       if (row.both !== undefined) checkAction(`${path}.both`, row.both);
+      checkOneOf(`${path}.turnCentre`, row.turnCentre, TURN_CENTRES);
       checkPartner(`${path}.lead`, row.lead);
       checkPartner(`${path}.follow`, row.follow);
       checkMoveOptions(`${path}.`, row);

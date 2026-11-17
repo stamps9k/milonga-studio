@@ -95,11 +95,38 @@ across the floor, with the same distance, timing and turn. Facing each other,
 the lead's forward is her back, his side left is her side right, and his
 diagonal forward right is her diagonal back left.
 
-On a step that turns, the follow stays in the same place relative to the lead,
-so the couple turns together. Her step then differs from his: whoever is on
-the outside of the turn travels further. Put a `both` turn on a travelling
-step. A turn on a `both` close, in place or pivot is an error, because each
-partner would turn on their own standing foot and the hold would come apart.
+On a step that turns, the partners keep their places in the hold, so the
+couple turns together round a **turning centre**, and their steps differ:
+whoever is on the outside of the turn travels further. The step you write is
+the centre's step. Choose the centre with `"turnCentre"` on the row:
+
+- `"lead"`: he takes the step as written, and she travels round him;
+- `"follow"`: she takes the mirror of it (his 0.4 forward is her 0.4 back), and
+  he travels round her;
+- `"between"`: the point halfway between their moving feet takes it, and both
+  travel round it, as in a pivot.
+
+Left out, the centre is whoever the step sends backward, since the partner
+going back is on the inside of an ordinary turn: the lead when he steps back,
+the follow when he steps forward, and the point between them for a step
+straight to the side. So on a forward turning step, write the follow's step
+as the lead would describe it, and he swings round her:
+
+```json
+{
+  "both": { "forward": 0.4, "right": 0.5 },
+  "turn": { "right": "1/4" },
+  "beat": 2
+}
+```
+
+is Box Turn (forward half)'s count 2: she goes 0.4 back and 0.5 to her left,
+and he lands 0.9 forward and 0.2 right of where his foot was.
+`"turnCentre"` only goes with `both` and a `turn`, on a step that travels.
+
+Put a `both` turn on a travelling step. A turn on a `both` close, in place or
+pivot is an error, because each partner would turn on their own standing foot
+and the hold would come apart.
 
 A partner can be written as just an action (`"lead": "forward"`, using the
 options on the row), or as an object with its own options:
@@ -135,11 +162,7 @@ Either part can be left out. It's the same step as a number of degrees with
 `by`, but reads as the move you have in mind and avoids long decimals:
 
 ```json
-{
-  "both": { "forward": 0.9, "right": 0.2 },
-  "turn": { "right": "1/4" },
-  "beat": 2
-}
+{ "both": { "forward": 0.9, "right": 0.2 }, "beat": 2 }
 ```
 
 is the same as `"both": 12.5288…, "by": 0.9220…`. Like the other directions, it's
@@ -147,7 +170,7 @@ measured from the facing before the step's turn. With `both`, the follow
 mirrors it (his 0.9 forward is her 0.9 back). A partner can be written as an
 offset directly (`"lead": { "right": -0.2 }`) or as `"go"` inside a partner
 object with its own options. The default label describes the offset, such as
-"0.9 forward, 0.2 right, turning 1/4 right".
+"0.9 forward, 0.2 right".
 
 ### Options
 
@@ -232,14 +255,19 @@ A stance is a named position for both partners, used by `start` and by
 
 - **`"closed"`**: closed hold. The midpoint of the lead's feet is at the origin,
   feet 20 cm apart. The lead faces line of dance and the follow faces him, 40 cm
-  in front. By default the lead stands on his right and the follow on her left.
+  in front and 10 cm to his right (as in real closed hold, where the partners
+  are offset rather than toe to toe): his right foot is straight in front of
+  the gap between her feet. By default the lead stands on his right and the
+  follow on her left.
 - **`"crossed promenade"`**: where a whisk ends. From closed hold, each partner
   has opened an eighth (the lead to his left, the follow to her right) into a V
   that opens to the lead's left. The crossing foot (the lead's left, the
   follow's right) is 25 cm behind the other foot and 5 cm across it, in the
   opened facing. The lead's right foot is at the origin, the follow's left foot
-  is 40 cm in front of it, and before opening the lead faced line of dance. So
-  the lead faces 315° and the follow 225°. By default each partner stands on
+  is 40 cm in front of it and 10 cm to its right (the closed hold's offset),
+  and before opening the lead faced line of dance. So the lead faces 315° and
+  the follow 225°, and she is 10 cm behind him along the line of travel, as in
+  a real promenade. By default each partner stands on
   the crossed foot.
 
 - **`"promenade apart"`**: where the Promenade Chassé ends. It's the same V, in
@@ -247,7 +275,7 @@ A stance is a named position for both partners, used by `start` and by
   runs towards −x), but with the feet apart. The lead's left foot is at the
   origin, the follow's right is about 54 cm from it across the line (the
   chassé separates the partners by about 7 cm each to make room for the next
-  stride), and each
+  stride) and 10 cm behind it along the line, and each
   partner's other foot is 40 cm back along the line and 10 cm to the side,
   where it closed. By default each partner stands on the leading foot (the
   lead's left, the follow's right).
@@ -256,7 +284,8 @@ A stance is a named position for both partners, used by `start` and by
   faces 315°, the follow 225°, travel towards −x), with the feet apart and
   uncrossed. The lead's right foot is at the origin and his left 60 cm along
   the line of travel; the follow's left is 40 cm across the line from his right
-  and her right 60 cm along the line, level with his left. By default each
+  and 10 cm behind it along the line, and her right 60 cm along the line from
+  her left. By default each
   partner stands on the inside foot (the lead's right, the follow's left).
 
 `"crossed promenade"` measures from the lead's right foot rather than the
@@ -310,8 +339,10 @@ The reset stops, listing every problem with its file and location, if:
   so they uncross the way they crossed: if the foot that was behind came out
   in front, its leg would have gone through the other leg. To uncross a foot
   that crossed behind, take it `"path": "around the back"`;
-- at any moment, one of the lead's feet comes within 15 cm of one of the
-  follow's feet, centre to centre, so one would tread on the other.
+- at any moment, one of the lead's feet comes within 10 cm of one of the
+  follow's feet, centre to centre, so one would tread on the other (a foot is
+  about 9 cm wide, so walking forward in the offset hold, his foot passing 10 cm
+  beside hers, is allowed).
 
 The last two are checked through the whole figure, not just at its end. A
 figure known to be wrong can skip them until it's rewritten, with

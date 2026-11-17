@@ -78,8 +78,8 @@ test("sequenceFootprints: the starting stance, then one print per step where the
   assert.equal(second.count, "2");
 
   const follow = footprints.filter((print) => print.partner === "follow");
-  pointClose(follow[2].position, [-0.1, 0.8]);
-  pointClose(follow[3].position, [0.1, 0.8]);
+  pointClose(follow[2].position, [0, 0.8]);
+  pointClose(follow[3].position, [0.2, 0.8]);
   assert.equal(follow[3].orientation, 180);
 });
 

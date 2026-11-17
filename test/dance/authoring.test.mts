@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   FigureError,
+  HOLD_OFFSET,
   PARTNER_DISTANCE,
   STANCE_WIDTH,
   defineFigure,
@@ -17,8 +18,9 @@ import { poseAtBeat } from "../../src/libs/dance/fold.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 
 // Worked examples for defineFigure. Closed hold: lead's feet at
-// (-0.1, 0) and (0.1, 0) facing north (0), follow's at (0.1, 0.4) [left]
-// and (-0.1, 0.4) [right] facing south (180).
+// (-0.1, 0) and (0.1, 0) facing north (0), follow's at (0.2, 0.4) [left]
+// and (0, 0.4) [right] facing south (180): 0.4 in front of him and
+// offset 0.1 to his right (HOLD_OFFSET).
 
 // Most tests here check one calculation with one dancer moving on their
 // own, often onto the other or across their own feet, so the whole-figure
@@ -59,14 +61,17 @@ test("closed stance uses the shared measurements, partners facing each other", (
   const { startPose } = figure([{ both: "forward", by: 0.3, length: "Q" }]);
   pointClose(startPose.lead.left.position, [-STANCE_WIDTH / 2, 0]);
   pointClose(startPose.lead.right.position, [STANCE_WIDTH / 2, 0]);
+  // Offset to his right, so his right foot is in line with the gap
+  // between hers.
   pointClose(startPose.follow.left.position, [
-    STANCE_WIDTH / 2,
+    HOLD_OFFSET + STANCE_WIDTH / 2,
     PARTNER_DISTANCE,
   ]);
   pointClose(startPose.follow.right.position, [
-    -STANCE_WIDTH / 2,
+    HOLD_OFFSET - STANCE_WIDTH / 2,
     PARTNER_DISTANCE,
   ]);
+  assert.equal(HOLD_OFFSET, STANCE_WIDTH / 2);
   assert.equal(startPose.lead.orientation, 0);
   assert.equal(startPose.follow.orientation, 180);
 });
@@ -80,7 +85,7 @@ test("both: the follow mirrors with the other foot, travelling the same way on t
   assert.equal(follow.foot, "right");
   // Lead forward = north; follow back (she faces south) = also north.
   pointClose(endPose.lead.left.position, [-0.1, 0.4]);
-  pointClose(endPose.follow.right.position, [-0.1, 0.8]);
+  pointClose(endPose.follow.right.position, [0, 0.8]);
   assert.equal(follow.label, "back");
 });
 
@@ -118,7 +123,7 @@ test("an offset can be written for one partner, plainly or as `go`, and either p
   // Lead's left foot 0.2 to his left; follow's right foot 0.3 back
   // from her facing (south), so north.
   pointClose(endPose.lead.left.position, [-0.3, 0]);
-  pointClose(endPose.follow.right.position, [-0.1, 0.7]);
+  pointClose(endPose.follow.right.position, [0, 0.7]);
   assert.equal(steps[0].label, "0.2 left");
   assert.equal(steps[1].label, "0.3 back, turning 1/8 right");
 });
@@ -137,14 +142,14 @@ test("an offset with `by`, or one that doesn't move the foot, is an error", () =
 test("both: side and diagonal steps mirror to the same floor direction", () => {
   const side = figure([{ both: "side left", by: 0.3, length: "Q" }]);
   pointClose(side.endPose.lead.left.position, [-0.4, 0]);
-  pointClose(side.endPose.follow.right.position, [-0.4, 0.4]);
+  pointClose(side.endPose.follow.right.position, [-0.3, 0.4]);
   assert.equal(side.steps[1].label, "side right");
 
   const diagonal = figure([
     { both: "diagonal forward right", by: Math.SQRT2 * 0.1, length: "Q" },
   ]);
   pointClose(diagonal.endPose.lead.left.position, [0, 0.1]);
-  pointClose(diagonal.endPose.follow.right.position, [0, 0.5]);
+  pointClose(diagonal.endPose.follow.right.position, [0.1, 0.5]);
   assert.equal(diagonal.steps[1].label, "diagonal back left");
 });
 
@@ -182,8 +187,15 @@ test("the moving foot is the free one, and the start weight is worked out from t
 test("directions are measured from the facing before the step's turn, and the facing turns", () => {
   // Forward while turning a quarter right: travels north, ends facing
   // east. The follow turns the same way (clockwise) with the couple.
+  // (Turning round the lead, so that his step is the one written.)
   const { steps } = figure([
-    { both: "forward", by: 0.3, turn: { right: 1 / 4 }, length: "Q" },
+    {
+      both: "forward",
+      by: 0.3,
+      turn: { right: 1 / 4 },
+      turnCentre: "lead",
+      length: "Q",
+    },
   ]);
   assert.equal(steps[0].movement.type, "straight");
   if (steps[0].movement.type === "straight") {
@@ -193,17 +205,24 @@ test("directions are measured from the facing before the step's turn, and the fa
   assert.equal(steps[1].orientation, 270);
 });
 
-test("both: on a turning step the follow keeps her place in front of the lead", () => {
+test("both: turning round the lead, he takes the step as written and she keeps her place in the hold", () => {
   // Lead: left foot forward 0.4 from (-0.1, 0) to (-0.1, 0.4), turning a
   // quarter right to face east; his right closes to its right (south),
-  // (-0.1, 0.2). Follow: her right foot started 0.4 north of his left;
-  // that offset turns with the couple to 0.4 east, so it lands at
-  // (0.3, 0.4) -- not (-0.1, 0.8), her own spot turned in place. Facing
-  // west, her left closes to the south, (0.3, 0.2). She ends 0.4 in front
-  // of him: closed hold turned a quarter right.
+  // (-0.1, 0.2). Follow: her right foot started at (0, 0.4), (0.1, 0.4)
+  // from his left; that offset turns with the couple to (0.4, -0.1), so
+  // it lands at (0.3, 0.3) -- not (0, 0.8), her own spot turned in
+  // place. Facing west, her left closes to the south, (0.3, 0.1). She
+  // ends 0.4 in front of him and 0.1 to his right (south): closed hold
+  // turned a quarter right.
   const { endPose } = figure(
     [
-      { both: "forward", by: 0.4, turn: { right: 1 / 4 }, length: "Q" },
+      {
+        both: "forward",
+        by: 0.4,
+        turn: { right: 1 / 4 },
+        turnCentre: "lead",
+        length: "Q",
+      },
       { both: "close", length: "Q" },
     ],
     {
@@ -217,9 +236,118 @@ test("both: on a turning step the follow keeps her place in front of the lead", 
   );
   pointClose(endPose.lead.left.position, [-0.1, 0.4]);
   pointClose(endPose.lead.right.position, [-0.1, 0.2]);
-  pointClose(endPose.follow.right.position, [0.3, 0.4]);
-  pointClose(endPose.follow.left.position, [0.3, 0.2]);
+  pointClose(endPose.follow.right.position, [0.3, 0.3]);
+  pointClose(endPose.follow.left.position, [0.3, 0.1]);
   assert.equal(endPose.follow.orientation, 270);
+});
+
+test("both: a step forward for the lead turns round the follow by default; he travels round her", () => {
+  // The same row without a centre. He goes forward, so she is on the
+  // inside: her right foot takes the written step (0.4 north, back for
+  // her) from (0, 0.4) to (0, 0.8). His left foot started (-0.1, -0.4)
+  // from hers; turned a quarter right that's (-0.4, 0.1), so he lands at
+  // (-0.4, 0.9), a 0.95 stride to her 0.4. Then both close.
+  const rows: StepRow[] = [
+    { both: "forward", by: 0.4, turn: { right: "1/4" }, length: "Q" },
+    { both: "close", length: "Q" },
+  ];
+  const { endPose, steps } = figure(rows, {
+    expectEnd: {
+      stance: "closed",
+      moved: { forward: 0.8, right: -0.4 },
+      turned: { right: 1 / 4 },
+      leadStandingOn: "R",
+    },
+  });
+  pointClose(endPose.follow.right.position, [0, 0.8]);
+  pointClose(endPose.lead.left.position, [-0.4, 0.9]);
+  // Same as writing it out.
+  const explicit = figure([{ ...rows[0], turnCentre: "follow" }, rows[1]]);
+  assert.deepEqual(explicit.endPose, endPose);
+  // Labels are still the written step, not the worked-out direction.
+  assert.equal(steps[0].label, "forward, turning 2/8 right");
+  assert.equal(steps[1].label, "back, turning 2/8 right");
+});
+
+test("both: turning round the point between them, each travels round it", () => {
+  // The centre starts halfway between his left foot (-0.1, 0) and her
+  // right (0, 0.4), at (-0.05, 0.2), and moves 0.4 north to (-0.05, 0.6).
+  // Each foot's offset from it, (-0.05, -0.2) and (0.05, 0.2), turns a
+  // quarter right to (-0.2, 0.05) and (0.2, -0.05).
+  const { endPose } = figure([
+    {
+      both: "forward",
+      by: 0.4,
+      turn: { right: 1 / 4 },
+      turnCentre: "between",
+      length: "Q",
+    },
+  ]);
+  pointClose(endPose.lead.left.position, [-0.25, 0.65]);
+  pointClose(endPose.follow.right.position, [0.15, 0.55]);
+});
+
+test("both: the default centre is whoever steps back, or between them on a step straight to the side", () => {
+  const ends = (row: StepRow) => figure([row]).endPose;
+  const back: StepRow = {
+    both: "back",
+    by: 0.4,
+    turn: { right: 1 / 8 },
+    length: "Q",
+  };
+  assert.deepEqual(ends(back), ends({ ...back, turnCentre: "lead" }));
+  const diagonal: StepRow = {
+    both: { forward: 0.2, right: -0.3 },
+    turn: { left: 1 / 8 },
+    length: "Q",
+  };
+  assert.deepEqual(ends(diagonal), ends({ ...diagonal, turnCentre: "follow" }));
+  const side: StepRow = {
+    both: "side left",
+    by: 0.4,
+    turn: { left: 1 / 8 },
+    length: "Q",
+  };
+  assert.deepEqual(ends(side), ends({ ...side, turnCentre: "between" }));
+  // Without a turn the centre makes no difference: the plain mirror.
+  const straight = figure([{ both: "forward", by: 0.4, length: "Q" }]);
+  pointClose(straight.endPose.lead.left.position, [-0.1, 0.4]);
+  pointClose(straight.endPose.follow.right.position, [0, 0.8]);
+});
+
+test("both: turnCentre needs `both`, a turn and a step on the floor", () => {
+  assert.throws(
+    () =>
+      figure([
+        {
+          lead: "forward",
+          by: 0.4,
+          turn: { right: 1 / 8 },
+          turnCentre: "lead",
+          length: "Q",
+        },
+      ]),
+    /step 1: `turnCentre` only goes with `both`/,
+  );
+  assert.throws(
+    () =>
+      figure([{ both: "forward", by: 0.4, turnCentre: "follow", length: "Q" }]),
+    /step 1: `turnCentre` needs a `turn` on the row/,
+  );
+  assert.throws(
+    () =>
+      figure([
+        {
+          both: "side left",
+          by: 0.3,
+          air: true,
+          turn: { right: 1 / 8 },
+          turnCentre: "between",
+          length: "Q",
+        },
+      ]),
+    /step 1: `turnCentre` can't go on an airborne step/,
+  );
 });
 
 test("both: a turn on a close, in place or pivot is rejected, since the hold would come apart", () => {
@@ -295,8 +423,9 @@ test("crossed promenade: a whisk ends in it, measured from where the lead's righ
 test("crossed promenade: a figure can start in it, opened an eighth each with the crossing feet behind", () => {
   // Lead's right foot at the origin, facing 315; his left 0.25 behind and
   // 0.05 to the right in that facing: 0.3 * (sin 45, -cos 45) =
-  // (0.2121, -0.1414). Follow's left at (0, 0.4) facing 225; her right
-  // the mirror image, at (0.2121, 0.5414). Both stand on the crossed
+  // (0.2121, -0.1414). Follow's left at (0.1, 0.4) facing 225 (offset
+  // to his right in the closed hold they opened from); her right the
+  // mirror image, at (0.3121, 0.5414). Both stand on the crossed
   // foot, so the lead's first step is with his right.
   const { startPose, steps } = figure(
     [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
@@ -305,8 +434,8 @@ test("crossed promenade: a figure can start in it, opened an eighth each with th
   const s = Math.SQRT1_2;
   pointClose(startPose.lead.right.position, [0, 0]);
   pointClose(startPose.lead.left.position, [0.3 * s, -0.2 * s]);
-  pointClose(startPose.follow.left.position, [0, 0.4]);
-  pointClose(startPose.follow.right.position, [0.3 * s, 0.4 + 0.2 * s]);
+  pointClose(startPose.follow.left.position, [0.1, 0.4]);
+  pointClose(startPose.follow.right.position, [0.1 + 0.3 * s, 0.4 + 0.2 * s]);
   assert.equal(startPose.lead.orientation, 315);
   assert.equal(startPose.follow.orientation, 225);
   assert.equal(startPose.lead.left.weight, 1);
@@ -318,8 +447,9 @@ test("promenade apart: the leading feet at the front of the V, the trailing ones
   // Lead's left at the origin facing 315; his right 0.4 back along the
   // line of travel (+x) and 0.1 to his right, (s, s) * 0.1:
   // (0.4 + 0.1s, 0.1s). The partners have separated by 0.05 * sqrt 2
-  // each, so the follow's right is at (0, 0.4 + 0.1 * sqrt 2), facing
-  // 225; her left 0.4 back and 0.1 to her left, (s, -s) * 0.1.
+  // each, so the follow's right is at (0.1, 0.4 + 0.1 * sqrt 2) (0.1 for
+  // the offset hold), facing 225; her left 0.4 back and 0.1 to her left,
+  // (s, -s) * 0.1.
   const { startPose, steps } = figure(
     [{ both: "diagonal forward left", by: 0.5, length: "Q" }],
     { start: "promenade apart" },
@@ -328,8 +458,8 @@ test("promenade apart: the leading feet at the front of the V, the trailing ones
   pointClose(startPose.lead.left.position, [0, 0]);
   pointClose(startPose.lead.right.position, [0.4 + 0.1 * s, 0.1 * s]);
   const gap = 0.4 + 0.1 * Math.SQRT2;
-  pointClose(startPose.follow.right.position, [0, gap]);
-  pointClose(startPose.follow.left.position, [0.4 + 0.1 * s, gap - 0.1 * s]);
+  pointClose(startPose.follow.right.position, [0.1, gap]);
+  pointClose(startPose.follow.left.position, [0.5 + 0.1 * s, gap - 0.1 * s]);
   assert.equal(startPose.lead.orientation, 315);
   assert.equal(startPose.follow.orientation, 225);
   assert.equal(startPose.lead.left.weight, 1);
@@ -337,10 +467,11 @@ test("promenade apart: the leading feet at the front of the V, the trailing ones
   assert.equal(steps[0].foot, "right");
 });
 
-test("tango promenade: inside feet standing, outside feet level along the line", () => {
+test("tango promenade: inside feet standing, outside feet 0.6 along the line, the follow 0.1 behind", () => {
   // Lead's right at the origin facing 315, his left 0.6 along the line
-  // of travel (-x); the follow's left 0.4 across from his right, facing
-  // 225, her right level with his left. Each stands on the inside foot,
+  // of travel (-x); the follow's left 0.4 across from his right and 0.1
+  // back along the line (the offset hold), facing 225, her right 0.6
+  // along the line from it. Each stands on the inside foot,
   // so the lead's first step is with his left.
   const { startPose, steps } = figure(
     [{ both: "diagonal forward left", by: 0.2, length: "S" }],
@@ -348,8 +479,8 @@ test("tango promenade: inside feet standing, outside feet level along the line",
   );
   pointClose(startPose.lead.right.position, [0, 0]);
   pointClose(startPose.lead.left.position, [-0.6, 0]);
-  pointClose(startPose.follow.left.position, [0, 0.4]);
-  pointClose(startPose.follow.right.position, [-0.6, 0.4]);
+  pointClose(startPose.follow.left.position, [0.1, 0.4]);
+  pointClose(startPose.follow.right.position, [-0.5, 0.4]);
   assert.equal(startPose.lead.orientation, 315);
   assert.equal(startPose.follow.orientation, 225);
   assert.equal(startPose.lead.right.weight, 1);
@@ -559,19 +690,31 @@ test("crossed feet: a figure starting crossed may stay crossed until the feet un
   );
 });
 
-test("partner spacing: a lead foot may not come within 15 cm of a follow foot", () => {
-  // The lead's left foot goes 0.35 forward, onto the follow's right foot
-  // at (-0.1, 0.4) (she doesn't move). The check reports the first moment
-  // it gets too close: three quarters of the way, 0.14 short of her foot.
+test("partner spacing: a lead foot may not come within 10 cm of a follow foot", () => {
+  // The lead's left foot goes 0.35 forward and 0.1 right, from (-0.1, 0)
+  // straight at the follow's right foot at (0, 0.4) (she doesn't move).
+  // The check reports the first moment it gets too close: seven eighths
+  // of the way, at (-0.0125, 0.30625), 0.095 short of her foot.
   const treading: StepRow[] = [
-    { lead: { go: "forward", by: 0.35 }, length: "Q" },
+    { lead: { forward: 0.35, right: 0.1 }, length: "Q" },
   ];
   assert.throws(
     () => figure(treading, { skipChecks: [] }),
-    /at beat 1\.75 the lead's left foot and the follow's right foot are 0\.14 apart, centre to centre \(at least 0\.15 needed\)/,
+    /at beat 1\.875 the lead's left foot and the follow's right foot are 0\.09 apart, centre to centre \(at least 0\.1 needed\)/,
   );
   assert.doesNotThrow(() =>
     figure(treading, { skipChecks: ["partner spacing"] }),
+  );
+  // Walking forward in the offset hold, his right foot passes between
+  // her feet, 10 cm from each: allowed.
+  assert.doesNotThrow(() =>
+    figure(
+      [
+        { both: "forward", by: 0.4, foot: "L", length: "Q" },
+        { both: "forward", by: 0.5, length: "Q" },
+      ],
+      { skipChecks: [] },
+    ),
   );
 });
 
@@ -582,8 +725,8 @@ test("close lands beside the standing foot at stance width, across the facing af
   ]);
   pointClose(endPose.lead.left.position, [-0.1, 0.4]);
   pointClose(endPose.lead.right.position, [0.1, 0.4]);
-  pointClose(endPose.follow.right.position, [-0.1, 0.8]);
-  pointClose(endPose.follow.left.position, [0.1, 0.8]);
+  pointClose(endPose.follow.right.position, [0, 0.8]);
+  pointClose(endPose.follow.left.position, [0.2, 0.8]);
 
   // Closing while turning a quarter right: the feet end side by side
   // across the new facing (east), so one in front of the other on the
@@ -612,7 +755,7 @@ test("in place changes weight without moving; pivot turns on the standing foot",
   assert.equal(step.foot, "left");
   assert.equal(step.orientation, 135);
   assert.equal(step.label, "pivot 1/8 left");
-  pointClose(pivot.endPose.follow.left.position, [0.1, 0.4]);
+  pointClose(pivot.endPose.follow.left.position, [0.2, 0.4]);
 });
 
 test("weight: false moves the foot but leaves the weight; air leaves the foot where it was", () => {
@@ -628,7 +771,7 @@ test("weight: false moves the foot but leaves the weight; air leaves the foot wh
   ]);
   assert.equal(boleo.steps[0].contact, "air");
   assert.equal(boleo.steps[0].weight, 0);
-  pointClose(boleo.endPose.follow.right.position, [-0.1, 0.4]);
+  pointClose(boleo.endPose.follow.right.position, [0, 0.4]);
 });
 
 test("timing: S and Q chain one after another; beats last until the partner's next step or the end of the measure", () => {
@@ -694,7 +837,7 @@ test("expectEnd passes when the figure ends there, by stance or by exact feet", 
       expectEnd: {
         feet: {
           lead: { L: [-0.1, 0.6], R: [0.1, 0] },
-          follow: { L: [0.1, 0.4], R: [-0.1, 1.0] },
+          follow: { L: [0.2, 0.4], R: [0, 1.0] },
         },
         facing: { lead: 0, follow: 180 },
       },
