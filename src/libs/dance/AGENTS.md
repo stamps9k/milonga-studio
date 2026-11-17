@@ -28,6 +28,9 @@ implementation's choice, not a confirmed dance rule.
   (`sequenceFootprints`), numbered with its count, and which placements
   are taken or coming up at an instant (`footprintsAtBeat`).
 - `serialize.mts`: converts builder state into a `Sequence` record.
+- `tempo.mts`: the playback tempo range and the metronome's clicks for a
+  sequence (`metronomeClicks`: every whole beat, the first beat of each
+  bar accented, bars running on across figures).
 - `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
   and which foot is the standing foot.
 - `authoring.mts`: `defineFigure`, which turns a dancer-level description
@@ -88,7 +91,13 @@ and usable by any renderer.
   folded. Both partners often step at the same time with different
   durations, so "current step" is tracked per partner.
 - Tempo lives on `Dance`, not on figures. The model works in beats; seconds
-  only appear at playback.
+  only appear at playback (`usePlayback` advances at the tempo the user
+  sets with `useTempo`; the per-dance starting tempos are there too, not
+  in the model, since they're about music rather than steps).
+- Bars come from each figure's `timeSignature` and run continuously
+  through a sequence, because figures needn't fill whole bars (a tango
+  S Q Q S is a bar and a half of 2/4). A change of time signature starts
+  a new bar (`metronomeClicks`).
 
 ## Frames, placement and derived data
 

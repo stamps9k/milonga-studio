@@ -8,8 +8,11 @@ import Canvas3D from "../components/Canvas3D";
 import Sequence from "../components/Sequence";
 import Timeline from "../components/Timeline";
 import ActiveStep from "../components/ActiveStep";
+import TempoControls from "../components/TempoControls";
 import { useSequenceBuilder } from "../hooks/useSequenceBuilder.mts";
 import { usePlayback } from "../hooks/usePlayback.mts";
+import { useTempo } from "../hooks/useTempo.mts";
+import { useMetronome } from "../hooks/useMetronome.mts";
 import { useSequenceExport } from "../hooks/useSequenceExport.mts";
 import type { Partner } from "../libs/dance/step.mts";
 import {
@@ -17,12 +20,36 @@ import {
   sequenceEntryIndexAtBeat,
   sequenceEntrySpans,
 } from "../libs/dance/fold.mts";
+import { metronomeClicks } from "../libs/dance/tempo.mts";
 
 const App = () => {
   const { entries, activeFigureId, addFigure, removeFigure, loading, error } =
     useSequenceBuilder();
   const totalBeats = sequenceDurationBeats(entries);
-  const { beat, playing, toggle, seek, stepBy } = usePlayback(totalBeats);
+  const tempo = useTempo(entries);
+  const { beat, playing, toggle, seek, stepBy } = usePlayback(
+    totalBeats,
+    tempo.bpm,
+  );
+  const [metronomeOn, setMetronomeOn] = useState(false);
+  const clicks = useMemo(() => metronomeClicks(entries), [entries]);
+  const { prime: primeMetronome } = useMetronome({
+    enabled: metronomeOn,
+    playing,
+    beat,
+    bpm: tempo.bpm,
+    clicks,
+  });
+  // Audio can only start from a user gesture, so the play button and the
+  // metronome switch both start it before doing their own thing.
+  const togglePlayback = () => {
+    if (metronomeOn) primeMetronome();
+    toggle();
+  };
+  const toggleMetronome = () => {
+    if (!metronomeOn) primeMetronome();
+    setMetronomeOn((on) => !on);
+  };
   const timelineSegments = useMemo(
     () =>
       sequenceEntrySpans(entries).map((span, index) => ({
@@ -95,9 +122,19 @@ const App = () => {
                       currentSegment={currentSegment}
                       totalBeats={totalBeats}
                       playing={playing}
-                      onToggle={toggle}
+                      onToggle={togglePlayback}
                       onSeek={seek}
                       onStepBy={stepBy}
+                    />
+                    <TempoControls
+                      bpm={tempo.bpm}
+                      defaultBpm={tempo.defaultBpm}
+                      adjusted={tempo.adjusted}
+                      onBpmChange={tempo.setBpm}
+                      onTap={tempo.tap}
+                      onReset={tempo.reset}
+                      metronomeOn={metronomeOn}
+                      onMetronomeToggle={toggleMetronome}
                     />
                   </div>
                 </div>
