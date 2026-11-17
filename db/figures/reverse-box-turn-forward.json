@@ -3,45 +3,50 @@
   "name": "Reverse Box Turn (forward half)",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's description (2026-11-16): the Box Turn with everything reversed. The turn is to the left; the lead starts forward on the left foot, side on the right, close the left. The mirror image of Box Turn (forward half), with the same sizes (0.5 forward, then the right foot lands 0.4 beyond the left in the turned frame, measured from the facing before the turn as 0.9 forward and 0.2 left), the whole quarter turn on count 2, the feet closing on 3 and no rise. Usually followed by Reverse Box Turn (backward half). Called the Left Box Turn in the American syllabus; the International Reverse Turn is a different, progressive figure. Like Box Turn (forward half), the lead goes forward on count 2, so the couple turns round the follow (the default turning centre, 2026-11-17) and step 2 is written as her step: 0.6 forward and 0.7 left as he'd say it (0.6 back and 0.7 to her right for her), chosen so that he lands where he did before. With her offset to his right, a left turn round her moves him as far as her (0.92 each). Exempt from the \"partner spacing\" and \"crossed feet\" checks: the feet still pass too close on counts 2 and 3 and her feet cross briefly, as in the Box Turn's forward half. Remove skipChecks with the Box Turn's in the figure clean-up. Turn timing from the book (2026-11-17, a box-step study card: the partner going forward turns 1/8 between 1 and 2 and 1/8 between 2 and 3; the partner going back turns 1/4 between 1 and 2, \"body turns less\", and the body completes the turn on 3): the bodies turn 1/8 left on count 2 and 1/8 on the close, and the follow, going back on the inside of the turn, points the foot a further 1/8 on count 2 (`pointing`), so her feet make the whole quarter between 1 and 2. The close's turn is carried back into count 2's foot placement, so the feet land exactly where they did with the whole quarter on count 2.",
+  "notes": "Owner's description (2026-11-16): the Box Turn with everything reversed. The turn is to the left; the lead starts forward on the left foot, side on the right, close the left. The mirror image of Box Turn (forward half); no rise. Usually followed by Reverse Box Turn (backward half). Called the Left Box Turn in the American syllabus; the International Reverse Turn is a different, progressive figure. Turn timing from the book (2026-11-17, a box-step study card: the partner going forward \"commences to turn\" on 1, turns 1/8 between 1 and 2 and 1/8 between 2 and 3; the partner going back turns 1/4 between 1 and 2, \"body turns less\", and the body completes the turn on 3). Written that way (2026-11-17, to stop the follow's legs crossing on count 2): the bodies turn 1/24 left on count 1 (the turn commencing), 1/8 on count 2 and 1/12 on the close, a quarter in all; the follow, going back on the inside of the turn, points her count-2 foot a further 1/8 (`pointing`); the close's turn is carried back into count 2's foot placement. The lead goes forward, so the couple turns round the follow (the default turning centre) and count 2 is written as her step, as the lead would describe it: 0.5 forward and 0.3 to his left, which for her is 0.5 back and 0.3 to her right. Step sizes, provisional (2026-11-17), chosen by measuring the 3D body solver against the figure checks: count 1 is 0.4 forward and 0.2 to his left. Before this change (0.5 straight forward with no turn on count 1, then her count-2 step 0.4 back and 0.5 to her right) her moving foot crossed behind her standing foot and landed 0.28 on the wrong side of it, so her legs passed through each other, and her foot passed 5-6 cm from his; the figure skipped the \"crossed feet\" and \"partner spacing\" checks. Now every check passes and the hips sink at most 0.08 m; the strides are 0.40, 0.71 and 0.39 for the lead and 0.45, 0.58 and 0.20 for the follow.",
   "steps": [
     {
-      "both": "forward",
-      "by": 0.5,
+      "both": {
+        "forward": 0.4,
+        "right": -0.2
+      },
       "foot": "L",
-      "beat": 1
+      "turn": {
+        "left": "1/24"
+      },
+      "beat": 1,
+      "label": "forward, starting to turn"
     },
     {
       "both": {
-        "forward": 0.6,
-        "right": -0.7
+        "forward": 0.5,
+        "right": -0.3
       },
       "turn": {
         "left": "1/8"
       },
-      "beat": 2,
-      "label": "side, turning",
       "pointing": {
         "follow": {
           "left": "1/8"
         }
-      }
+      },
+      "beat": 2,
+      "label": "side, turning"
     },
     {
       "both": "close",
-      "beat": 3,
       "turn": {
-        "left": "1/8"
-      }
+        "left": "1/12"
+      },
+      "beat": 3
     }
   ],
   "expectBeats": 3,
-  "skipChecks": ["partner spacing", "crossed feet"],
   "expectEnd": {
     "stance": "closed",
     "moved": {
-      "forward": 0.8,
-      "right": -0.1
+      "forward": 0.6053,
+      "right": 0.1808
     },
     "turned": {
       "left": "1/4"

@@ -296,9 +296,10 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   judgement call: just over a foot's width, so his foot can pass beside
   hers in the offset hold; it was 15 cm before the offset) of a follow
   foot. Figures known to be wrong opt out with `skipChecks` and a note; at
-  the time of writing that's the three old Argentine tango figures and the
-  box turns (except Reverse Box Turn (backward half)), whose feet pass
-  too close on count 2, waiting for the figure clean-up.
+  the time of writing that's the three old Argentine tango figures and
+  the Open Natural Turn (hold), waiting for the figure clean-up. The box
+  turns pass every check since their turns commence on count 1
+  (2026-11-17).
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's centre of weight must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
