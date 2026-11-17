@@ -1,5 +1,6 @@
 import { applyTransform } from "./floor.mts";
 import { figureDurationBeats, poseAtBeat } from "./fold.mts";
+import { centerOfWeight } from "./weight.mts";
 import {
   DEG_TO_RAD,
   RAD_TO_DEG,
@@ -365,10 +366,11 @@ export const CURVED_PATHS: readonly CurvedPath[] = [
 ];
 
 /** The checks a figure can skip (FigureDefinition.skipChecks). */
-export type FootCheck = "crossed feet" | "partner spacing";
+export type FootCheck = "crossed feet" | "partner spacing" | "hold";
 export const FOOT_CHECKS: readonly FootCheck[] = [
   "crossed feet",
   "partner spacing",
+  "hold",
 ];
 
 // ---------------------------------------------------------------------
@@ -629,7 +631,8 @@ export interface FigureDefinition {
   expectBeats?: number;
   /** Checks to leave out for this figure, for figures known to be wrong
    *  that are kept until they're rewritten (say why in `notes`):
-   *  "crossed feet" and "partner spacing" (see checkFeet). */
+   *  "crossed feet" and "partner spacing" (see checkFeet), and "hold"
+   *  (see checkHold). */
   skipChecks?: FootCheck[];
   /** Free text for whoever reads or edits the figure file: sources,
    *  caveats, open questions. Not stored in the database. */
@@ -976,6 +979,103 @@ function applyMove(
     rise: move.rise ?? 0,
     label: label || defaultLabel(move.go, move.turn, air),
   };
+}
+
+/**
+ * The hold positions checkHold recognises, as where the follow's centre
+ * of weight is from the lead's (centerOfWeight) and how she faces
+ * relative to him, at the end of a row:
+ * - closed hold: facing him (follow's facing minus lead's = 180),
+ *   HOLD_OFFSET to his right and PARTNER_DISTANCE in front, in his
+ *   facing;
+ * - promenade: the V (270, as the promenade stances have it: him 315,
+ *   her 225), measured in the closed hold the couple opened from (his
+ *   facing + 45): HOLD_OFFSET to the right and 0.55 in front. Where the
+ *   promenade stances put the weighted feet she is 0.40 to 0.68 in front
+ *   in that frame (tango promenade, promenade apart, crossed promenade),
+ *   so the middle of that range is used.
+ */
+const HOLD_POSITIONS: readonly {
+  name: string;
+  /** The follow's facing minus the lead's, degrees. */
+  facing: number;
+  /** Turn from the lead's facing to the frame `at` is measured in. */
+  frame: number;
+  at: Point2D;
+}[] = [
+  {
+    name: "closed hold",
+    facing: 180,
+    frame: 0,
+    at: { x: HOLD_OFFSET, y: PARTNER_DISTANCE },
+  },
+  {
+    name: "promenade",
+    facing: 270,
+    frame: 45,
+    at: { x: HOLD_OFFSET, y: 0.55 },
+  },
+];
+
+/** How far the follow's centre of weight may be from a hold position at
+ *  the end of a row, in metres, and how far her facing may be from it,
+ *  in degrees. Provisional judgement calls (2026-11-17): loose enough
+ *  for the promenade stances' range and the Open Natural Turn's opening
+ *  out of promenade on count 1, tight enough to catch a partner left
+ *  20-30 cm out of place. */
+export const HOLD_TOLERANCE = 0.2;
+export const HOLD_FACING_TOLERANCE = 30;
+
+/**
+ * The "hold" check: at the end of every row, once all of its steps have
+ * finished, the partners must be in a recognised hold position
+ * (HOLD_POSITIONS). The model has no arms, so this stands in for them:
+ * it catches a figure whose separately written steps leave one partner
+ * out of reach of the other mid-figure. Mirrored (`both`) steps keep the
+ * hold by construction, so in practice it checks `lead`/`follow` rows.
+ * Each partner's centre of weight is compared rather than their feet,
+ * because mid-figure the feet are apart while the body is over the
+ * standing foot. Added 2026-11-17 (owner's request).
+ */
+function checkHold(
+  name: string,
+  figure: Figure,
+  rowEnds: Map<number, number>,
+): void {
+  for (const [row, beat] of [...rowEnds].sort((a, b) => a[0] - b[0])) {
+    const pose = poseAtBeat(figure, beat);
+    const lead = centerOfWeight(pose.lead);
+    const follow = centerOfWeight(pose.follow);
+    const facing = normalizeDegrees(
+      pose.follow.orientation - pose.lead.orientation,
+    );
+    const misses = HOLD_POSITIONS.map((hold) => {
+      // Smallest angle between her facing and the hold's, 0-180.
+      const turnedBy = Math.abs(
+        normalizeDegrees(facing - hold.facing + 180) - 180,
+      );
+      const expected = addPoints(
+        lead,
+        rotatePoint(hold.at, pose.lead.orientation + hold.frame),
+      );
+      const off = subPoints(follow, expected);
+      return { hold, turnedBy, distance: Math.hypot(off.x, off.y) };
+    });
+    if (
+      misses.some(
+        ({ turnedBy, distance }) =>
+          turnedBy <= HOLD_FACING_TOLERANCE && distance <= HOLD_TOLERANCE,
+      )
+    ) {
+      continue;
+    }
+    const nearest = misses.reduce((best, miss) =>
+      miss.turnedBy < best.turnedBy ? miss : best,
+    );
+    throw new FigureError(
+      `${name}: after step ${row + 1} (beat ${Number((beat + 1).toFixed(3))}) the partners aren't in hold: the nearest is ${nearest.hold.name}, but the follow is ${nearest.distance.toFixed(2)} from where it puts her (at most ${HOLD_TOLERANCE}) and her facing is ${nearest.turnedBy.toFixed(0)}° off (at most ${HOLD_FACING_TOLERANCE}°)`,
+    );
+  }
 }
 
 /** How far (metres) the left foot may stray to the right of the right
@@ -1391,6 +1491,8 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
      *  which row it came from ("step 2"). */
     cross: boolean;
     where: string;
+    /** For checkHold: the row (0-based) the step came from. */
+    row: number;
   }[] = [];
 
   rows.forEach((row, index) => {
@@ -1566,6 +1668,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         length,
         cross: partnerMove.cross === true,
         where: `step ${index + 1}`,
+        row: index,
       });
     }
   });
@@ -1622,6 +1725,17 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     start === "crossed promenade",
     new Set(definition.skipChecks ?? []),
   );
+
+  if (!(definition.skipChecks ?? []).includes("hold")) {
+    // When each row has finished: the latest end of its steps.
+    const rowEnds = new Map<number, number>();
+    steps.forEach((step, index) => {
+      const { row } = resolved[index];
+      const end = step.beat - 1 + step.duration;
+      rowEnds.set(row, Math.max(rowEnds.get(row) ?? 0, end));
+    });
+    checkHold(name, figure, rowEnds);
+  }
 
   if (definition.expectEnd) {
     checkExpectedEnd(name, definition.expectEnd, endPose);

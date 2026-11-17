@@ -3,7 +3,7 @@
   "name": "Ocho",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "A pair of back ochos: on each, the follow pivots on her standing foot and steps across, while the lead takes a small step to each side of line of dance. Exempt from the \"crossed feet\" check (added 2026-11-16) because the follow's feet cross on count 3, and the Ocho is one of the old seed's tango figures awaiting the owner's own tango; whether the cross is real ocho technique is the owner's call. Also exempt from the \"partner spacing\" check (2026-11-17): with the follow offset to the lead's right in closed hold, on count 3 her right foot passes 9.7 cm from his left, just inside the 10 cm limit. Remove skipChecks when the figure is rewritten from the owner's tango.",
+  "notes": "A pair of back ochos: on each, the follow pivots on her standing foot and steps across, while the lead takes a small step to each side of line of dance. Exempt from the \"crossed feet\" check (added 2026-11-16) because the follow's feet cross on count 3, and the Ocho is one of the old seed's tango figures awaiting the owner's own tango; whether the cross is real ocho technique is the owner's call. Also exempt from the \"partner spacing\" check (2026-11-17): with the follow offset to the lead's right in closed hold, on count 3 her right foot passes 9.7 cm from his left, just inside the 10 cm limit. Remove skipChecks when the figure is rewritten from the owner's tango. Also exempt from the \"hold\" check (2026-11-17): the ocho turns the follow 45° away from the lead, which isn't a ballroom hold position; Argentine tango's embrace isn't modelled.",
   "steps": [
     {
       "lead": {
@@ -54,7 +54,7 @@
     }
   ],
   "expectBeats": 4,
-  "skipChecks": ["crossed feet", "partner spacing"],
+  "skipChecks": ["crossed feet", "partner spacing", "hold"],
   "expectEnd": {
     "feet": {
       "lead": {
