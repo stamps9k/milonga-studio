@@ -1,5 +1,11 @@
 import { applyTransform } from "./floor.mts";
-import { figureDurationBeats, poseAtBeat } from "./fold.mts";
+import {
+  FOOTPRINT_LENGTH,
+  FOOTPRINT_WIDTH,
+  figureDurationBeats,
+  footprintGap,
+  poseAtBeat,
+} from "./fold.mts";
 import { centerOfWeight } from "./weight.mts";
 import {
   DEG_TO_RAD,
@@ -12,6 +18,7 @@ import {
   scalePoint,
   subPoints,
 } from "./heading.mts";
+import { footHeading } from "./pose.mts";
 import type { Pose, Point2D } from "./pose.mts";
 import type {
   DanceStep,
@@ -368,9 +375,11 @@ export const CURVED_PATHS: readonly CurvedPath[] = [
 ];
 
 /** The checks a figure can skip (FigureDefinition.skipChecks). */
-export type FootCheck = "crossed feet" | "partner spacing" | "hold";
+export type FootCheck =
+  "crossed feet" | "own feet" | "partner spacing" | "hold";
 export const FOOT_CHECKS: readonly FootCheck[] = [
   "crossed feet",
+  "own feet",
   "partner spacing",
   "hold",
 ];
@@ -1160,6 +1169,11 @@ function checkHold(
  *  foot, across the dancer's facing, before the feet count as crossed. */
 const CROSSED_FEET_TOLERANCE = 0.02;
 
+/** How far a dancer's footprints may overlap before the "own feet"
+ *  check fails, in metres: a few millimetres, for the footprint being
+ *  only close to a real foot's outline. Provisional (2026-11-17). */
+const OWN_FEET_TOLERANCE = 0.005;
+
 /** The closest a lead's foot and a follow's foot may come, centre to
  *  centre, in metres: a foot is about 9 cm wide
  *  (src/libs/render/figureShapes.mts), so this keeps them from
@@ -1241,6 +1255,29 @@ function checkFeet(
         across.x * headingToUnitVector(orientation + 90).x +
         across.y * headingToUnitVector(orientation + 90).y;
       const where = current >= 0 ? ` (${marks[current].where})` : "";
+      // "own feet": a dancer's two feet, drawn as footprints, may not
+      // overlap, except while they're crossed on purpose (a step with
+      // `cross`, until they uncross), when one passes over or behind
+      // the other off the floor. The crossed-feet check below compares
+      // only the feet's middles, so without this a foot could land on
+      // top of the other, or its toes swing into it, unnoticed.
+      if (
+        !skip.has("own feet") &&
+        !(allowed[partner] && toTheRight > CROSSED_FEET_TOLERANCE) &&
+        !crossing
+      ) {
+        const gap = footprintGap(
+          left.position,
+          footHeading(pose[partner], "left"),
+          right.position,
+          footHeading(pose[partner], "right"),
+        );
+        if (gap < -OWN_FEET_TOLERANCE) {
+          throw new FigureError(
+            `${name}: at beat ${Number((beat + 1).toFixed(3))}${where} the ${partner}'s feet overlap by ${(-gap).toFixed(3)} (feet drawn ${FOOTPRINT_LENGTH} long and ${FOOTPRINT_WIDTH} wide), so one would stand on the other or the legs would pass through each other`,
+          );
+        }
+      }
       if (toTheRight <= CROSSED_FEET_TOLERANCE) {
         if (!crossing) allowed[partner] = false;
         inFront[partner] = null;

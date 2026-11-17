@@ -160,7 +160,9 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   routes. Decided once per step from where the feet are when it starts,
   so playback, trails and the figure checks agree. The two curve pieces
   share the step's time by their lengths, so the foot keeps an even
-  pace.
+  pace. The foot also comes in only as far as keeps the two feet's
+  outlines (`footprintGap`) a centimetre apart, so feet pointing
+  different ways, as in a turn, pass a little wider than parallel ones.
 - A moving foot travels at a steady speed along its path unless the
   caller passes `PoseOptions.footEasing`; both renderers pass `footEase`
   (smoothstep: the foot sets off gently and lands softly, and is halfway
@@ -295,10 +297,17 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   check); and no lead foot comes within `PARTNER_FOOT_CLEARANCE` (10 cm, a
   judgement call: just over a foot's width, so his foot can pass beside
   hers in the offset hold; it was 15 cm before the offset) of a follow
-  foot. Figures known to be wrong opt out with `skipChecks` and a note; at
-  the time of writing that's the three old Argentine tango figures and the
-  box turns (except Reverse Box Turn (backward half)), whose feet pass
-  too close on count 2, waiting for the figure clean-up.
+  foot; and ("own feet", added 2026-11-17) neither dancer's own two feet,
+  drawn as footprints (`FOOTPRINT_LENGTH` 26 cm by `FOOTPRINT_WIDTH` 9 cm,
+  rounded strips along the way each foot points; `footprintGap` in
+  `fold.mts`), overlap by more than a few millimetres, except while
+  crossed on purpose by a `cross` step. The crossed-feet check compares
+  only the feet's middles, so before this a foot could land on the other
+  or swing its toes into it unnoticed (the forward box halves did).
+  Figures known to be wrong opt out with `skipChecks` and a note; at the
+  time of writing that's the old Argentine tango figures, and for "own
+  feet" the Back Corté, Closed Promenade, Open Natural Turn and Promenade
+  Chassé, waiting for the figure clean-up. The box turns pass every check.
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's centre of weight must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from

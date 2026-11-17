@@ -215,7 +215,9 @@ A step written as a direction or an offset lands where it says, but the foot
 doesn't slide there in a straight line. If it passes the standing foot on the
 way (a walk forward or back, or a diagonal that goes past it), it curves in to
 pass close beside it, about 10 cm centre to centre, as feet brush past each
-other. It comes in only as far as the partner's feet allow, so a lead's right
+other. It keeps a centimetre between the feet's outlines, so feet pointing
+different ways pass a little wider. It comes in only as far as the partner's
+feet allow, so a lead's right
 foot walking between the follow's feet stays nearly straight. Side steps and
 closes go straight. Use `"path"` for a foot that should go round the front or
 the back instead.
@@ -384,6 +386,9 @@ The reset stops, listing every problem with its file and location, if:
   so they uncross the way they crossed: if the foot that was behind came out
   in front, its leg would have gone through the other leg. To uncross a foot
   that crossed behind, take it `"path": "around the back"`;
+- at any moment, one of a dancer's own feet overlaps the other (feet are
+  treated as footprints about 26 cm long and 9 cm wide, pointing the way each
+  foot points), except while they are crossed by a step with `"cross": true`;
 - at any moment, one of the lead's feet comes within 10 cm of one of the
   follow's feet, centre to centre, so one would tread on the other (a foot is
   about 9 cm wide, so walking forward in the offset hold, his foot passing 10 cm
@@ -394,10 +399,10 @@ The reset stops, listing every problem with its file and location, if:
   way that position faces. Mirrored (`both`) steps keep the hold on their own,
   so this mostly checks steps written for `lead` and `follow` separately.
 
-The last three are checked through the whole figure, not just at its end. A
+The last four are checked through the whole figure, not just at its end. A
 figure known to be wrong can skip them until it's rewritten, with
-`"skipChecks"` listing any of `"crossed feet"`, `"partner spacing"` and
-`"hold"`. Say why in `notes`, and remove it once the figure is fixed.
+`"skipChecks"` listing any of `"crossed feet"`, `"own feet"`,
+`"partner spacing"` and `"hold"`. Say why in `notes`, and remove it once the figure is fixed.
 
 The sample dances in `db/seed.mts` refer to figures by name. If one of their
 figures is missing (because a file was renamed or removed), that sample is
