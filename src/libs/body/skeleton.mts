@@ -424,6 +424,8 @@ export function solvePartnerSkeleton(
  *   laid across her back (HAND_DOWN) ends near her spine.
  * - The follow's left hand on his right upper arm: UPPER_ARM_ALONG of the
  *   way from his shoulder to his elbow, resting on top (UPPER_ARM_ABOVE).
+ *   That is her wrist; her hand lies on along his arm from there, so the
+ *   fingers reach his shoulder, not past it.
  *
  * These place the wrists; which way each hand then points is set in
  * connectHold (and HAND_DOWN, OVER_HIS_ARM below).
@@ -434,7 +436,7 @@ const PALM = 0.05;
 const BLADE_BEHIND = 0.06;
 const BLADE_IN = 0.02;
 const BLADE_DOWN = 0.12;
-const UPPER_ARM_ALONG = 0.35;
+const UPPER_ARM_ALONG = 0.6;
 const UPPER_ARM_ABOVE = 0.05;
 /**
  * Which way the lead's right hand points on her back: across it towards
@@ -445,10 +447,13 @@ const UPPER_ARM_ABOVE = 0.05;
  * down.
  */
 const HAND_DOWN = 0.3;
-/** How far the follow's left hand tips down, and turns towards his
- *  shoulder, for each metre it points out over his arm. Provisional
- *  (2026-11-17). */
-const OVER_HIS_ARM = 0.5;
+/** How far the follow's left hand tips out to his right and down, over
+ *  the outside of his arm, for each metre it points along his upper arm
+ *  towards his shoulder. With her wrist UPPER_ARM_ALONG down his arm,
+ *  this puts her fingertips about 5 cm from the line of his upper arm
+ *  (on its surface) at his shoulder, in closed hold and promenade.
+ *  Provisional (2026-11-17). */
+const OVER_HIS_ARM = 0.2;
 
 /**
  * When a hold point is further from the shoulder than the arm can reach,
@@ -557,10 +562,11 @@ function connectHold(
   // - his right hand lies flat on her back, fingers towards her spine
   //   (her right, round the curve of her back) and a little down;
   // - the joined hands point upwards, palm to palm;
-  // - her left hand lies on his upper arm and drapes over the outside of
-  //   it: fingers out to his right and down (OVER_HIS_ARM), turned a
-  //   little towards his shoulder. Pointed straight along his arm, the
-  //   hand reached past his shoulder onto his neck.
+  // - her left hand lies along his upper arm, fingers towards his
+  //   shoulder, tipped a little out and down over the outside of it
+  //   (OVER_HIS_ARM), so the fingertips rest on the cap of his shoulder.
+  //   Pointed out to his side instead, the hand stuck out past his arm
+  //   into the air.
   const acrossHerBack = add(herRight, scale(UP, -HAND_DOWN));
 
   let him = reachFor(lead, "left", palmShort(hisShoulder), UP, bodies.lead);
@@ -574,8 +580,8 @@ function connectHold(
   const upHisArm =
     normalize(sub(him.joints.rightUpperArm, him.joints.rightLowerArm)) ?? UP;
   const overHisArm = add(
-    headingVector(him.facing + 90),
-    add(scale(UP, -OVER_HIS_ARM), scale(upHisArm, OVER_HIS_ARM)),
+    upHisArm,
+    scale(sub(headingVector(him.facing + 90), UP), OVER_HIS_ARM),
   );
   let her = reachFor(
     follow,

@@ -228,7 +228,32 @@ for (const stance of [
     // His right hand is on her back, just behind and below her left
     // shoulder; hers is on his right upper arm.
     assert.ok(gap(him.joints.rightHand, her.joints.leftUpperArm) < 0.2);
-    assert.ok(gap(her.joints.leftHand, him.joints.rightUpperArm) < 0.15);
+    // Her wrist is part-way down his upper arm (about 20 cm from his
+    // shoulder), so her hand can lie along it up to his shoulder.
+    assert.ok(gap(her.joints.leftHand, him.joints.rightUpperArm) < 0.25);
+    // Her fingertips rest on his upper arm at the shoulder: within 6 cm
+    // of the line from his shoulder to his elbow (the arm's surface, not
+    // out in the air beside it).
+    const shoulder = him.joints.rightUpperArm;
+    const along = sub(him.joints.rightLowerArm, shoulder);
+    const toTip = sub(her.fingertips.left, shoulder);
+    const length2 = along.x ** 2 + along.y ** 2 + along.z ** 2;
+    const t = Math.min(
+      1,
+      Math.max(
+        0,
+        (toTip.x * along.x + toTip.y * along.y + toTip.z * along.z) / length2,
+      ),
+    );
+    const nearest = {
+      x: shoulder.x + along.x * t,
+      y: shoulder.y + along.y * t,
+      z: shoulder.z + along.z * t,
+    };
+    assert.ok(
+      gap(her.fingertips.left, nearest) < 0.06,
+      `her fingertips ${gap(her.fingertips.left, nearest)} m off his arm`,
+    );
     // The joined hands are out beyond the line between his left shoulder
     // and her right one, away from the middle of the couple (to his left
     // in closed hold, ahead in the open side of the V in promenade).
@@ -283,11 +308,12 @@ test("solveSkeleton: in closed hold his right hand lies across her back; the joi
   // The joined hands point straight up.
   assert.ok(pointing(him, "left").z > 0.99);
   assert.ok(pointing(her, "right").z > 0.99);
-  // Her left hand drapes over the outside of his upper arm: out to his
-  // right (east, as he faces north), downwards, and not up onto his neck.
+  // Her left hand lies along his upper arm, fingers towards his
+  // shoulder: from her wrist the fingers go up and back (south), and
+  // the fingertips stay outside his shoulder, not in on his neck.
   const herLeft = pointing(her, "left");
-  assert.ok(herLeft.x > 0.5 && herLeft.z < 0, `${JSON.stringify(herLeft)}`);
-  assert.ok(her.fingertips.left.z < him.joints.rightUpperArm.z);
+  assert.ok(herLeft.z > 0 && herLeft.y < 0, `${JSON.stringify(herLeft)}`);
+  assert.ok(her.fingertips.left.x > him.joints.rightUpperArm.x - 0.02);
   // His fingertips end near her spine (the line through her neck and
   // hips), not out beyond her right side.
   const spineX = her.joints.neck.x;
