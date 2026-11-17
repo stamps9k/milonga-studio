@@ -229,7 +229,12 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   bodies turn in the book's timing, and the plain closes finish exactly
   in hold. At that travelling step's end the follow is in the position
   of the hold the turn finishes in (about 30 cm further round for an
-  eighth), and the hold check judges it against that.
+  eighth), and the hold check judges it against that. A turn may also
+  be spread over consecutive mirrored travelling steps (begun on count
+  1, as a chart's "commence to turn"): in hold the lead's left foot
+  pairs with the follow's right and his right with her left, and each
+  pair turns by everything since it was last placed (`pairFacing`), so
+  the couple still ends exactly in hold (2026-11-17).
 - The "crossed promenade" stance (`authoring.mts`) is the owner's whisk
   ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
   (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured

@@ -432,6 +432,43 @@ test("both: a turning close carries its turn back into the feet of the step befo
   );
 });
 
+test("both: a turn spread over consecutive mirrored steps still ends exactly in hold", () => {
+  // The turn starts on count 1 (1/24), continues on count 2 (1/8) and
+  // finishes on the close (1/12). Count 1 moves his left foot and her
+  // right; count 2 moves the other pair, which last stood in the
+  // un-turned hold, so it turns by everything since: the whole quarter.
+  // Without that the follow ends about 10 cm out of place.
+  const { endPose } = figure(
+    [
+      {
+        both: { forward: -0.4, right: -0.2 },
+        foot: "L",
+        turn: { right: "1/24" },
+        length: "Q",
+      },
+      {
+        both: { forward: -0.6, right: -0.3 },
+        turn: { right: "1/8" },
+        length: "Q",
+      },
+      { both: "close", turn: { right: "1/12" }, length: "Q" },
+    ],
+    { skipChecks: [] },
+  );
+  const lead = {
+    x: (endPose.lead.left.position.x + endPose.lead.right.position.x) / 2,
+    y: (endPose.lead.left.position.y + endPose.lead.right.position.y) / 2,
+  };
+  const follow = {
+    x: (endPose.follow.left.position.x + endPose.follow.right.position.x) / 2,
+    y: (endPose.follow.left.position.y + endPose.follow.right.position.y) / 2,
+  };
+  // Facing east (90): the follow 0.4 in front (+x) and 0.1 to his right
+  // (-y).
+  assert.equal(endPose.lead.orientation, 90);
+  pointClose(follow, [lead.x + PARTNER_DISTANCE, lead.y - HOLD_OFFSET]);
+});
+
 test("both: a turning close needs a mirrored travelling step before it", () => {
   for (const before of [
     { lead: "forward", follow: "back", by: 0.4, length: "Q" },
