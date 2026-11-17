@@ -30,9 +30,11 @@ frontend and a small Express + SQLite API.
   the 2D view's colours, shapes and scale bar, shared with the legend.
   `Renderer3D.mts` draws the couple as jointed mannequins (from the body
   solver's skeletons) on a floor with the same footprints and paths, with
-  Three.js and an orbit camera; `scene3d.mts` holds its WebGL-free parts
-  (the floor-space to Three.js axis mapping, the mannequin's bones, the
-  camera framing, footprint outlines), tested under `node:test`.
+  Three.js; its camera orbits (optionally following the couple) or takes
+  a preset view (above, side, over either dancer's shoulder).
+  `scene3d.mts` holds its WebGL-free parts (the floor-space to Three.js
+  axis mapping, the mannequin's bones, the camera framing and presets,
+  footprint outlines), tested under `node:test`.
   React components create a renderer once and pass it new scenes; they do
   not draw the view themselves.
 - `src/libs/body/` is the body solver for the 3D view: plain functions that

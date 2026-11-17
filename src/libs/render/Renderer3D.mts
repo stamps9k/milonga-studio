@@ -4,7 +4,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { solveSkeleton } from "../body/skeleton.mts";
 import type { PartnerSkeleton } from "../body/skeleton.mts";
 import type { Point3D } from "../body/vector3.mts";
-import { sequencePoseAtBeat, sequenceTrailSegments } from "../dance/fold.mts";
+import {
+  footEase,
+  sequencePoseAtBeat,
+  sequenceTrailSegments,
+} from "../dance/fold.mts";
 import { footprintsAtBeat, sequenceFootprints } from "../dance/footprints.mts";
 import type { Footprint } from "../dance/footprints.mts";
 import { headingToUnitVector } from "../dance/heading.mts";
@@ -22,10 +26,14 @@ import type { RenderScene, SceneRenderer } from "./renderer.mts";
 import {
   MANNEQUIN_BONES,
   VISIBLE_JOINTS,
+  approach,
+  coupleCentre,
   footprintOutline,
   frameSequence,
+  presetCamera,
   toThree,
 } from "./scene3d.mts";
+import type { CameraMode, CameraSubject } from "./scene3d.mts";
 
 /** Colours the CSS variables in PARTNER_COLOR resolve to when the page
  *  doesn't define them (WebGL can't read CSS variables itself). */
@@ -39,6 +47,19 @@ const FALLBACK_COLOR: Record<Partner, string> = {
 const LEFT_SIDE_SHADE = 0.55;
 
 const FLOOR_COLOR = 0x1b1e26;
+
+/** How quickly the camera catches up with where it should be: it covers
+ *  half the remaining way in this many seconds. Long enough to glide
+ *  rather than jerk through the small sway of each step, short enough
+ *  to keep the couple in view. */
+const CAMERA_HALF_LIFE = 0.35;
+
+/** How close the camera must be to where it's going (metres) before it
+ *  counts as there and the view stops redrawing. */
+const CAMERA_SETTLED = 1e-3;
+
+/** How far the camera starts from the couple when it follows them. */
+const FOLLOW_DISTANCE = 4.5;
 const JOINT_COLOR = 0xe8e8e8;
 const UP = new THREE.Vector3(0, 1, 0);
 
@@ -207,6 +228,15 @@ export class Renderer3D implements SceneRenderer {
   private drawnBeat: number | null = null;
   private needsFrame = true;
 
+  private mode: CameraMode = "orbit";
+  private followCouple = true;
+  /** Each dancer's hips and facing at the drawn beat, for the camera. */
+  private subjects: Record<Partner, CameraSubject> | null = null;
+  private lastFrameTime: number | null = null;
+  /** Called when the camera mode changes by itself (a drag in a preset
+   *  view switches to orbit), so the page's buttons can follow. */
+  onCameraModeChange: ((mode: CameraMode) => void) | null = null;
+
   constructor(private readonly host: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -224,6 +254,14 @@ export class Renderer3D implements SceneRenderer {
     this.controls.maxDistance = 40;
     this.controls.addEventListener("change", () => {
       this.needsFrame = true;
+    });
+    // Turning or zooming by hand in a preset view hands the camera back
+    // to the viewer, from where it is.
+    this.controls.addEventListener("start", () => {
+      if (this.mode !== "orbit") {
+        this.enterOrbit();
+        this.onCameraModeChange?.("orbit");
+      }
     });
 
     this.addFloorAndLights();
@@ -245,7 +283,9 @@ export class Renderer3D implements SceneRenderer {
     this.sceneData = scene;
     if (entriesChanged) {
       this.buildFloorMarks();
-      this.resetView();
+      // Placed on the couple once their first pose is drawn.
+      this.subjects = null;
+      this.placeOrbitCamera();
     }
     for (const partner of PARTNERS) {
       this.mannequins[partner].group.visible = scene.shown[partner];
@@ -254,16 +294,31 @@ export class Renderer3D implements SceneRenderer {
     this.needsFrame = true;
   }
 
-  /** Puts the camera back where it started for this sequence: behind the
-   *  start of the line of dance, a little to the right and above. */
+  /**
+   * Puts the orbit camera back where it starts: behind the line of dance,
+   * a little to the right and above. Following the couple, it starts
+   * FOLLOW_DISTANCE from them; otherwise it frames the whole sequence.
+   */
   resetView(): void {
+    if (this.mode !== "orbit") {
+      this.enterOrbit();
+      this.onCameraModeChange?.("orbit");
+    }
+    this.placeOrbitCamera();
+  }
+
+  /** Places the orbit camera as resetView describes. A preset view
+   *  places itself (moveCamera), so this does nothing then. */
+  private placeOrbitCamera(): void {
+    if (this.mode !== "orbit") return;
     const framing = frameSequence(this.sceneData?.entries ?? []);
-    const target = framing?.target ?? { x: 0, y: 0, z: 0.9 };
-    const distance = framing?.distance ?? 5;
+    let target = framing?.target ?? { x: 0, y: 0, z: 0.9 };
+    let distance = framing?.distance ?? 5;
+    if (this.followCouple && this.subjects !== null) {
+      target = coupleCentre(this.subjects.lead, this.subjects.follow);
+      distance = FOLLOW_DISTANCE;
+    }
     this.controls.target.copy(vector(target));
-    // Grid lines on whole half metres from the floor's origin.
-    this.grid.position.x = Math.round(target.x * 2) / 2;
-    this.grid.position.z = Math.round(-target.y * 2) / 2;
     // From the south-east of the target (floor -y is behind the line of
     // dance), looking down at about 30°.
     const offset = vector({ x: 0.45, y: -0.8, z: 0.53 })
@@ -274,18 +329,97 @@ export class Renderer3D implements SceneRenderer {
     this.needsFrame = true;
   }
 
+  /** Switches the camera to a preset view, or back to orbiting. The
+   *  camera glides there rather than jumping. */
+  setCameraMode(mode: CameraMode): void {
+    if (mode === this.mode) return;
+    if (mode === "orbit") this.enterOrbit();
+    else this.mode = mode;
+    this.needsFrame = true;
+  }
+
+  /** Whether the orbit camera keeps the couple in view as they travel
+   *  (the presets always do). */
+  setFollowCouple(follow: boolean): void {
+    this.followCouple = follow;
+    this.needsFrame = true;
+  }
+
   render(beat: number): void {
+    const now = window.performance.now();
+    const dt =
+      this.lastFrameTime === null ? 0 : (now - this.lastFrameTime) / 1000;
+    this.lastFrameTime = now;
+
     const scene = this.sceneData;
     if (scene !== null && beat !== this.drawnBeat) {
       this.drawnBeat = beat;
       this.updateDancers(scene, beat);
       this.needsFrame = true;
     }
-    // Damping keeps the camera moving for a moment after a drag.
-    if (this.controls.update()) this.needsFrame = true;
+    if (this.moveCamera(dt)) this.needsFrame = true;
+    // Damping keeps the orbit camera moving for a moment after a drag.
+    if (this.mode === "orbit" && this.controls.update()) {
+      this.needsFrame = true;
+    }
     if (!this.needsFrame) return;
     this.needsFrame = false;
+    // Keep the 20 m grid under the camera's target, on whole half
+    // metres from the floor's origin so its lines don't slide.
+    this.grid.position.x = Math.round(this.controls.target.x * 2) / 2;
+    this.grid.position.z = Math.round(this.controls.target.z * 2) / 2;
     this.renderer.render(this.scene, this.camera);
+  }
+
+  /** Hands the camera to OrbitControls from wherever it is now, with the
+   *  normal up direction OrbitControls expects. */
+  private enterOrbit() {
+    this.mode = "orbit";
+    this.camera.up.set(0, 1, 0);
+    const direction = new THREE.Vector3();
+    this.camera.getWorldDirection(direction);
+    // Orbit around the point the camera was looking at, about as far
+    // away as the couple.
+    const distance =
+      this.subjects !== null
+        ? this.camera.position.distanceTo(
+            vector(coupleCentre(this.subjects.lead, this.subjects.follow)),
+          )
+        : FOLLOW_DISTANCE;
+    this.controls.target
+      .copy(this.camera.position)
+      .addScaledVector(direction, distance);
+    this.controls.update();
+  }
+
+  /** Moves the camera a frame's worth towards where it should be.
+   *  Returns true while it's still on its way. */
+  private moveCamera(dt: number): boolean {
+    if (this.subjects === null) return false;
+    const { lead, follow } = this.subjects;
+    const step = approach(dt, CAMERA_HALF_LIFE);
+    const placement = presetCamera(this.mode, lead, follow);
+    if (placement !== null) {
+      const position = vector(placement.position);
+      const target = vector(placement.target);
+      const up = vector(placement.up);
+      const away = this.camera.position.distanceTo(position);
+      const offTarget = this.controls.target.distanceTo(target);
+      this.camera.position.lerp(position, step);
+      this.controls.target.lerp(target, step);
+      this.camera.up.lerp(up, step).normalize();
+      this.camera.lookAt(this.controls.target);
+      return away > CAMERA_SETTLED || offTarget > CAMERA_SETTLED;
+    }
+    if (!this.followCouple) return false;
+    // Orbiting and following: slide the target and the camera together,
+    // keeping the viewer's angle and distance.
+    const centre = vector(coupleCentre(lead, follow));
+    const away = centre.distanceTo(this.controls.target);
+    const shift = centre.sub(this.controls.target).multiplyScalar(step);
+    this.controls.target.add(shift);
+    this.camera.position.add(shift);
+    return away > CAMERA_SETTLED;
   }
 
   dispose(): void {
@@ -457,12 +591,28 @@ export class Renderer3D implements SceneRenderer {
   }
 
   private updateDancers(scene: RenderScene, beat: number) {
-    const pose = sequencePoseAtBeat(scene.entries, beat);
+    const pose = sequencePoseAtBeat(scene.entries, beat, {
+      footEasing: footEase,
+    });
     if (pose !== null) {
       const skeletons = solveSkeleton(pose);
       for (const partner of PARTNERS) {
         this.mannequins[partner].update(skeletons[partner]);
       }
+      const firstPose = this.subjects === null;
+      this.subjects = {
+        lead: {
+          hips: skeletons.lead.joints.hips,
+          facing: pose.lead.orientation,
+        },
+        follow: {
+          hips: skeletons.follow.joints.hips,
+          facing: pose.follow.orientation,
+        },
+      };
+      // The first pose of a sequence: start the camera on the couple
+      // rather than gliding over from the whole-sequence framing.
+      if (firstPose) this.placeOrbitCamera();
     }
 
     for (const child of this.floorMarks.children) {

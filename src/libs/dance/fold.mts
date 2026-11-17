@@ -353,7 +353,7 @@ export function figureDurationBeats(figure: Figure): number {
  * across the same step interval -- a simplification, since the schema
  * only states their value at a step's end, not how they move through
  * it, but it reads as a smooth, believable weight transfer rather than
- * a snap.
+ * a snap. A renderer can ease the foot's travel instead (PoseOptions).
  */
 /**
  * For a "late" step (see WeightTiming in step.mts), the share of the step
@@ -385,7 +385,40 @@ export function stepPhases(
   };
 }
 
-export function poseAtBeat(figure: Figure, localBeat: number): Pose {
+/**
+ * How to draw the motion between the states the model records, for a
+ * renderer that wants something other than steady speed. These don't
+ * change where anything ends up, only how it gets there.
+ */
+export interface PoseOptions {
+  /**
+   * Maps how far through its travel a moving foot is (0 to 1) to how far
+   * along its path to draw it. Left out, a foot travels at a steady
+   * speed. The renderers pass footEase, so a foot sets off gently and
+   * lands softly instead of sliding at a constant speed and stopping
+   * dead. Weight, orientation and rise stay linear, so the body keeps
+   * moving steadily from step to step.
+   */
+  footEasing?: (progress: number) => number;
+}
+
+/**
+ * Smoothstep: starts and ends at rest, fastest in the middle, and
+ * symmetric, so halfway through the time the foot is halfway along.
+ * Provisional (2026-11-17): a stand-in for real foot timing, which
+ * differs by dance (a tango step is quick and then held).
+ */
+export function footEase(progress: number): number {
+  const t = Math.min(1, Math.max(0, progress));
+  return t * t * (3 - 2 * t);
+}
+
+export function poseAtBeat(
+  figure: Figure,
+  localBeat: number,
+  options: PoseOptions = {},
+): Pose {
+  const easeFoot = options.footEasing ?? ((progress: number) => progress);
   const positions: Record<Partner, Record<Foot, Point2D>> = {
     lead: {
       left: figure.startPose.lead.left.position,
@@ -457,10 +490,11 @@ export function poseAtBeat(figure: Figure, localBeat: number): Pose {
     // simultaneous step for the other partner (or a foot's later step)
     // can still need processing at this same localBeat.
     const progress = (localBeat - stepStart) / step.duration;
-    const { foot: footProgress, weight: weightProgress } = stepPhases(
+    const { foot: footPhase, weight: weightProgress } = stepPhases(
       step,
       progress,
     );
+    const footProgress = easeFoot(footPhase);
     positions[step.partner][step.foot] = (
       step.contact === "air" ? airborneExcursionAt : movementPointAt
     )(
@@ -590,13 +624,14 @@ export function sequenceEntryIndexAtBeat(
 export function sequencePoseAtBeat(
   entries: { figure: Figure; transform: FloorTransform }[],
   globalBeat: number,
+  options: PoseOptions = {},
 ): Pose | null {
   const located = locateEntry(entries, globalBeat);
   if (located === null) return null;
 
   return applyTransform(
     located.entry.transform,
-    poseAtBeat(located.entry.figure, located.localBeat),
+    poseAtBeat(located.entry.figure, located.localBeat, options),
   );
 }
 

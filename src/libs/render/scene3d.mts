@@ -157,3 +157,138 @@ export function footprintOutline(
     y: footprint.position.y + right.y * x - forward.y * screenY,
   }));
 }
+
+/**
+ * How the 3D camera is placed:
+ * - "orbit": the viewer turns, zooms and moves it (OrbitControls), and
+ *   it can keep the couple in view as they travel (see Renderer3D);
+ * - "above": straight down on the couple, line of dance up the screen,
+ *   like the 2D view;
+ * - "side": level with the couple from the right of the line of dance,
+ *   so they travel left to right;
+ * - "lead" / "follow": behind that dancer, over their shoulder, turning
+ *   as they turn.
+ * The last four follow the couple by themselves.
+ */
+export type CameraMode = "orbit" | "above" | "side" | "lead" | "follow";
+
+export const CAMERA_MODES: readonly CameraMode[] = [
+  "orbit",
+  "above",
+  "side",
+  "lead",
+  "follow",
+];
+
+/** Where a preset camera sits and what it looks at, in floor space,
+ *  with the direction that should be up on the screen. */
+export interface CameraPlacement {
+  position: Point3D;
+  target: Point3D;
+  up: Point3D;
+}
+
+/** The parts of a skeleton the camera needs: where each dancer's hips
+ *  are and which way they face. */
+export interface CameraSubject {
+  hips: Point3D;
+  facing: number;
+}
+
+/** The middle of the couple, at waist height: what the camera keeps in
+ *  view. */
+export function coupleCentre(
+  lead: CameraSubject,
+  follow: CameraSubject,
+): Point3D {
+  return {
+    x: (lead.hips.x + follow.hips.x) / 2,
+    y: (lead.hips.y + follow.hips.y) / 2,
+    z: 0.9,
+  };
+}
+
+/** How far each preset sits from the couple, in metres. Judgement calls
+ *  (2026-11-17): far enough to see both dancers whole. */
+const ABOVE_HEIGHT = 5.5;
+const SIDE_DISTANCE = 4.5;
+const SIDE_HEIGHT = 1.3;
+const BEHIND_DISTANCE = 3.2;
+const BEHIND_HEIGHT = 2.1;
+/** The dancers' views look over the right shoulder: in closed hold the
+ *  partner stands a little to that side, so the dancer nearest the
+ *  camera doesn't hide them. */
+const BEHIND_SHOULDER = 0.5;
+
+/**
+ * Where a preset camera goes for the couple as they are now. "orbit"
+ * has no preset placement (null): the viewer places it.
+ *
+ * "above" and "side" are fixed to the floor (line of dance = floor +y,
+ * where a sequence starts) and only move with the couple. "lead" and
+ * "follow" also turn with that dancer's facing, so the view is theirs.
+ */
+export function presetCamera(
+  mode: CameraMode,
+  lead: CameraSubject,
+  follow: CameraSubject,
+): CameraPlacement | null {
+  const centre = coupleCentre(lead, follow);
+  const UP = { x: 0, y: 0, z: 1 };
+  switch (mode) {
+    case "orbit":
+      return null;
+    case "above":
+      // Straight down, so "up" on the screen is the line of dance.
+      return {
+        position: { ...centre, z: ABOVE_HEIGHT },
+        target: { ...centre, z: 0 },
+        up: { x: 0, y: 1, z: 0 },
+      };
+    case "side":
+      // East of the couple, looking west: north (the line of dance) is
+      // to the right on screen.
+      return {
+        position: { x: centre.x + SIDE_DISTANCE, y: centre.y, z: SIDE_HEIGHT },
+        target: centre,
+        up: UP,
+      };
+    case "lead":
+    case "follow": {
+      const dancer = mode === "lead" ? lead : follow;
+      const forward = headingToUnitVector(dancer.facing);
+      const right = headingToUnitVector(dancer.facing + 90);
+      return {
+        position: {
+          x:
+            dancer.hips.x -
+            forward.x * BEHIND_DISTANCE +
+            right.x * BEHIND_SHOULDER,
+          y:
+            dancer.hips.y -
+            forward.y * BEHIND_DISTANCE +
+            right.y * BEHIND_SHOULDER,
+          z: BEHIND_HEIGHT,
+        },
+        // Just in front of the dancer, a little below waist height, so
+        // both dancers are in view from head to foot.
+        target: {
+          x: dancer.hips.x + forward.x * 0.6,
+          y: dancer.hips.y + forward.y * 0.6,
+          z: 0.8,
+        },
+        up: UP,
+      };
+    }
+  }
+}
+
+/**
+ * How much of the remaining way a smoothly moving camera covers in `dt`
+ * seconds: an exponential approach that covers half the distance every
+ * `halfLife` seconds, whatever the frame rate.
+ */
+export function approach(dt: number, halfLife: number): number {
+  if (!(dt > 0)) return 0;
+  return 1 - 0.5 ** (dt / halfLife);
+}

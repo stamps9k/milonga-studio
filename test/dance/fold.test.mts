@@ -5,6 +5,7 @@ import {
   currentStepsAtBeat,
   figureDurationBeats,
   figureFootTrails,
+  footEase,
   poseAtBeat,
   sequenceCurrentStepsAtBeat,
   sequenceDurationBeats,
@@ -593,6 +594,43 @@ test("figureFootTrails: negative curvature curves left (mirror of the positive q
   // From (0, 0) facing north, a radius-1 quarter circle curving left
   // ends at (-1, 1), now facing west.
   pointClose(trail[trail.length - 1], { x: -1, y: 1 });
+});
+
+test("poseAtBeat: footEasing changes how the foot travels, not where it goes or the weight", () => {
+  // The lead's left foot goes 0.4 north over one beat.
+  const step = singleLeadStepFigure({
+    movement: { type: "straight", direction: 0, distance: 0.4 },
+  });
+  const eased = { footEasing: footEase };
+  // A quarter of the way through the time, a steady foot has covered a
+  // quarter of the way; an eased one has only just got going
+  // (smoothstep(0.25) = 0.15625).
+  pointClose(poseAtBeat(step, 0.25).lead.left.position, { x: 0, y: 0.1 });
+  pointClose(poseAtBeat(step, 0.25, eased).lead.left.position, {
+    x: 0,
+    y: 0.4 * 0.15625,
+  });
+  // Halfway and at the end they agree.
+  pointClose(poseAtBeat(step, 0.5, eased).lead.left.position, {
+    x: 0,
+    y: 0.2,
+  });
+  pointClose(poseAtBeat(step, 1, eased).lead.left.position, { x: 0, y: 0.4 });
+  // The weight still moves steadily.
+  assert.equal(
+    poseAtBeat(step, 0.25, eased).lead.left.weight,
+    poseAtBeat(step, 0.25).lead.left.weight,
+  );
+});
+
+test("footEase: starts and ends at rest, and is symmetric", () => {
+  assert.equal(footEase(0), 0);
+  assert.equal(footEase(1), 1);
+  assert.equal(footEase(0.5), 0.5);
+  assert.ok(Math.abs(footEase(0.2) + footEase(0.8) - 1) < 1e-12);
+  // Out-of-range progress is clamped.
+  assert.equal(footEase(-1), 0);
+  assert.equal(footEase(2), 1);
 });
 
 test("poseAtBeat: halfway through an arc the foot is on the curve, not on the straight chord", () => {

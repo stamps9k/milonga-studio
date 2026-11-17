@@ -146,6 +146,11 @@ the owner before building more on top of them.
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
   Turn's and the Closed Promenade's uncrossing steps use `"around the
 back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
+- A moving foot travels at a steady speed along its path unless the
+  caller passes `PoseOptions.footEasing`; both renderers pass `footEase`
+  (smoothstep: the foot sets off gently and lands softly, and is halfway
+  at half time). Provisional (2026-11-17). Easing never changes where a
+  foot ends up, so the checks and footprints are unaffected.
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
   The exception is a step with `weightTiming: "late"`: its foot arrives at
