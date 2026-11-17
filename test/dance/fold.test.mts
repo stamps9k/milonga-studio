@@ -609,6 +609,28 @@ test("poseAtBeat: halfway through an arc the foot is on the curve, not on the st
   assert.ok(Math.abs(Math.hypot(mid.x - 1, mid.y) - 1) < 1e-9);
 });
 
+test("poseAtBeat: an arc with setOff sets off at that angle from the facing", () => {
+  // Facing north, setOff 180 sets off south; curving right (clockwise)
+  // from south heads round towards the west. A radius-1 quarter circle
+  // from (0, 0) is centred on (-1, 0) and ends at (-1, -1); halfway it
+  // is at (cos 45 - 1, -sin 45).
+  const backwards = singleLeadStepFigure({
+    movement: {
+      type: "arc",
+      curvature: 1,
+      arcLength: Math.PI / 2,
+      setOff: 180,
+    },
+  });
+  pointClose(poseAtBeat(backwards, 0.5).lead.left.position, {
+    x: Math.SQRT1_2 - 1,
+    y: -Math.SQRT1_2,
+  });
+  pointClose(poseAtBeat(backwards, 1).lead.left.position, { x: -1, y: -1 });
+  const trail = figureFootTrails(backwards, IDENTITY).lead.left;
+  pointClose(trail[trail.length - 1], { x: -1, y: -1 });
+});
+
 test("poseAtBeat: rise is interpolated linearly across the step", () => {
   const rising = singleLeadStepFigure({
     movement: { type: "straight", direction: 0, distance: 0.4 },

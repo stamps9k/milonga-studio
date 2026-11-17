@@ -39,16 +39,8 @@ function straightEndpoint(
 }
 
 /**
- * Endpoint of an arc movement after travelling `arcLength` along it.
- * Movement.arc has no explicit starting heading of its own (unlike
- * `straight`, which specifies `direction` directly) -- this uses the
- * partner's frame orientation immediately before the step as the arc's
- * initial tangent heading, on the assumption that a curving step
- * continues whichever way the body was already facing. This is a
- * genuine, currently-unconfirmed modeling choice: no seeded figure uses
- * an arc movement yet (db/seed.mts deliberately leaves them out, for
- * exactly this reason), so it hasn't been checked against a real
- * example. Worth revisiting once one exists.
+ * Endpoint of an arc movement after travelling `arcLength` along it,
+ * setting off along `initialHeading` (see arcHeading).
  */
 function arcEndpoint(
   start: Point2D,
@@ -66,6 +58,22 @@ function arcEndpoint(
   return addPoints(center, rotatePoint(relativeToCenter, sweepDegrees));
 }
 
+/**
+ * The heading an arc sets off along: the partner's facing just before
+ * the step, turned by the arc's `setOff` (0 when left out, so the foot
+ * sets off the way the body faces). An arc is stored relative to the
+ * facing rather than with an absolute heading, so it reads the same
+ * wherever a figure is placed on the floor. `path: "around the back"`
+ * in a figure file sets `setOff` so the foot leaves diagonally back
+ * (see curveAround in authoring.mts).
+ */
+function arcHeading(
+  headingBefore: number,
+  movement: Extract<Movement, { type: "arc" }>,
+): number {
+  return headingBefore + (movement.setOff ?? 0);
+}
+
 /** Where a movement ends up, having fully completed. */
 function movementEndpoint(
   start: Point2D,
@@ -74,7 +82,12 @@ function movementEndpoint(
 ): Point2D {
   return movement.type === "straight"
     ? straightEndpoint(start, movement.direction, movement.distance)
-    : arcEndpoint(start, headingBefore, movement.curvature, movement.arcLength);
+    : arcEndpoint(
+        start,
+        arcHeading(headingBefore, movement),
+        movement.curvature,
+        movement.arcLength,
+      );
 }
 
 /** Where a movement is after covering `progress` (0..1) of it. For an
@@ -90,7 +103,7 @@ function movementPointAt(
     ? straightEndpoint(start, movement.direction, movement.distance * progress)
     : arcEndpoint(
         start,
-        headingBefore,
+        arcHeading(headingBefore, movement),
         movement.curvature,
         movement.arcLength * progress,
       );

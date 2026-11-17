@@ -426,6 +426,83 @@ test("path around the front: straight ahead stays straight; it needs a travellin
   );
 });
 
+test("path around the back: the foot sets off diagonally back towards its side and curves round to land where the step says", () => {
+  // Lead's left foot at (-0.1, 0), facing north, lands 0.4 to the left
+  // at (-0.5, 0). The spot is to the left, so the foot sets off
+  // diagonally back left (setOff -135, heading 225). The spot is 90°
+  // left of the facing, 45° round from the set-off heading, so the arc
+  // turns through 90° and bends right: a quarter circle with chord 0.4.
+  const authored = figure([
+    {
+      lead: { go: "side left", by: 0.4, path: "around the back" },
+      length: "Q",
+    },
+  ]);
+  const step = authored.steps[0];
+  assert.equal(step.movement.type, "arc");
+  if (step.movement.type === "arc") {
+    assert.equal(step.movement.setOff, -135);
+    assert.ok(step.movement.curvature > 0);
+    assert.ok(
+      Math.abs(
+        step.movement.arcLength - (0.4 * Math.PI) / 4 / Math.sin(Math.PI / 4),
+      ) < 1e-9,
+    );
+  }
+  pointClose(authored.endPose.lead.left.position, [-0.5, 0]);
+  // Partway, the foot is behind where it started.
+  const curve = { ...authored, id: "c", steps: [{ ...step, id: "0" }] };
+  assert.ok(poseAtBeat(curve, 0.25).lead.left.position.y < -0.05);
+
+  // A spot to the right sets off diagonally back right.
+  const right = figure([
+    {
+      lead: { go: "side right", by: 0.4, path: "around the back" },
+      length: "Q",
+    },
+  ]).steps[0].movement;
+  assert.equal(right.type === "arc" && right.setOff, 135);
+});
+
+test("path around the back: it needs a spot to one side", () => {
+  for (const go of ["forward", "back"] as const) {
+    assert.throws(
+      () =>
+        figure([
+          { lead: { go, by: 0.4, path: "around the back" }, length: "Q" },
+        ]),
+      /"around the back" needs a spot to one side/,
+    );
+  }
+});
+
+test("crossed legs: feet uncross the way they crossed, not through each other", () => {
+  // The lead's right foot crosses 0.2 in front of his left: from
+  // (0.1, 0) to (-0.3, 0.3). Then his left foot, which is behind, goes
+  // to (-0.5, 1.0). In a straight line it comes out in front of the
+  // right foot while the feet are still crossed: its leg would pass
+  // through the right leg. Round the back, it stays behind until the
+  // feet have uncrossed.
+  const steps = (path?: "around the back"): StepRow[] => [
+    {
+      lead: { go: { forward: 0.3, right: -0.4 }, foot: "R", cross: true },
+      length: "Q",
+    },
+    { lead: { go: { forward: 1.0, right: -0.4 }, path }, length: "Q" },
+  ];
+  assert.throws(
+    () => figure(steps(), { skipChecks: ["partner spacing"] }),
+    /step 2\) the lead's left foot has come out in front of the right while the feet are still crossed, so the legs would pass through each other/,
+  );
+  assert.doesNotThrow(() =>
+    figure(steps("around the back"), { skipChecks: ["partner spacing"] }),
+  );
+  // It belongs to the crossed-feet check, so skipping that skips it.
+  assert.doesNotThrow(() =>
+    figure(steps(), { skipChecks: ["crossed feet", "partner spacing"] }),
+  );
+});
+
 test("close with by: the feet end that far apart instead of stance width", () => {
   // Lead: left forward 0.4 to (-0.1, 0.4), then the right closes to 0.1
   // beside it: (0, 0.4).
@@ -783,13 +860,24 @@ test("parseFigureDefinition: cross is true or false, and skipChecks names known 
   );
 });
 
-test('parseFigureDefinition: path is only "around the front"', () => {
+test('parseFigureDefinition: path is "around the front" or "around the back"', () => {
   assert.match(
     problemsOf({
       ...VALID_FILE,
-      steps: [{ both: "forward", by: 0.3, path: "around the back", beat: 1 }],
+      steps: [{ both: "forward", by: 0.3, path: "around the side", beat: 1 }],
     }),
-    /steps\[0\]\.path: should be one of: "around the front"/,
+    /steps\[0\]\.path: should be one of: "around the front", "around the back"/,
+  );
+  assert.doesNotThrow(() =>
+    parseFigureDefinition(
+      {
+        ...VALID_FILE,
+        steps: [
+          { both: "side left", by: 0.3, path: "around the back", beat: 1 },
+        ],
+      },
+      "rock-step.json",
+    ),
   );
 });
 

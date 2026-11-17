@@ -327,6 +327,13 @@ function tangoPromenadePose(
   };
 }
 
+/** The curved foot paths a step can ask for (MoveOptions.path). */
+export type CurvedPath = "around the front" | "around the back";
+export const CURVED_PATHS: readonly CurvedPath[] = [
+  "around the front",
+  "around the back",
+];
+
 /** The checks a figure can skip (FigureDefinition.skipChecks). */
 export type FootCheck = "crossed feet" | "partner spacing";
 export const FOOT_CHECKS: readonly FootCheck[] = [
@@ -478,13 +485,18 @@ export interface MoveOptions {
   /** An airborne action (boleo, gancho, ...): the free leg goes out
    *  along the direction and back, carrying no weight. */
   air?: boolean;
-  /** "around the front": the foot travels on a curve instead of a
-   *  straight line. It sets off the way the dancer faces before the
-   *  step's turn and curves round to land exactly where the step says,
-   *  so on a turning step it swings round in front of the body instead
-   *  of cutting across behind the standing foot. Owner's request
-   *  (2026-11-16), for the Open Natural Turn. */
-  path?: "around the front";
+  /** The foot travels on a curve instead of a straight line, landing
+   *  exactly where the step says (see curveAround):
+   *  - "around the front": it sets off the way the dancer faces before
+   *    the step's turn, so on a turning step it swings round in front of
+   *    the body instead of cutting across behind the standing foot.
+   *    Owner's request (2026-11-16).
+   *  - "around the back": it sets off diagonally back, towards the side
+   *    it lands on, so it swings round behind the standing foot. For
+   *    uncrossing feet that crossed with this foot behind: the foot
+   *    stays behind the other leg instead of passing through it (the
+   *    Open Natural Turn's count 2, owner's choice 2026-11-17). */
+  path?: CurvedPath;
   /** true when this step crosses the feet on purpose (a whisk's cross
    *  behind). Without it, defineFigure refuses a step that puts the left
    *  foot to the right of the right foot (see checkFeet). */
@@ -819,18 +831,18 @@ function applyMove(
   }
 
   let movement: Movement = { type: "straight", direction, distance };
-  if (move.path === "around the front") {
+  if (move.path !== undefined) {
     if (air || distance === 0) {
       throw new FigureError(
         `${where}: "path" needs a step that travels along the floor`,
       );
     }
-    movement = curveAroundTheFront(before, direction, distance, where);
+    movement = curveAround(move.path, before, direction, distance, where);
   }
 
   if (!air && distance > 0) {
     // The curve, if there is one, ends at the same spot as the straight
-    // step would (see curveAroundTheFront).
+    // step would (see curveAround).
     state.position[foot] = addPoints(
       start,
       scalePoint(headingToUnitVector(direction), distance),
@@ -883,6 +895,16 @@ const FOOT_CHECK_STEP = 1 / 16;
  *   allowed during a step marked `cross: true` and afterwards until the
  *   feet uncross, or from the start of a figure that starts crossed
  *   ("crossed promenade") until they first uncross.
+ * - Legs passing through each other (part of the "crossed feet" check):
+ *   while the feet are crossed, whichever foot is in front stays in
+ *   front, so they uncross the way they crossed. Crossed feet mean
+ *   crossed legs; if the foot that was behind came out in front, its
+ *   leg would have gone through the other one. Added 2026-11-17 after
+ *   the Open Natural Turn's left foot uncrossed in front of a right foot
+ *   that had crossed in front of it. "In front" is along the dancer's
+ *   facing, and only counts once the feet are more than
+ *   CROSSED_FEET_TOLERANCE apart that way, so feet crossing level with
+ *   each other don't flip it on rounding.
  * - Partner spacing: no lead foot comes within PARTNER_FOOT_CLEARANCE of
  *   a follow foot, centre to centre, so neither steps on the other.
  *
@@ -908,6 +930,10 @@ function checkFeet(
     lead: startsCrossed,
     follow: startsCrossed,
   };
+  // While a partner's feet are crossed: the foot found in front since
+  // they crossed (null until one is clearly in front, or while
+  // uncrossed).
+  const inFront: Record<Partner, Foot | null> = { lead: null, follow: null };
   for (const beat of ordered) {
     const pose = poseAtBeat(figure, beat);
     for (const partner of ["lead", "follow"] as const) {
@@ -926,12 +952,28 @@ function checkFeet(
       const toTheRight =
         across.x * headingToUnitVector(orientation + 90).x +
         across.y * headingToUnitVector(orientation + 90).y;
+      const where = current >= 0 ? ` (${marks[current].where})` : "";
       if (toTheRight <= CROSSED_FEET_TOLERANCE) {
         if (!crossing) allowed[partner] = false;
-      } else if (!allowed[partner] && !skip.has("crossed feet")) {
-        const where = current >= 0 ? ` (${marks[current].where})` : "";
+        inFront[partner] = null;
+        continue;
+      }
+      if (skip.has("crossed feet")) continue;
+      if (!allowed[partner]) {
         throw new FigureError(
           `${name}: at beat ${Number((beat + 1).toFixed(3))}${where} the ${partner}'s left foot is ${toTheRight.toFixed(2)} to the right of the right foot, so the feet are crossed. If that's meant, add "cross": true to the step that crosses them`,
+        );
+      }
+      const ahead =
+        across.x * headingToUnitVector(orientation).x +
+        across.y * headingToUnitVector(orientation).y;
+      if (Math.abs(ahead) <= CROSSED_FEET_TOLERANCE) continue;
+      const front: Foot = ahead > 0 ? "left" : "right";
+      if (inFront[partner] === null) {
+        inFront[partner] = front;
+      } else if (inFront[partner] !== front) {
+        throw new FigureError(
+          `${name}: at beat ${Number((beat + 1).toFixed(3))}${where} the ${partner}'s ${front} foot has come out in front of the ${OTHER[front]} while the feet are still crossed, so the legs would pass through each other. Feet uncross the way they crossed: if the ${front} foot crossed behind, take it round the back (\`path: "around the back"\`)`,
         );
       }
     }
@@ -954,40 +996,71 @@ function checkFeet(
   }
 }
 
-/** How far a curve "around the front" may turn away from the dancer's
- *  facing to reach its landing spot. Beyond this the foot would swing
- *  round behind the body, which isn't "around the front". */
+/** How far a curve may turn away from the way it sets off to reach its
+ *  landing spot. Beyond this the foot would loop round to the other
+ *  side of the body: for "around the front" it would swing round
+ *  behind, which isn't "around the front". */
 const MAX_CURVE_DEGREES = 120;
 
+/** Which way, in degrees from the facing, a curve "around the back"
+ *  sets off: diagonally back on the side the foot lands on (+135 for a
+ *  spot to the right, -135 to the left). Provisional (2026-11-17):
+ *  chosen for the Open Natural Turn's count 2, where it takes the left
+ *  foot 13 cm behind the right, centre to centre, as the feet uncross.
+ *  Setting off straight back made a loop of nearly three quarters of a
+ *  circle, and anything nearer the side passed in front of the right
+ *  foot again. */
+const AROUND_THE_BACK_SET_OFF = 135;
+
 /**
- * The circular arc for a step with `path: "around the front"`.
+ * The circular arc for a step with a curved `path`.
  *
- * The model draws an arc from where the foot is, setting off along the
- * dancer's facing before the step (arcEndpoint in fold.mts), bending
- * with a constant curvature. There is exactly one such arc through the
- * landing spot: if the landing spot is `theta` degrees round from the
- * facing (clockwise positive) and `chord` metres away, the arc turns
- * through 2 * theta, so
+ * The model draws an arc from where the foot is, setting off at a given
+ * angle from the dancer's facing before the step (Movement.arc's
+ * `setOff`; see arcHeading in fold.mts) and bending with a constant
+ * curvature. There is exactly one such arc through the landing spot:
+ * if the landing spot is `theta` degrees round from the set-off heading
+ * (clockwise positive) and `chord` metres away, the arc turns through
+ * 2 * theta, so
  *   curvature = 2 sin(theta) / chord   (positive curves right)
  *   arcLength = chord * theta / sin(theta)   (theta in radians).
- * Setting off forward means the foot passes in front of the body before
- * it curves to land, which is what the owner described for the left
- * foot on count 2 of the Open Natural Turn.
+ *
+ * - "around the front" sets off forward (setOff 0), so the foot passes
+ *   in front of the body before it curves to land, which is what the
+ *   owner described for a foot swinging round on a turning step.
+ * - "around the back" sets off diagonally back towards the landing side
+ *   (AROUND_THE_BACK_SET_OFF), so the foot passes behind the standing
+ *   foot. The landing spot has to be to one side: straight ahead or
+ *   straight behind, there is no side to go round.
  */
-function curveAroundTheFront(
+function curveAround(
+  path: CurvedPath,
   facing: number,
   direction: number,
   chord: number,
   where: string,
 ): Movement {
-  const theta = normalizeDegrees(direction - facing + 180) - 180;
+  // Where the landing spot is, in degrees clockwise from the facing,
+  // in (-180, 180].
+  const fromFacing = normalizeDegrees(direction - facing + 180) - 180;
+  let setOff = 0;
+  if (path === "around the back") {
+    if (Math.abs(fromFacing) < 1e-9 || Math.abs(fromFacing) > 180 - 1e-9) {
+      throw new FigureError(
+        `${where}: "around the back" needs a spot to one side, not straight ${Math.abs(fromFacing) < 90 ? "ahead" : "behind"}`,
+      );
+    }
+    setOff = Math.sign(fromFacing) * AROUND_THE_BACK_SET_OFF;
+  }
+  const theta = normalizeDegrees(fromFacing - setOff + 180) - 180;
   if (Math.abs(theta) < 1e-9) {
-    // The landing spot is straight ahead: the curve is a straight line.
+    // The landing spot is straight along the set-off heading: the curve
+    // is a straight line.
     return { type: "straight", direction, distance: chord };
   }
   if (Math.abs(theta) > MAX_CURVE_DEGREES) {
     throw new FigureError(
-      `${where}: "around the front" can't reach a spot ${Math.round(Math.abs(theta))}° round from the way the dancer faces (at most ${MAX_CURVE_DEGREES}°)`,
+      `${where}: "${path}" can't reach a spot ${Math.round(Math.abs(theta))}° round from the way the foot sets off (at most ${MAX_CURVE_DEGREES}°)`,
     );
   }
   const radians = theta / RAD_TO_DEG;
@@ -995,6 +1068,7 @@ function curveAroundTheFront(
     type: "arc",
     curvature: (2 * Math.sin(radians)) / chord,
     arcLength: (chord * radians) / Math.sin(radians),
+    ...(setOff !== 0 ? { setOff } : {}),
   };
 }
 
@@ -1595,7 +1669,7 @@ export function parseFigureDefinition(
     checkNumber(`${path}rise`, object.rise);
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
-    checkOneOf(`${path}path`, object.path, ["around the front"]);
+    checkOneOf(`${path}path`, object.path, CURVED_PATHS);
     checkBoolean(`${path}cross`, object.cross);
   }
 

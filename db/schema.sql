@@ -72,7 +72,8 @@ CREATE TABLE movement_straight (
 CREATE TABLE movement_arc (
 	movement_id INTEGER PRIMARY KEY REFERENCES movements(id) ON DELETE CASCADE,
 	curvature   REAL NOT NULL CHECK (curvature != 0), -- signed 1/radius; 0 must be 'straight' instead
-	arc_length  REAL NOT NULL
+	arc_length  REAL NOT NULL,
+	set_off     REAL NOT NULL DEFAULT 0 -- degrees from the facing before the step; 0 = straight ahead
 );
 
 CREATE TRIGGER movement_straight_type_check

@@ -109,6 +109,7 @@ interface MovementStraightRow {
 interface MovementArcRow {
   curvature: number;
   arc_length: number;
+  set_off: number;
 }
 
 const movementStmt = db.prepare("SELECT id, type FROM movements WHERE id = ?");
@@ -116,7 +117,7 @@ const movementStraightStmt = db.prepare(
   "SELECT direction, distance FROM movement_straight WHERE movement_id = ?",
 );
 const movementArcStmt = db.prepare(
-  "SELECT curvature, arc_length FROM movement_arc WHERE movement_id = ?",
+  "SELECT curvature, arc_length, set_off FROM movement_arc WHERE movement_id = ?",
 );
 
 function assembleMovement(movementId: number): Movement {
@@ -137,7 +138,14 @@ function assembleMovement(movementId: number): Movement {
   }
 
   const arc = movementArcStmt.get(movementId) as MovementArcRow;
-  return { type: "arc", curvature: arc.curvature, arcLength: arc.arc_length };
+  // setOff is left out when 0 (straight ahead), as in figures written
+  // before it existed, so they come back exactly as they were stored.
+  return {
+    type: "arc",
+    curvature: arc.curvature,
+    arcLength: arc.arc_length,
+    ...(arc.set_off !== 0 ? { setOff: arc.set_off } : {}),
+  };
 }
 
 // ---------------------------------------------------------------------

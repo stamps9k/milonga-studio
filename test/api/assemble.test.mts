@@ -165,6 +165,29 @@ test("assembleFigure: rebuilds both movement variants, with camelCase fields", (
   });
 });
 
+test("assembleFigure: an arc's set-off angle comes back as setOff, and is left out when 0", () => {
+  // insertFigure stores its arc without set_off: the column's default,
+  // 0 (straight ahead), is left out when assembled, as in figures
+  // written before setOff existed.
+  const plainId = insertFigure("Set Off Default");
+  assert.equal(
+    "setOff" in assemble.assembleFigure(plainId).steps[0].movement,
+    false,
+  );
+
+  const turnedId = insertFigure("Set Off Back Left");
+  db.prepare(
+    `UPDATE movement_arc SET set_off = -135 WHERE movement_id IN
+       (SELECT movement_id FROM dance_steps WHERE figure_id = ?)`,
+  ).run(turnedId);
+  assert.deepEqual(assemble.assembleFigure(turnedId).steps[0].movement, {
+    type: "arc",
+    curvature: -2.5,
+    arcLength: 0.4,
+    setOff: -135,
+  });
+});
+
 test("assembleFigure: step ids are strings, a NULL label is omitted, and contact is kept", () => {
   const [labelled, unlabelled] = assemble.assembleFigure(
     insertFigure("Label Test"),
