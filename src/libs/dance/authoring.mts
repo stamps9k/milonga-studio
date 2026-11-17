@@ -1065,6 +1065,8 @@ export const HOLD_FACING_TOLERANCE = 30;
  * it catches a figure whose separately written steps leave one partner
  * out of reach of the other mid-figure. Mirrored (`both`) steps keep the
  * hold by construction, so in practice it checks `lead`/`follow` rows.
+ * Before a turning mirrored close it checks against the hold the turn
+ * finishes in (`carriedTurn`, one entry per row, in degrees).
  * Each partner's centre of weight is compared rather than their feet,
  * because mid-figure the feet are apart while the body is over the
  * standing foot. Added 2026-11-17 (owner's request).
@@ -1073,6 +1075,7 @@ function checkHold(
   name: string,
   figure: Figure,
   rowEnds: Map<number, number>,
+  carriedTurn: readonly number[],
 ): void {
   for (const [row, beat] of [...rowEnds].sort((a, b) => a[0] - b[0])) {
     const pose = poseAtBeat(figure, beat);
@@ -1086,9 +1089,16 @@ function checkHold(
       const turnedBy = Math.abs(
         normalizeDegrees(facing - hold.facing + 180) - 180,
       );
+      // Before a turning close the feet are already placed for the
+      // whole turn while the bodies are still on their way round
+      // (carriedTurn in defineFigure), so the hold to check is the one
+      // the turn finishes in.
       const expected = addPoints(
         lead,
-        rotatePoint(hold.at, pose.lead.orientation + hold.frame),
+        rotatePoint(
+          hold.at,
+          pose.lead.orientation + carriedTurn[row] + hold.frame,
+        ),
       );
       const off = subPoints(follow, expected);
       return { hold, turnedBy, distance: Math.hypot(off.x, off.y) };
@@ -1510,6 +1520,47 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     },
   };
 
+  // A turn on a mirrored close: the couple's bodies turn on the close,
+  // but the feet were already placed for it on the step before.
+  //
+  // In hold each partner's weight is a fixed offset from the other's,
+  // turned with the couple. A close only moves each body 10 cm sideways
+  // (from the standing foot to the middle of the feet), so if the couple
+  // were exactly in hold before the close, turning the bodies an eighth
+  // on it would leave the follow about 30 cm out of place. Ballroom
+  // charts have the bodies keep turning through the close (a natural
+  // turn's "1/8 between 2 and 3") while the feet close normally, which
+  // works because the step before already placed the feet for the whole
+  // turn. So the close's turn is carried back into the previous
+  // mirrored travelling step's foot placement (the couple's rotation
+  // round its turning centre), while each body still turns only by its
+  // own step's `turn`: after the close the couple is exactly in hold,
+  // facing the way the whole turn leads. Owner's choice (option A,
+  // 2026-11-17).
+  const carriedTurn: number[] = rows.map(() => 0);
+  rows.forEach((row, index) => {
+    if (
+      row.both !== "close" ||
+      row.turn === undefined ||
+      turnDegrees(row.turn) === 0
+    ) {
+      return;
+    }
+    const previous = rows[index - 1];
+    const travelling =
+      previous?.both !== undefined &&
+      previous.air !== true &&
+      previous.both !== "close" &&
+      previous.both !== "in place" &&
+      previous.both !== "pivot";
+    if (!travelling) {
+      throw new FigureError(
+        `${name}, step ${index + 1}: with \`both\`, a turn on a close needs the step before it to be a mirrored (\`both\`) travelling step, which places the feet for the turn the close finishes`,
+      );
+    }
+    carriedTurn[index - 1] = turnDegrees(row.turn);
+  });
+
   // Resolve every move in row order, tracking each partner's state so
   // later steps know which foot is free, where "close" lands, etc.
   const slow = definition.slow ?? 2;
@@ -1549,14 +1600,13 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       row.both !== undefined &&
       row.turn !== undefined &&
       turnDegrees(row.turn) !== 0 &&
-      (row.both === "close" || row.both === "in place" || row.both === "pivot")
+      (row.both === "in place" || row.both === "pivot")
     ) {
       // On these steps each partner turns over their own standing foot,
       // which doesn't move, so the two can't swing round each other and
       // closed hold would silently come apart (the follow would end up
-      // beside the lead instead of in front of him). Turning on a
-      // standing foot while the couple rotates round a shared centre
-      // isn't modelled yet.
+      // beside the lead instead of in front of him). A turning close is
+      // different: see carriedTurn above.
       throw new FigureError(
         `${where}: with \`both\`, a turn can't go on "${row.both}": each partner would turn on their own standing foot and the hold would come apart. Put the turn on a travelling step, or write \`lead\` and \`follow\` separately`,
       );
@@ -1567,9 +1617,12 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
           `${where}: \`turnCentre\` only goes with \`both\`; with \`lead\` and \`follow\` written separately, each step already says where that partner goes`,
         );
       }
-      if (row.turn === undefined || turnDegrees(row.turn) === 0) {
+      if (
+        (row.turn === undefined || turnDegrees(row.turn) === 0) &&
+        carriedTurn[index] === 0
+      ) {
         throw new FigureError(
-          `${where}: \`turnCentre\` needs a \`turn\` on the row`,
+          `${where}: \`turnCentre\` needs a \`turn\` on the row (or a turning close after it)`,
         );
       }
       if (row.air === true) {
@@ -1639,7 +1692,9 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
           leadFrom,
           scalePoint(subPoints(followFrom, leadFrom), t),
         );
-        const degrees = turnDegrees(move.turn);
+        // The step's own turn, plus any the next close carries back
+        // (carriedTurn): the feet land for the whole turn.
+        const degrees = turnDegrees(move.turn) + carriedTurn[index];
         const land = (from: Point2D) =>
           addPoints(
             addPoints(pivot, displacement),
@@ -1766,7 +1821,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       const end = step.beat - 1 + step.duration;
       rowEnds.set(row, Math.max(rowEnds.get(row) ?? 0, end));
     });
-    checkHold(name, figure, rowEnds);
+    checkHold(name, figure, rowEnds, carriedTurn);
   }
 
   if (definition.expectEnd) {

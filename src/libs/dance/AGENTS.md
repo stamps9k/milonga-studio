@@ -218,8 +218,18 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   pivots turn round a point between the partners (owner's decision,
   2026-11-17). So a written turning step is the centre's step, which
   means a forward turning step is the follow's mirror of it. A `both`
-  turn on a close, in place or pivot is still rejected: each partner
-  would turn on their own standing foot.
+  turn on in place or a pivot is still rejected: each partner would
+  turn on their own standing foot. A `both` turn on a close is allowed
+  (owner's option A, 2026-11-17): the bodies turn on the close, as a
+  chart's "1/8 between 2 and 3", but the feet were already placed for it.
+  `defineFigure` carries the close's turn back into the previous row's
+  foot placement (`carriedTurn`; that row must be a mirrored travelling
+  step), while each body turns only by its own row's `turn`. So the
+  footprints are those of the whole turn on the travelling step, the
+  bodies turn in the book's timing, and the plain closes finish exactly
+  in hold. At that travelling step's end the follow is in the position
+  of the hold the turn finishes in (about 30 cm further round for an
+  eighth), and the hold check judges it against that.
 - The "crossed promenade" stance (`authoring.mts`) is the owner's whisk
   ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
   (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured
@@ -263,9 +273,10 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   `skipChecks`): Back Corté and Open Natural Turn (out of hold until their
   turning close, waiting for the clean-up and a couple turn through the
   close), and the Cruzada and Ocho (Argentine tango, not a ballroom hold).
-- Planned model changes, in the owner's agreed order (2026-11-17): a
-  foot direction separate from the body's facing (done, see above), then
-  a couple turn that continues through a close.
+- The model changes agreed with the owner on 2026-11-17 (a hold check,
+  foot direction separate from the body's facing, a couple turn that
+  continues through a close) are all done; see above. The box turns use
+  all three, with the book's turn timing.
 
 ## Terminology
 
