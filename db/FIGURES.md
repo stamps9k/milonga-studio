@@ -207,6 +207,17 @@ just an action, or inside a partner object.
 | `"path"`          | The foot curves instead of going straight, and lands where the step says. `"around the front"`: it sets off the way the dancer faces (before the step's turn), for a foot that swings round in front of the body on a turning step. `"around the back"`: it sets off diagonally back towards the side it lands on, so it passes behind the standing foot; use it to uncross feet that crossed with this foot behind (the Open Natural Turn's count 2). The curve may turn at most 120° from the way it sets off. |
 | `"label"`         | Text shown for the step. One string, or `{ "lead": …, "follow": … }`. Default: generated.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
+### How a foot travels
+
+A step written as a direction or an offset lands where it says, but the foot
+doesn't slide there in a straight line. If it passes the standing foot on the
+way (a walk forward or back, or a diagonal that goes past it), it curves in to
+pass close beside it, about 10 cm centre to centre, as feet brush past each
+other. It comes in only as far as the partner's feet allow, so a lead's right
+foot walking between the follow's feet stays nearly straight. Side steps and
+closes go straight. Use `"path"` for a foot that should go round the front or
+the back instead.
+
 ### Foot direction
 
 `turn` turns the body; a foot points the way the body faces unless the step

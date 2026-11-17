@@ -16,6 +16,8 @@ import {
   sequenceEntryIndexAtBeat,
   stepPhases,
   swivelStandingFoot,
+  passingPoint,
+  PASSING_GAP,
   LATE_WEIGHT_FOOT_SHARE,
 } from "../../src/libs/dance/fold.mts";
 import { defineFigure } from "../../src/libs/dance/authoring.mts";
@@ -1053,4 +1055,116 @@ test("poseAtBeat: without pointing, poses have no foot directions, as before", (
       }
     }
   }
+});
+
+test("passingPoint: a walk passes the standing foot at PASSING_GAP; side steps, closes and close-running lines don't", () => {
+  // Right foot walks from (0.1, 0) to (0.1, 1.0) past the left at
+  // (-0.1, 0.5): it passes halfway, 0.1 from the left foot, at (0, 0.5).
+  const walk = passingPoint(
+    { x: 0.1, y: 0 },
+    { x: 0.1, y: 1 },
+    {
+      x: -0.1,
+      y: 0.5,
+    },
+  );
+  assert.ok(walk);
+  pointClose(walk.point, { x: -0.1 + PASSING_GAP, y: 0.5 });
+  assert.equal(walk.at, 0.5);
+  // A side step away from the standing foot, and a close beside it.
+  assert.equal(
+    passingPoint({ x: -0.1, y: 0 }, { x: -0.4, y: 0 }, { x: 0.1, y: 0 }),
+    undefined,
+  );
+  assert.equal(
+    passingPoint({ x: -0.1, y: -0.4 }, { x: -0.1, y: 0 }, { x: 0.1, y: 0 }),
+    undefined,
+  );
+  // Already running within PASSING_GAP of it.
+  assert.equal(
+    passingPoint({ x: 0, y: 0 }, { x: 0, y: 1 }, { x: -0.08, y: 0.5 }),
+    undefined,
+  );
+});
+
+/** One lead step from a stance with the lead's feet 0.2 apart, his left
+ *  forward of his right, and the follow's feet where given. */
+function walkPastFigure(follow: [number, number][]): Figure {
+  const foot = (x: number, y: number, weight: number) => ({
+    position: { x, y },
+    weight,
+  });
+  return {
+    id: "walk",
+    name: "Walk past",
+    style: "test",
+    timeSignature: { beatsPerMeasure: 4, beatUnit: 4 },
+    steps: [
+      {
+        id: "1",
+        partner: "lead",
+        foot: "right",
+        movement: { type: "straight", direction: 0, distance: 1 },
+        contact: "floor",
+        weight: 1,
+        orientation: 0,
+        rise: 0,
+        beat: 1,
+        duration: 1,
+      },
+    ],
+    startPose: {
+      lead: {
+        left: foot(-0.1, 0.5, 1),
+        right: foot(0.1, 0, 0),
+        orientation: 0,
+        rise: 0,
+      },
+      follow: {
+        left: foot(follow[0][0], follow[0][1], 1),
+        right: foot(follow[1][0], follow[1][1], 0),
+        orientation: 180,
+        rise: 0,
+      },
+    },
+    endPose: {} as Figure["endPose"],
+  };
+}
+
+test("poseAtBeat and trails: a walking foot curves in past the standing foot and lands where the step says", () => {
+  // The follow is well out of the way.
+  const figure = walkPastFigure([
+    [3, 3],
+    [3.2, 3],
+  ]);
+  // Halfway round its route (both pieces are the same length here) the
+  // right foot is at the passing point.
+  pointClose(poseAtBeat(figure, 0.5).lead.right.position, { x: 0, y: 0.5 });
+  pointClose(poseAtBeat(figure, 1).lead.right.position, { x: 0.1, y: 1 });
+  // The trail draws the curve: it comes within PASSING_GAP of the left
+  // foot, where a straight line would stay 0.2 away.
+  const trail = figureFootTrails(figure, IDENTITY).lead.right;
+  assert.ok(trail.length > 2);
+  const closest = Math.min(
+    ...trail.map((point) => Math.hypot(point.x + 0.1, point.y - 0.5)),
+  );
+  assert.ok(closest < 0.11, `closest ${closest}`);
+});
+
+test("poseAtBeat: a passing foot comes in only as far as the partner's standing feet allow", () => {
+  // The follow's right foot stands at (-0.02, 0.6), on the passing
+  // route: drawing the lead's foot all the way in would take it within
+  // 10 cm of hers, so it comes in less, and keeps 10 cm from it.
+  const figure = walkPastFigure([
+    [0.2, 1.6],
+    [-0.02, 0.6],
+  ]);
+  let closestToHer = Infinity;
+  for (let beat = 0; beat <= 1; beat += 1 / 64) {
+    const { x, y } = poseAtBeat(figure, beat).lead.right.position;
+    closestToHer = Math.min(closestToHer, Math.hypot(x + 0.02, y - 0.6));
+  }
+  assert.ok(closestToHer >= 0.1 - 1e-9, `closest ${closestToHer}`);
+  const midway = poseAtBeat(figure, 0.5).lead.right.position;
+  assert.ok(midway.x > 0 && midway.x < 0.1, `midway x ${midway.x}`);
 });
