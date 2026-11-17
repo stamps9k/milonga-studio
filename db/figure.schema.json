@@ -141,6 +141,15 @@
       "description": "How much further round than the body the moving foot points when it lands, from the body's facing after the step's turn (a chart's \"body turns less\"). Default: the way the body faces.",
       "allOf": [{ "$ref": "#/definitions/turn" }]
     },
+    "riseTiming": {
+      "enum": ["even", "late"],
+      "description": "\"late\": the rise holds and changes at the end of the step (a chart's \"at end of\"). Default \"even\": steadily across the step."
+    },
+    "footwork": {
+      "type": "string",
+      "pattern": "^[HTBF]+$",
+      "description": "The chart's footwork: H heel, T toe, B ball, F flat, in order (\"HT\", \"T\", \"TH\"). The first letter decides how the foot lands: heel first (toes up), toe or ball first (heel up), or flat."
+    },
     "weight": {
       "type": "boolean",
       "description": "false for a step without weight (a tap): the foot moves, the weight stays."
@@ -177,6 +186,8 @@
             "turn": { "$ref": "#/definitions/turn" },
             "pointing": { "$ref": "#/definitions/pointing" },
             "rise": { "$ref": "#/definitions/rise" },
+            "riseTiming": { "$ref": "#/definitions/riseTiming" },
+            "footwork": { "$ref": "#/definitions/footwork" },
             "weight": { "$ref": "#/definitions/weight" },
             "air": { "$ref": "#/definitions/air" },
             "path": { "$ref": "#/definitions/path" },
@@ -240,6 +251,22 @@
           ]
         },
         "rise": { "$ref": "#/definitions/rise" },
+        "riseTiming": { "$ref": "#/definitions/riseTiming" },
+        "footwork": {
+          "description": "The chart's footwork: one for each partner the row applies to, or one each ({ \"lead\": \"HT\", \"follow\": \"TH\" }).",
+          "anyOf": [
+            { "$ref": "#/definitions/footwork" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "lead": { "$ref": "#/definitions/footwork" },
+                "follow": { "$ref": "#/definitions/footwork" }
+              }
+            }
+          ]
+        },
         "weight": { "$ref": "#/definitions/weight" },
         "air": { "$ref": "#/definitions/air" },
         "path": { "$ref": "#/definitions/path" },

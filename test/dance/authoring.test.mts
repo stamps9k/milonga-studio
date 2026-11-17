@@ -1315,6 +1315,54 @@ test("parseFigureDefinition: pointing is a turn, or one per partner on a row", (
   );
 });
 
+test("footwork and riseTiming: kept on the steps, one footwork each on a mirrored row", () => {
+  const { steps } = figure([
+    {
+      both: "forward",
+      by: 0.5,
+      rise: 0.02,
+      riseTiming: "late",
+      footwork: { lead: "HT", follow: "TH" },
+      length: "Q",
+    },
+    { both: "side right", by: 0.4, footwork: "T", length: "Q" },
+  ]);
+  assert.deepEqual(
+    steps.map((step) => [step.footwork, step.riseTiming]),
+    [
+      ["HT", "late"],
+      ["TH", "late"],
+      ["T", undefined],
+      ["T", undefined],
+    ],
+  );
+});
+
+test("parseFigureDefinition: footwork is chart letters, or one per partner on a row; riseTiming is even or late", () => {
+  const file = (row: Record<string, unknown>) => ({
+    ...VALID_FILE,
+    steps: [{ both: "forward", by: 0.3, beat: 1, ...row }],
+  });
+  assert.doesNotThrow(() =>
+    parseFigureDefinition(
+      file({ footwork: { lead: "HT", follow: "TH" }, riseTiming: "late" }),
+      "a.json",
+    ),
+  );
+  assert.match(
+    problemsOf(file({ footwork: "heel" })),
+    /steps\[0\]\.footwork: should be footwork letters/,
+  );
+  assert.match(
+    problemsOf(file({ footwork: { lead: "HT", everyone: "T" } })),
+    /steps\[0\]\.footwork\.everyone: unknown field/,
+  );
+  assert.match(
+    problemsOf(file({ riseTiming: "early" })),
+    /steps\[0\]\.riseTiming: should be one of/,
+  );
+});
+
 test("parseFigureDefinition: turns can be written as fractions of a turn in text", () => {
   const authored = defineFigure(
     parseFigureDefinition(

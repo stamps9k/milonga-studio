@@ -153,6 +153,8 @@ CREATE TABLE dance_steps (
 	orientation REAL    NOT NULL, -- degrees, absolute frame heading at end of step
 	foot_direction REAL, -- degrees, which way the stepping foot points at the end; NULL = orientation (DanceStep.footDirection)
 	rise        REAL    NOT NULL,
+	rise_timing TEXT    NOT NULL DEFAULT 'even' CHECK (rise_timing IN ('even', 'late')), -- RiseTiming in step.mts
+	footwork    TEXT, -- chart footwork such as 'HT' or 'T' (DanceStep.footwork); NULL = none given
 	beat        REAL    NOT NULL, -- position within the measure
 	duration    REAL    NOT NULL, -- in beats
 	label       TEXT,

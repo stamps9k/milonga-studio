@@ -636,6 +636,57 @@ export function figureDurationBeats(figure: Figure): number {
  */
 export const LATE_WEIGHT_FOOT_SHARE = 2 / 3;
 
+/** For a step with `riseTiming: "late"`, how far through the step the
+ *  rise starts to change: it holds until two thirds and changes over the
+ *  last third. Provisional (2026-11-17): a chart's "at end of" doesn't
+ *  say how long the change takes; this matches LATE_WEIGHT_FOOT_SHARE. */
+export const LATE_RISE_SHARE = 2 / 3;
+
+/** How far through a step's rise change it is at `progress` (0 to 1)
+ *  through the step (see RiseTiming). */
+export function risePhase(
+  step: Pick<DanceStep, "riseTiming">,
+  progress: number,
+): number {
+  if (step.riseTiming !== "late") return progress;
+  return Math.max(0, (progress - LATE_RISE_SHARE) / (1 - LATE_RISE_SHARE));
+}
+
+/** The most a foot tips as it lands with a heel or toe lead, in
+ *  degrees. Provisional (2026-11-17): enough to read clearly in the 3D
+ *  view; real dancers vary. */
+export const LEAD_PITCH = 20;
+
+/**
+ * How far a stepping foot is tipped (degrees: positive toes up, negative
+ * heel up) at `footProgress` (0 to 1) through its travel, from the first
+ * letter of its footwork: "H" (heel) lands heel first, toes up; "T"
+ * (toe) or "B" (ball) lands toe first, heel up; anything else, or no
+ * footwork, lands flat. The tip grows over the middle of the travel to
+ * LEAD_PITCH by seven tenths of the way, as the foot reaches for the
+ * floor, then the foot rolls flat as it arrives, so it's flat when it
+ * lands (and stays up on the ball only if the dancer has risen, which
+ * the body solver draws from the rise). Provisional (2026-11-17).
+ */
+export function footPitchAt(
+  step: Pick<DanceStep, "footwork" | "contact">,
+  footProgress: number,
+): number {
+  if (step.contact === "air") return 0;
+  const lead = step.footwork?.[0];
+  const sign = lead === "H" ? 1 : lead === "T" || lead === "B" ? -1 : 0;
+  if (sign === 0) return 0;
+  const peak = 0.7;
+  const t = Math.min(1, Math.max(0, footProgress));
+  const shape =
+    t <= 0.3
+      ? 0
+      : t <= peak
+        ? footEase((t - 0.3) / (peak - 0.3))
+        : footEase((1 - t) / (1 - peak));
+  return sign * LEAD_PITCH * shape;
+}
+
 /**
  * How far through its travel the foot is, and how far through its weight
  * change, at `progress` (0 to 1) through a step. For an "even" step both
@@ -752,6 +803,12 @@ export function poseAtBeat(
     lead: figure.startPose.lead.rise,
     follow: figure.startPose.follow.rise,
   };
+  // How far each foot is tipped (footPitchAt): only a foot partway
+  // through a step with footwork is.
+  const pitches: Record<Partner, Record<Foot, number>> = {
+    lead: { left: 0, right: 0 },
+    follow: { left: 0, right: 0 },
+  };
   // Which way each foot points. A stepping foot turns to the step's
   // footDirection (the body's facing when it has none); the other foot
   // swivels with the body or holds (swivelStandingFoot).
@@ -860,7 +917,12 @@ export function poseAtBeat(
       footProgress,
     );
     orientations[step.partner] = bodyNow;
-    rises[step.partner] = lerp(rises[step.partner], step.rise, progress);
+    rises[step.partner] = lerp(
+      rises[step.partner],
+      step.rise,
+      risePhase(step, progress),
+    );
+    pitches[step.partner][step.foot] = footPitchAt(step, footProgress);
   }
 
   // A foot's direction is only given when it differs from the body's
@@ -870,10 +932,12 @@ export function poseAtBeat(
     const direction = directions[partner][foot];
     const pointed =
       Math.abs(angleBetweenDegrees(orientations[partner], direction)) > 1e-9;
+    const pitch = pitches[partner][foot];
     return {
       position: positions[partner][foot],
       weight: weights[partner][foot],
       ...(pointed ? { direction } : {}),
+      ...(Math.abs(pitch) > 1e-9 ? { pitch } : {}),
     };
   };
   const buildPartnerPose = (partner: Partner): PartnerPose => ({

@@ -166,6 +166,23 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   (smoothstep: the foot sets off gently and lands softly, and is halfway
   at half time). Provisional (2026-11-17). Easing never changes where a
   foot ends up, so the checks and footprints are unaffected.
+- Rise and footwork (2026-11-17, before the figure clean-up, so charts
+  are transcribed once): `DanceStep.riseTiming: "late"` holds the rise and
+  changes it over the last third of the step (`LATE_RISE_SHARE`, a
+  judgement call), for a chart's "commence to rise at end of 1" or "lower
+  at end of 3"; otherwise the rise changes evenly. `DanceStep.footwork`
+  keeps the chart's letters ("HT", "T", "TH", "BF": heel, toe, ball,
+  flat). Only the first letter is drawn: `footPitchAt` tips the stepping
+  foot toes up for a heel lead or heel up for a toe or ball lead, by up
+  to `LEAD_PITCH` (20°), growing over the middle of its travel and
+  rolling flat as it lands; the pose carries it as `FootState.pitch`
+  (only mid-step) and the body solver tips the foot about its heel or
+  ball. Being up on the toes after landing comes from the rise, as
+  before. There is no default footwork: forward steps are heel leads in
+  ballroom but ball-flat in Latin, and the model has no style-specific
+  rules, so figures say it. Both are stored (`dance_steps.rise_timing`,
+  `dance_steps.footwork`); additive and optional, so no schemaVersion
+  bump.
 - Weight, orientation and rise are interpolated linearly across a step's
   interval. The schema only records their values at the end of each step.
   The exception is a step with `weightTiming: "late"`: its foot arrives at
