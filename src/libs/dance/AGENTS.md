@@ -146,6 +146,21 @@ the owner before building more on top of them.
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
   Turn's and the Closed Promenade's uncrossing steps use `"around the
 back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
+- A straight step's foot passes close beside the standing foot when its
+  line runs past it (a walk, forward or back, or a diagonal that passes
+  the standing foot), as feet brush past each other, rather than
+  travelling the straight line (`passingPoint` and `stepPassings` in
+  `fold.mts`, 2026-11-17, provisional). The stored movement is unchanged
+  and still says where the foot lands; only the route is worked out
+  while folding. The foot comes in to `PASSING_GAP` (10 cm, centre to
+  centre) from the standing foot, but only as far as the partner's
+  standing feet allow (10 cm from them too): in the offset hold the
+  lead's right foot walks between the follow's feet, so it mostly stays
+  straight. Side steps, closes, airborne steps and arcs keep their own
+  routes. Decided once per step from where the feet are when it starts,
+  so playback, trails and the figure checks agree. The two curve pieces
+  share the step's time by their lengths, so the foot keeps an even
+  pace.
 - A moving foot travels at a steady speed along its path unless the
   caller passes `PoseOptions.footEasing`; both renderers pass `footEase`
   (smoothstep: the foot sets off gently and lands softly, and is halfway
