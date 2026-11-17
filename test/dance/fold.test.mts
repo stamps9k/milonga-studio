@@ -18,6 +18,10 @@ import {
   swivelStandingFoot,
   passingPoint,
   PASSING_GAP,
+  footPitchAt,
+  risePhase,
+  LATE_RISE_SHARE,
+  LEAD_PITCH,
   LATE_WEIGHT_FOOT_SHARE,
 } from "../../src/libs/dance/fold.mts";
 import { defineFigure } from "../../src/libs/dance/authoring.mts";
@@ -1167,4 +1171,56 @@ test("poseAtBeat: a passing foot comes in only as far as the partner's standing 
   assert.ok(closestToHer >= 0.1 - 1e-9, `closest ${closestToHer}`);
   const midway = poseAtBeat(figure, 0.5).lead.right.position;
   assert.ok(midway.x > 0 && midway.x < 0.1, `midway x ${midway.x}`);
+});
+
+test("risePhase and poseAtBeat: a late rise holds, then changes over the end of the step", () => {
+  assert.equal(risePhase({}, 0.5), 0.5);
+  assert.equal(risePhase({ riseTiming: "late" }, 0.5), 0);
+  assert.equal(risePhase({ riseTiming: "late" }, LATE_RISE_SHARE), 0);
+  assert.equal(risePhase({ riseTiming: "late" }, 1), 1);
+  const figure = authored([
+    { both: "forward", by: 0.5, rise: 0.06, length: "Q" },
+    { both: "forward", by: 0.5, rise: 0, riseTiming: "late", length: "Q" },
+  ]);
+  // Up evenly on the first step; held through most of the second, then
+  // lowered at its end.
+  assert.ok(Math.abs(poseAtBeat(figure, 0.5).lead.rise - 0.03) < 1e-9);
+  assert.ok(Math.abs(poseAtBeat(figure, 1.5).lead.rise - 0.06) < 1e-9);
+  assert.ok(Math.abs(poseAtBeat(figure, 2).lead.rise) < 1e-9);
+});
+
+test("footPitchAt: a heel lead lands toes up, a toe or ball lead heel up, flat or none lands flat", () => {
+  const heel = { footwork: "HT", contact: "floor" as const };
+  const toe = { footwork: "TH", contact: "floor" as const };
+  assert.equal(footPitchAt(heel, 0.7), LEAD_PITCH);
+  assert.equal(footPitchAt(toe, 0.7), -LEAD_PITCH);
+  assert.equal(
+    footPitchAt({ footwork: "B", contact: "floor" }, 0.7),
+    -LEAD_PITCH,
+  );
+  assert.equal(footPitchAt({ footwork: "F", contact: "floor" }, 0.7), 0);
+  assert.equal(footPitchAt({ contact: "floor" }, 0.7), 0);
+  assert.equal(footPitchAt({ footwork: "HT", contact: "air" }, 0.7), 0);
+  // Flat as it sets off and as it lands, tipped in between.
+  assert.equal(footPitchAt(heel, 0), 0);
+  assert.equal(footPitchAt(heel, 1), 0);
+  assert.ok(footPitchAt(heel, 0.5) > 0 && footPitchAt(heel, 0.5) < LEAD_PITCH);
+});
+
+test("poseAtBeat: a foot with footwork is tipped only while it travels", () => {
+  const figure = authored([
+    {
+      both: "forward",
+      by: 0.5,
+      footwork: { lead: "HT", follow: "TH" },
+      length: "Q",
+    },
+  ]);
+  const mid = poseAtBeat(figure, 0.7);
+  assert.ok((mid.lead.left.pitch ?? 0) > 0);
+  assert.ok((mid.follow.right.pitch ?? 0) < 0);
+  assert.equal("pitch" in mid.lead.right, false);
+  const end = poseAtBeat(figure, 1);
+  assert.equal("pitch" in end.lead.left, false);
+  assert.equal("pitch" in end.follow.right, false);
 });

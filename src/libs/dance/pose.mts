@@ -29,6 +29,11 @@ export interface FootState {
    *  PartnerPose.orientation). Left out when it points the way the body
    *  faces, which is the usual case: read it with footHeading. */
   direction?: number;
+  /** How far the foot is tipped as it lands, in degrees: positive lifts
+   *  the toes (a heel lead), negative lifts the heel (a toe lead). Only
+   *  given partway through a step with footwork (DanceStep.footwork);
+   *  left out when the foot is flat, which it always is between steps. */
+  pitch?: number;
 }
 
 /** Resolved state of a single partner (lead or follow) at one instant. */

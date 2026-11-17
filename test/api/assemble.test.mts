@@ -230,6 +230,23 @@ test("assembleFigure and assemblePose: a pointed foot's direction comes back, an
   assert.equal("direction" in pose.follow.left, false);
 });
 
+test("assembleFigure: a late rise and footwork come back; the defaults are left out", () => {
+  const figureId = insertFigure("Rise Test");
+  const [first] = db
+    .prepare(
+      "SELECT id FROM dance_steps WHERE figure_id = ? ORDER BY step_index",
+    )
+    .all(figureId) as { id: number }[];
+  db.prepare(
+    "UPDATE dance_steps SET rise_timing = 'late', footwork = 'HT' WHERE id = ?",
+  ).run(first.id);
+  const [risen, plain] = assemble.assembleFigure(figureId).steps;
+  assert.equal(risen.riseTiming, "late");
+  assert.equal(risen.footwork, "HT");
+  assert.equal("riseTiming" in plain, false);
+  assert.equal("footwork" in plain, false);
+});
+
 test("assembleFigure: a missing figure throws a descriptive error", () => {
   assert.throws(
     () => assemble.assembleFigure(424242),

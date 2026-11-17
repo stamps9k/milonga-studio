@@ -215,7 +215,10 @@ export function solvePartnerSkeleton(
   // than half a foot ahead of the hips) its toes lift, rolling back on
   // the heel (a heel lead). It peels only
   // as far as its leg needs to reach the hips at standing height, up to
-  // MAX_PEEL_DEGREES. A standing foot stays flat (apart from the rise).
+  // MAX_PEEL_DEGREES. A foot landing with footwork is tipped by its
+  // pitch first (FootState.pitch: toes up for a heel lead, heel up for a
+  // toe lead), and any further peel rolls it the same way. A standing
+  // foot otherwise stays flat (apart from the rise).
   const foot = (side: Foot) => {
     // Along the foot: the way it points (footHeading), which is the
     // body's facing unless the step pointed it further round.
@@ -231,25 +234,12 @@ export function solvePartnerSkeleton(
       -body.footLength / 2 + body.ankleFromHeel,
       body.ankleHeight + pose.rise,
     );
-    const flat = { ankle, ball, ends: { heel, toeTip } };
-    if (pose[side].weight >= 0.5) return flat;
-
-    const hip = add(hipJointFloor(side), vec(0, 0, standing));
-    const reaches = (point: Point3D) =>
-      Math.hypot(point.x - hip.x, point.y - hip.y, point.z - hip.z) <= leg;
-    if (reaches(ankle)) return flat;
-    // Which end the foot rolls over: the heel if the foot is well in
-    // front of the hips, otherwise the ball.
-    const behind =
-      (middle.x - pelvisFloor.x) * forward.x +
-        (middle.y - pelvisFloor.y) * forward.y <
-      body.footLength / 2;
-    const pivot = behind ? ball : heel;
-    const peel = (degrees: number) => {
-      // Rotate about the pivot in the vertical plane along the foot,
-      // lifting the far end: positive angles lift the heel when rolling
-      // over the ball, and the toes when rolling over the heel.
-      const angle = ((degrees * Math.PI) / 180) * (behind ? 1 : -1);
+    // Rolling the foot over its ball (lifting the heel) or back on its
+    // heel (lifting the toes) by `degrees`, in the vertical plane along
+    // the foot.
+    const roll = (overBall: boolean, degrees: number) => {
+      const pivot = overBall ? ball : heel;
+      const angle = ((degrees * Math.PI) / 180) * (overBall ? 1 : -1);
       const turn = (point: Point3D) => {
         const offset = sub(point, pivot);
         const f = offset.x * toes.x + offset.y * toes.y;
@@ -259,25 +249,48 @@ export function solvePartnerSkeleton(
         const zNew = -f * Math.sin(angle) + offset.z * Math.cos(angle);
         return add(pivot, add(scale(toes, fNew), vec(0, 0, zNew)));
       };
-      return turn;
+      return {
+        ankle: turn(ankle),
+        ball: turn(ball),
+        ends: { heel: turn(heel), toeTip: turn(toeTip) },
+      };
     };
-    let low = 0;
-    let high = MAX_PEEL_DEGREES;
-    if (!reaches(peel(high)(ankle))) low = high;
+
+    // A foot landing with footwork (FootState.pitch, from footPitchAt)
+    // is tipped as it lands: positive lifts the toes (a heel lead),
+    // negative the heel (a toe lead).
+    const pitch = pose[side].pitch ?? 0;
+    const overBallForPitch = pitch < 0;
+    const landing =
+      pitch === 0
+        ? { ankle, ball, ends: { heel, toeTip } }
+        : roll(overBallForPitch, Math.abs(pitch));
+    if (pose[side].weight >= 0.5) return landing;
+
+    const hip = add(hipJointFloor(side), vec(0, 0, standing));
+    const reaches = (point: Point3D) =>
+      Math.hypot(point.x - hip.x, point.y - hip.y, point.z - hip.z) <= leg;
+    if (reaches(landing.ankle)) return landing;
+    // Which end the foot rolls over to reach further: the one its
+    // footwork tips it over, or without footwork the heel if the foot is
+    // well in front of the hips, otherwise the ball.
+    const behind =
+      (middle.x - pelvisFloor.x) * forward.x +
+        (middle.y - pelvisFloor.y) * forward.y <
+      body.footLength / 2;
+    const overBall = pitch === 0 ? behind : overBallForPitch;
+    let low = Math.abs(pitch);
+    let high = Math.max(MAX_PEEL_DEGREES, low);
+    if (!reaches(roll(overBall, high).ankle)) low = high;
     else {
       for (let i = 0; i < 30; i++) {
         const mid = (low + high) / 2;
-        if (reaches(peel(mid)(ankle))) high = mid;
+        if (reaches(roll(overBall, mid).ankle)) high = mid;
         else low = mid;
       }
       low = high;
     }
-    const turn = peel(low);
-    return {
-      ankle: turn(ankle),
-      ball: turn(ball),
-      ends: { heel: turn(heel), toeTip: turn(toeTip) },
-    };
+    return roll(overBall, low);
   };
   const feet = { left: foot("left"), right: foot("right") };
 

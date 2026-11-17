@@ -319,3 +319,23 @@ test("solvePartnerSkeleton: a pointed foot lies along its direction, and its kne
     close(Math.atan2(out.x, out.y) * (180 / Math.PI), 45, 1);
   }
 });
+
+test("solvePartnerSkeleton: a landing foot's pitch tips it toes up (heel lead) or heel up (toe lead)", () => {
+  for (const [pitch, up] of [
+    [20, "toeTip"],
+    [-20, "heel"],
+  ] as const) {
+    // Weight shared, feet level, so the leg reaches without peeling
+    // further and only the pitch tips the foot.
+    const pose = lead([-0.1, 0], [0.1, 0], 0.5);
+    pose.right.pitch = pitch;
+    const { heel, toeTip } = solvePartnerSkeleton(pose, LEAD, "lead").feet
+      .right;
+    const raised = up === "toeTip" ? toeTip : heel;
+    const down = up === "toeTip" ? heel : toeTip;
+    assert.ok(raised.z > down.z + 0.05, `${up} up for pitch ${pitch}`);
+    // Tipped by 20°: the raised end is the foot's length times sin 20°
+    // above the other, within the ball's offset.
+    close(raised.z - down.z, Math.sin((20 * Math.PI) / 180) * 0.26, 0.04);
+  }
+});

@@ -39,6 +39,16 @@ export type Contact = "floor" | "air";
 export type WeightTiming = "even" | "late";
 
 /**
+ * When, within a step, the rise changes to the step's `rise`:
+ * - "even": steadily across the whole step (a chart's "continue to rise
+ *   on 2");
+ * - "late": the rise holds where it was and changes over the end of the
+ *   step (a chart's "commence to rise at end of 1", or "lower at end of
+ *   3"). Where the change starts is LATE_RISE_SHARE in fold.mts.
+ */
+export type RiseTiming = "even" | "late";
+
+/**
  * How a foot travels from its previous position to this one.
  * A pivot (foot stationary, body/frame rotates) is just a movement with
  * zero distance/arcLength and a changed `orientation` on the step — it
@@ -115,6 +125,20 @@ export interface DanceStep {
    *  standing height, in metres. Structural for waltz-style rise and
    *  fall, left at 0 for flat styles like most tango/blues. */
   rise: number;
+
+  /** How the rise changes during the step (see RiseTiming). Left out for
+   *  "even", so steps stored before this field existed play as they
+   *  always did. */
+  riseTiming?: RiseTiming;
+
+  /** Which parts of the stepping foot meet the floor, in order, as a
+   *  ballroom chart writes it: "HT" (heel, then toe: a heel lead), "T"
+   *  (toe, or ball, staying up), "TH" (toe, then heel), "B" (ball), "F"
+   *  (flat, whole foot) and so on. Only its first letter changes how the
+   *  foot is drawn: a heel lead arrives toes up, a toe or ball lead
+   *  arrives heel up, flat lands flat (see footPitchAt in fold.mts).
+   *  Left out: the foot lands as it always did, with no pitch of its own. */
+  footwork?: string;
 
   /** Position within the figure's measure (e.g. 1, 2, 3 for a 3/4 waltz
    *  measure, or 1–4 for tango's even quarter notes). Paired with the

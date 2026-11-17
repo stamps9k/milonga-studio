@@ -13,6 +13,7 @@ import type {
   Contact,
   Movement,
   DanceStep,
+  RiseTiming,
   WeightTiming,
   TimeSignature,
   Figure,
@@ -180,6 +181,8 @@ interface DanceStepRow {
   orientation: number;
   foot_direction: number | null;
   rise: number;
+  rise_timing: RiseTiming;
+  footwork: string | null;
   beat: number;
   duration: number;
   label: string | null;
@@ -187,7 +190,7 @@ interface DanceStepRow {
 
 const figureStmt = db.prepare("SELECT * FROM figures WHERE id = ?");
 const figureStepsStmt = db.prepare(
-  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, beat, duration, label
+  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, rise_timing, footwork, beat, duration, label
 	 FROM dance_steps WHERE figure_id = ? ORDER BY step_index`,
 );
 
@@ -212,6 +215,9 @@ export function assembleFigure(figureId: number): Figure {
       ? { footDirection: step.foot_direction }
       : {}),
     rise: step.rise,
+    // "even" is the default and is left out, like weightTiming.
+    ...(step.rise_timing === "late" ? { riseTiming: "late" as const } : {}),
+    ...(step.footwork !== null ? { footwork: step.footwork } : {}),
     beat: step.beat,
     duration: step.duration,
     ...(step.label !== null ? { label: step.label } : {}),

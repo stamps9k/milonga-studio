@@ -19,6 +19,7 @@ import type {
   Foot,
   Movement,
   Partner,
+  RiseTiming,
   TimeSignature,
 } from "./step.mts";
 
@@ -545,6 +546,15 @@ export interface MoveOptions {
   /** Rise at the end of the step, in metres above normal standing
    *  height (waltz/foxtrot rise and fall). Default 0. */
   rise?: number;
+  /** "late" when the rise holds and changes at the end of the step (a
+   *  chart's "commence to rise at end of 1", "lower at end of 3");
+   *  default "even", steadily across the step (see RiseTiming). */
+  riseTiming?: RiseTiming;
+  /** The chart's footwork for the step: letters for the parts of the
+   *  foot that meet the floor, in order (H heel, T toe, B ball, F flat):
+   *  "HT", "T", "TH", "BF". The first letter decides how the foot lands
+   *  (DanceStep.footwork). Default: none. */
+  footwork?: string;
   /** false for a step without weight (a tap or a close without
    *  weight): the foot moves but the weight stays on the standing foot. */
   weight?: boolean;
@@ -585,7 +595,15 @@ export interface PartnerMove extends MoveOptions {
  * to `lead`/`follow` written as a plain action; a partner written as an
  * object uses only its own options.
  */
-export interface StepRow extends Omit<MoveOptions, "label" | "pointing"> {
+export interface StepRow extends Omit<
+  MoveOptions,
+  "label" | "pointing" | "footwork"
+> {
+  /** See MoveOptions.footwork. On a row, either one for each partner it
+   *  applies to, or one each: a mirrored forward step is usually a heel
+   *  lead for one partner and a toe lead for the other,
+   *  `{ "lead": "HT", "follow": "TH" }`. */
+  footwork?: string | { lead?: string; follow?: string };
   /** See MoveOptions.pointing. On a row, either one amount for each
    *  partner it applies to, or one each: `{ "follow": { "right": "1/8" } }`
    *  (on a turning `both` step the partners usually point differently:
@@ -787,6 +805,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     by: row.by,
     turn: row.turn,
     rise: row.rise,
+    riseTiming: row.riseTiming,
     weight: row.weight,
     air: row.air,
     path: row.path,
@@ -794,6 +813,8 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
   };
   const labelFor = (partner: Partner) =>
     typeof row.label === "string" ? row.label : row.label?.[partner];
+  const footworkFor = (partner: Partner): string | undefined =>
+    typeof row.footwork === "object" ? row.footwork[partner] : row.footwork;
   const pointingFor = (partner: Partner): Turn | undefined =>
     row.pointing === undefined
       ? undefined
@@ -808,7 +829,12 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
       );
     }
     const lead = resolveOffset(
-      { ...shared, pointing: pointingFor("lead"), go: row.both },
+      {
+        ...shared,
+        footwork: footworkFor("lead"),
+        pointing: pointingFor("lead"),
+        go: row.both,
+      },
       where,
     );
     let leadLabel = labelFor("lead") ?? "";
@@ -835,6 +861,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     const follow: PlainMove = {
       ...lead,
       foot: undefined,
+      footwork: footworkFor("follow"),
       pointing: pointingFor("follow"),
     };
     return [
@@ -852,7 +879,12 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     const written: PartnerMove =
       typeof value === "object" && "go" in value
         ? value
-        : { ...shared, pointing: pointingFor(partner), go: value };
+        : {
+            ...shared,
+            footwork: footworkFor(partner),
+            pointing: pointingFor(partner),
+            go: value,
+          };
     let label = written.label ?? labelFor(partner) ?? "";
     if (isOffset(written.go)) {
       // Label from the offset as written, before it becomes degrees.
@@ -1010,6 +1042,9 @@ function applyMove(
       ? { footDirection: normalizeDegrees(after + turnDegrees(move.pointing)) }
       : {}),
     rise: move.rise ?? 0,
+    // "even" and no footwork are the defaults, left out.
+    ...(move.riseTiming === "late" ? { riseTiming: "late" as const } : {}),
+    ...(move.footwork !== undefined ? { footwork: move.footwork } : {}),
     label: label || defaultLabel(move.go, move.turn, air),
   };
 }
@@ -2048,6 +2083,8 @@ export function parseFigureDefinition(
     "turn",
     "pointing",
     "rise",
+    "riseTiming",
+    "footwork",
     "weight",
     "air",
     "path",
@@ -2073,6 +2110,26 @@ export function parseFigureDefinition(
       checkTurn(`${path}pointing`, object.pointing);
     }
     checkNumber(`${path}rise`, object.rise);
+    checkOneOf(`${path}riseTiming`, object.riseTiming, ["even", "late"]);
+    const checkFootwork = (where: string, v: unknown) => {
+      if (v === undefined) return;
+      if (typeof v !== "string" || !/^[HTBF]+$/.test(v)) {
+        problem(
+          where,
+          'should be footwork letters, such as "HT", "T", "TH" or "BF" (H heel, T toe, B ball, F flat)',
+        );
+      }
+    };
+    if (rowLevel && isObject(object.footwork)) {
+      checkKeys(`${path}footwork`, object.footwork, ["lead", "follow"]);
+      if (Object.keys(object.footwork).length === 0) {
+        problem(`${path}footwork`, 'should name "lead" or "follow"');
+      }
+      checkFootwork(`${path}footwork.lead`, object.footwork.lead);
+      checkFootwork(`${path}footwork.follow`, object.footwork.follow);
+    } else {
+      checkFootwork(`${path}footwork`, object.footwork);
+    }
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
     checkOneOf(`${path}path`, object.path, CURVED_PATHS);

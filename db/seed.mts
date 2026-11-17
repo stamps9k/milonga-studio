@@ -105,8 +105,8 @@ const insertFigure = db.prepare(
 );
 const insertStep = db.prepare(
   `INSERT INTO dance_steps
-	 (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, beat, duration, label)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	 (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, rise_timing, footwork, beat, duration, label)
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 );
 const insertTransform = db.prepare(
   "INSERT INTO floor_transforms (x, y, rotation) VALUES (?, ?, ?)",
@@ -219,6 +219,8 @@ function seedFigure(figure: AuthoredFigure): SeededFigure {
       step.orientation,
       step.footDirection ?? null,
       step.rise,
+      step.riseTiming ?? "even",
+      step.footwork ?? null,
       step.beat,
       step.duration,
       step.label ?? null,
