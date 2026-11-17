@@ -182,13 +182,29 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   steps in progress at once, are checked against the seed as provisional
   rules.
 - `defineFigure`'s closed stance (feet 20 cm apart, partners 40 cm apart,
-  follow directly in front of the lead), its mirroring (the follow uses the
-  other foot and travels the same floor direction; on a turning step she
-  keeps her position relative to the lead, so the couple turns together,
-  and a `both` turn on a close, in place or pivot is rejected), "close" (beside the
+  the follow `HOLD_OFFSET`, 10 cm, to the lead's right, so his right foot
+  is in line with the gap between hers), its mirroring (the follow uses the
+  other foot and travels the same floor direction), "close" (beside the
   standing foot at stance width, across the facing after the turn) and its
   default starting weight (lead on his right, follow on her left) are
-  agreed defaults, not technique.
+  agreed defaults, not technique. The offset hold is the owner's request
+  (2026-11-17); its size is half the stance width, at the small end of
+  the references' "up to half a body width", and the same for every
+  dance (real tango's is larger). Every stance keeps it, so in the
+  promenades the follow is 10 cm behind the lead along the line of
+  travel, as in real promenade.
+- On a turning `both` step the couple keeps its hold and turns round a
+  centre (`TurnCentre`, the row's `turnCentre`): "lead" (he takes the
+  step as written, she goes round him), "follow" (she takes its mirror,
+  he goes round her) or "between" (the point halfway between their moving
+  feet takes it). Left out, it's whoever the written step sends backward,
+  or "between" for a step straight to the side: references agree the
+  partner going backward is on the inside of an ordinary turn, and only
+  pivots turn round a point between the partners (owner's decision,
+  2026-11-17). So a written turning step is the centre's step, which
+  means a forward turning step is the follow's mirror of it. A `both`
+  turn on a close, in place or pivot is still rejected: each partner
+  would turn on their own standing foot.
 - The "crossed promenade" stance (`authoring.mts`) is the owner's whisk
   ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
   (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured
@@ -206,7 +222,7 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   Link ends: the same V and frame, feet apart and uncrossed, each
   outside foot `TANGO_PROMENADE_WIDTH` (60 cm, from the owner's wide
   step) along the line of travel from the inside foot, measured from the
-  lead's right foot, partners at closed hold's distance. Its default
+  lead's right foot, partners at closed hold's distance and offset. Its default
   starting weight is on the inside feet.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
@@ -214,11 +230,13 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   step is marked `cross: true` or the figure starts crossed; while the
   feet are crossed the foot in front stays in front, so legs never pass
   through each other (added 2026-11-17, part of the "crossed feet"
-  check); and no lead foot comes within `PARTNER_FOOT_CLEARANCE` (15 cm, a judgement call) of
-  a follow foot. Figures known to be wrong opt out with `skipChecks` and a
-  note; at the time of writing that's the three old tango figures and Box
-  Turn (forward half), whose follow can't get round the lead without
-  passing his foot while closed hold puts her directly in front of him.
+  check); and no lead foot comes within `PARTNER_FOOT_CLEARANCE` (10 cm, a
+  judgement call: just over a foot's width, so his foot can pass beside
+  hers in the offset hold; it was 15 cm before the offset) of a follow
+  foot. Figures known to be wrong opt out with `skipChecks` and a note; at
+  the time of writing that's the three old Argentine tango figures and the
+  box turns (except Reverse Box Turn (backward half)), whose feet pass
+  too close on count 2, waiting for the figure clean-up.
 
 ## Terminology
 

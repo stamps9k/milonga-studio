@@ -187,6 +187,10 @@
       "additionalProperties": false,
       "properties": {
         "both": { "$ref": "#/definitions/action" },
+        "turnCentre": {
+          "enum": ["lead", "follow", "between"],
+          "description": "With \"both\" and a \"turn\": what the couple turns around. \"lead\": he takes the step as written and she goes round him; \"follow\": she takes the mirror of it and he goes round her; \"between\": the point halfway between them takes it. Default: whoever the step sends backward (between them for a step straight to the side)."
+        },
         "lead": { "$ref": "#/definitions/partner" },
         "follow": { "$ref": "#/definitions/partner" },
         "beat": {

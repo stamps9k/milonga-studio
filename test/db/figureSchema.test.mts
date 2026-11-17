@@ -55,6 +55,7 @@ const WITH_STANCE_END = {
   steps: [
     {
       both: "forward",
+      turnCentre: "between",
       foot: "L",
       by: 0.3,
       turn: { right: "1/8" },
