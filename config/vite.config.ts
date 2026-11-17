@@ -20,5 +20,9 @@ export default defineConfig({
   build: {
     target: "es2022",
     outDir: path.resolve(repo_root, "dist"),
+    // The 3D view's chunk (Three.js, about 600 kB) is loaded only when the
+    // 3D view is first opened, so its size doesn't slow the page down.
+    // Raised from the default 500 kB so the build doesn't warn about it.
+    chunkSizeWarningLimit: 700,
   },
 });
