@@ -12,6 +12,9 @@ import {
   solveSkeleton,
 } from "../../src/libs/body/skeleton.mts";
 import type { PartnerSkeleton } from "../../src/libs/body/skeleton.mts";
+import type { Point3D } from "../../src/libs/body/vector3.mts";
+import { loadFigures } from "../../db/figures/index.mts";
+import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
 import { distance, sub } from "../../src/libs/body/vector3.mts";
 
 const LEAD = DEFAULT_PROPORTIONS.lead;
@@ -174,7 +177,7 @@ test("solveSkeleton: placing a pose on the floor moves the skeleton with it", ()
   }
 });
 
-test("solveSkeleton: in closed hold the partners face each other with the hold placeholder's hands", () => {
+test("solveSkeleton: in closed hold the partners face each other, in hold", () => {
   const { lead: him, follow: her } = solveSkeleton(
     stancePose("closed", { lead: "right", follow: "left" }),
   );
@@ -204,4 +207,91 @@ test("solveSkeleton: in closed hold the partners face each other with the hold p
     Math.hypot(herThigh.x, herThigh.y, herThigh.z),
     DEFAULT_PROPORTIONS.follow.thigh,
   );
+});
+
+/** How far apart two points are. */
+const gap = (a: Point3D, b: Point3D) =>
+  Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+
+for (const stance of [
+  "closed",
+  "crossed promenade",
+  "promenade apart",
+] as const) {
+  test(`solveSkeleton: in ${stance} the couple keeps hold`, () => {
+    const { lead: him, follow: her } = solveSkeleton(
+      stancePose(stance, { lead: "right", follow: "left" }),
+    );
+    // The joined hands meet: each wrist stops 5 cm short of the meeting
+    // point, so they're about 10 cm apart, palm to palm.
+    assert.ok(gap(him.joints.leftHand, her.joints.rightHand) < 0.12);
+    // His right hand is on her back, just behind and below her left
+    // shoulder; hers is on his right upper arm.
+    assert.ok(gap(him.joints.rightHand, her.joints.leftUpperArm) < 0.2);
+    assert.ok(gap(her.joints.leftHand, him.joints.rightUpperArm) < 0.15);
+    // The joined hands are out beyond the line between his left shoulder
+    // and her right one, away from the middle of the couple (to his left
+    // in closed hold, ahead in the open side of the V in promenade).
+    const between = {
+      x: (him.joints.leftUpperArm.x + her.joints.rightUpperArm.x) / 2,
+      y: (him.joints.leftUpperArm.y + her.joints.rightUpperArm.y) / 2,
+    };
+    const middle = {
+      x: (him.joints.hips.x + her.joints.hips.x) / 2,
+      y: (him.joints.hips.y + her.joints.hips.y) / 2,
+    };
+    const outward =
+      (him.joints.leftHand.x - between.x) * (between.x - middle.x) +
+      (him.joints.leftHand.y - between.y) * (between.y - middle.y);
+    assert.ok(outward > 0);
+  });
+}
+
+test("solveSkeleton: the hold changes smoothly from closed to promenade and back", () => {
+  // The Whisk goes from closed hold into crossed promenade.
+  const whisk = loadFigures().find((figure) => figure.name === "Whisk");
+  assert.ok(whisk);
+  const figure = {
+    ...whisk,
+    id: "whisk",
+    steps: whisk.steps.map((step, index) => ({ ...step, id: String(index) })),
+  };
+  let previous = solveSkeleton(poseAtBeat(figure, 0));
+  for (let beat = 1 / 64; beat <= figureDurationBeats(figure); beat += 1 / 64) {
+    const now = solveSkeleton(poseAtBeat(figure, beat));
+    for (const partner of ["lead", "follow"] as const) {
+      for (const joint of [
+        "leftHand",
+        "rightHand",
+        "leftLowerArm",
+        "rightLowerArm",
+      ] as const) {
+        assert.ok(
+          gap(previous[partner].joints[joint], now[partner].joints[joint]) <
+            0.03,
+          `${partner} ${joint} jumps at beat ${beat}`,
+        );
+      }
+    }
+    assert.ok(
+      gap(now.lead.joints.leftHand, now.follow.joints.rightHand) < 0.12,
+    );
+    previous = now;
+  }
+});
+
+test("solveSkeleton: partners out of reach let go, back to the solo hold shape", () => {
+  const pose = stancePose("closed", { lead: "right", follow: "left" });
+  // Move the follow 3 m away.
+  for (const foot of ["left", "right"] as const) {
+    pose.follow[foot].position = {
+      x: pose.follow[foot].position.x,
+      y: pose.follow[foot].position.y + 3,
+    };
+  }
+  const together = solveSkeleton(pose);
+  const alone = solvePartnerSkeleton(pose.lead, LEAD, "lead");
+  for (const joint of ["leftHand", "rightHand"] as const) {
+    assert.ok(gap(together.lead.joints[joint], alone.joints[joint]) < 1e-9);
+  }
 });

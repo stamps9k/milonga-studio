@@ -6,6 +6,7 @@ import type { BodyProportions } from "./proportions.mts";
 import {
   add,
   headingVector,
+  normalize,
   scale,
   sub,
   twoBoneJoint,
@@ -32,7 +33,11 @@ import type { Point3D } from "./vector3.mts";
  *   the thigh and shin lengths);
  * - the spine, neck and head stack straight up from the hips: no sway,
  *   CBM or shaping yet, since the model can't describe them;
- * - the arms hold a fixed closed-hold shape relative to the dancer's own
+ * - the arms take hold of the partner (connectHold, in solveSkeleton):
+ *   the joined hands meet out beyond the couple, the lead's right hand
+ *   is on the follow's left shoulder blade and her left hand on his right
+ *   upper arm. A dancer solved alone (solvePartnerSkeleton) holds the
+ *   same shape relative to their own
  *   chest (a placeholder until the model has a hold).
  *
  * Plain data and pure functions, no 3D library: any renderer (the
@@ -112,14 +117,15 @@ const MAX_PEEL_DEGREES = 50;
 const KNEE_SLACK = 0.005;
 
 /**
- * Closed-hold placeholder for the arms, in metres from each shoulder
- * joint, in the dancer's own frame (forward, to the right, up), for the
- * left and right hands. The lead's left hand holds the follow's right
- * at about her eye level, out to his left; his right hand is on her left
- * shoulder blade. The follow mirrors the joined hands, and her left hand
- * rests on his right upper arm. Provisional (2026-11-17): fixed shapes,
- * not reaching for the partner's actual hands, until the model has a
- * hold (closed, promenade, apart) and the arms can follow it.
+ * The arms of a dancer solved without their partner, in metres from each
+ * shoulder joint, in the dancer's own frame (forward, to the right, up),
+ * for the left and right hands: a closed-hold shape. The lead's left
+ * hand out to his left at about her eye level, his right hand forward
+ * where her left shoulder blade would be; the follow mirrors the joined
+ * hands, and her left hand is forward where his right upper arm would
+ * be. With both dancers solved together, connectHold reaches for the
+ * partner instead, and falls back to this shape only when the partner is
+ * out of reach.
  */
 const HOLD: Record<
   Partner,
@@ -147,6 +153,36 @@ export function standingHipHeight(body: BodyProportions): number {
   const leg = body.thigh + body.shin - KNEE_SLACK;
   const ankleBehind = body.footLength / 2 - body.ankleFromHeel;
   return body.ankleHeight + Math.sqrt(leg * leg - ankleBehind * ankleBehind);
+}
+
+/**
+ * The elbow and hand for an arm from `shoulder` reaching for `wrist`,
+ * with the elbow bending down and out to the arm's own side (two-bone
+ * IK). The hand ends where the forearm reaches, which is the wrist
+ * target unless it's out of reach.
+ */
+function solveArm(
+  shoulder: Point3D,
+  wrist: Point3D,
+  body: BodyProportions,
+  facing: number,
+  side: Foot,
+): { elbow: Point3D; hand: Point3D } {
+  const outwards = scale(headingVector(facing + 90), side === "left" ? -1 : 1);
+  const elbow = twoBoneJoint(
+    shoulder,
+    wrist,
+    body.upperArm,
+    body.forearm,
+    add(outwards, vec(0, 0, -1)),
+  );
+  const toWrist = sub(wrist, elbow);
+  const reach = Math.hypot(toWrist.x, toWrist.y, toWrist.z);
+  const hand =
+    reach <= body.forearm + 1e-9
+      ? wrist
+      : add(elbow, scale(toWrist, body.forearm / reach));
+  return { elbow, hand };
 }
 
 /** The skeleton of one dancer at one instant. */
@@ -282,28 +318,16 @@ export function solvePartnerSkeleton(
   const collar = (side: Foot) =>
     along(neck, 0, (side === "left" ? -1 : 1) * 0.02 * body.height, 0);
 
-  // Arms: wrists at the hold placeholder, elbows bending down and out.
+  // Arms: wrists at the solo hold shape (HOLD), elbows bending down
+  // and out.
   const arm = (side: Foot) => {
     const shoulder = shoulderJoint(side);
     const hold = HOLD[partner][side];
     const wrist = along(shoulder, hold.forward, hold.right, hold.up);
-    const outwards = scale(right, side === "left" ? -1 : 1);
-    const elbow = twoBoneJoint(
+    return {
       shoulder,
-      wrist,
-      body.upperArm,
-      body.forearm,
-      add(outwards, vec(0, 0, -1)),
-    );
-    // The hand ends where the forearm reaches, which is the wrist target
-    // unless it's out of reach.
-    const toWrist = sub(wrist, elbow);
-    const reach = Math.hypot(toWrist.x, toWrist.y, toWrist.z);
-    const hand =
-      reach <= body.forearm + 1e-9
-        ? wrist
-        : add(elbow, scale(toWrist, body.forearm / reach));
-    return { shoulder, elbow, hand };
+      ...solveArm(shoulder, wrist, body, pose.orientation, side),
+    };
   };
   const leftArm = arm("left");
   const rightArm = arm("right");
@@ -339,14 +363,148 @@ export function solvePartnerSkeleton(
   };
 }
 
+/**
+ * How the couple's hold is shaped (metres). Standard ballroom closed
+ * hold, as commonly taught; the exact distances are provisional
+ * judgement calls (2026-11-17):
+ * - JOINED_OUT: how far the joined hands (his left, her right) are out
+ *   beyond the point between those two shoulders, away from the middle of
+ *   the couple. In closed hold that is out to his left; in promenade it
+ *   is towards the open side of the V, the way the couple travels.
+ * - JOINED_ABOVE_HEAD: the joined hands' height above the base of the
+ *   follow's skull, about her eye level.
+ * - PALM: how far each wrist stops short of the point where the hands
+ *   meet, so the two hands sit palm to palm rather than inside each other.
+ * - The lead's right hand on her left shoulder blade: BLADE_BEHIND behind
+ *   her left shoulder joint, BLADE_IN towards her spine, BLADE_DOWN below
+ *   it.
+ * - The follow's left hand on his right upper arm: UPPER_ARM_ALONG of the
+ *   way from his shoulder to his elbow, resting on top (UPPER_ARM_ABOVE).
+ */
+const JOINED_OUT = 0.2;
+const JOINED_ABOVE_HEAD = 0.06;
+const PALM = 0.05;
+const BLADE_BEHIND = 0.06;
+const BLADE_IN = 0.1;
+const BLADE_DOWN = 0.12;
+const UPPER_ARM_ALONG = 0.35;
+const UPPER_ARM_ABOVE = 0.05;
+
+/**
+ * When a hold point is further from the shoulder than the arm can reach,
+ * the arm lets go and returns to the solo hold shape, gradually: fully
+ * holding up to HOLD_LETS_GO_FROM times the arm's length, fully let go by
+ * HOLD_LET_GO_BY times. Figures where the partners separate (an open
+ * position, an Argentine ocho) then don't drag the arms out straight.
+ */
+const HOLD_LETS_GO_FROM = 1.05;
+const HOLD_LET_GO_BY = 1.5;
+
+function smoothstep(from: number, to: number, value: number): number {
+  const t = Math.min(1, Math.max(0, (value - from) / (to - from)));
+  return t * t * (3 - 2 * t);
+}
+
+function lerp3(a: Point3D, b: Point3D, t: number): Point3D {
+  return add(a, scale(sub(b, a), t));
+}
+
+/** Re-solves one arm of `skeleton` towards a hold point, blending back to
+ *  the solo shape (the arm as solved alone) as the point gets out of
+ *  reach. */
+function reachFor(
+  skeleton: PartnerSkeleton,
+  side: Foot,
+  target: Point3D,
+  body: BodyProportions,
+): PartnerSkeleton {
+  const shoulder = skeleton.joints[`${side}UpperArm`];
+  const solo = skeleton.joints[`${side}Hand`];
+  const arm = body.upperArm + body.forearm;
+  const away = Math.hypot(...Object.values(sub(target, shoulder)));
+  const holding =
+    1 - smoothstep(HOLD_LETS_GO_FROM * arm, HOLD_LET_GO_BY * arm, away);
+  const wrist = lerp3(solo, target, holding);
+  const { elbow, hand } = solveArm(
+    shoulder,
+    wrist,
+    body,
+    skeleton.facing,
+    side,
+  );
+  return {
+    ...skeleton,
+    joints: {
+      ...skeleton.joints,
+      [`${side}LowerArm`]: elbow,
+      [`${side}Hand`]: hand,
+    },
+  };
+}
+
+/**
+ * Takes hold: points each dancer's arms at the partner, from where both
+ * bodies are now. Because the hold points move with the bodies, the hold
+ * keeps its shape through closed hold, promenade and every moment in
+ * between, with no hold written in the figures.
+ */
+function connectHold(
+  lead: PartnerSkeleton,
+  follow: PartnerSkeleton,
+  bodies: Record<Partner, BodyProportions>,
+): CoupleSkeleton {
+  const UP = vec(0, 0, 1);
+  const middle = scale(add(lead.joints.hips, follow.joints.hips), 0.5);
+
+  // The joined hands: out beyond the point between his left shoulder and
+  // her right, away from the middle of the couple.
+  const hisShoulder = lead.joints.leftUpperArm;
+  const herShoulder = follow.joints.rightUpperArm;
+  const between = scale(add(hisShoulder, herShoulder), 0.5);
+  const outward =
+    normalize(vec(between.x - middle.x, between.y - middle.y, 0)) ??
+    scale(headingVector(lead.facing + 90), -1);
+  const joined = {
+    ...add(between, scale(outward, JOINED_OUT)),
+    z: follow.joints.head.z + JOINED_ABOVE_HEAD,
+  };
+  const palmShort = (shoulder: Point3D) =>
+    add(joined, scale(normalize(sub(shoulder, joined)) ?? UP, PALM));
+
+  // His right hand on her left shoulder blade.
+  const herForward = headingVector(follow.facing);
+  const herRight = headingVector(follow.facing + 90);
+  const blade = add(
+    follow.joints.leftUpperArm,
+    add(
+      scale(herForward, -BLADE_BEHIND),
+      add(scale(herRight, BLADE_IN), scale(UP, -BLADE_DOWN)),
+    ),
+  );
+
+  let him = reachFor(lead, "left", palmShort(hisShoulder), bodies.lead);
+  him = reachFor(him, "right", blade, bodies.lead);
+
+  // Her left hand on his right upper arm, where his arm now is.
+  const onHisArm = add(
+    lerp3(him.joints.rightUpperArm, him.joints.rightLowerArm, UPPER_ARM_ALONG),
+    scale(UP, UPPER_ARM_ABOVE),
+  );
+  let her = reachFor(follow, "right", palmShort(herShoulder), bodies.follow);
+  her = reachFor(her, "left", onHisArm, bodies.follow);
+
+  return { lead: him, follow: her };
+}
+
 /** Both dancers' skeletons at one instant (for example a Pose from
- *  sequencePoseAtBeat). */
+ *  sequencePoseAtBeat), in hold (connectHold). */
 export function solveSkeleton(
   pose: Pose,
   bodies: Record<Partner, BodyProportions> = DEFAULT_PROPORTIONS,
 ): CoupleSkeleton {
-  return {
-    lead: solvePartnerSkeleton(pose.lead, bodies.lead, "lead"),
-    follow: solvePartnerSkeleton(pose.follow, bodies.follow, "follow"),
-  };
+  return connectHold(
+    solvePartnerSkeleton(pose.lead, bodies.lead, "lead"),
+    solvePartnerSkeleton(pose.follow, bodies.follow, "follow"),
+    bodies,
+  );
 }
