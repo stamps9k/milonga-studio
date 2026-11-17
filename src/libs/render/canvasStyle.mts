@@ -1,8 +1,8 @@
-import type { Partner } from "../libs/dance/step.mts";
+import type { Partner } from "../dance/step.mts";
 
 /**
- * The visual encoding of the 2D canvas, shared by Canvas2D (which draws
- * it) and CanvasLegend (which explains it), so the legend can't drift
+ * The visual encoding of the 2D canvas, shared by Renderer2D (which
+ * draws it) and CanvasLegend (which explains it), so the legend can't drift
  * out of step with what's actually drawn.
  */
 

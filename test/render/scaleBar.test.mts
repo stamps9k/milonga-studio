@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {
   formatScaleLength,
   niceScaleLength,
-} from "../../src/components/scaleBar.mts";
+} from "../../src/libs/render/scaleBar.mts";
 
 test("niceScaleLength: picks the largest 1, 2 or 5 times a power of ten that fits", () => {
   assert.equal(niceScaleLength(0.7), 0.5);

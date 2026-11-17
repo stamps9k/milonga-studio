@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { FOOT_OUTLINES } from "../../src/components/figureShapes.mts";
+import { FOOT_OUTLINES } from "../../src/libs/render/figureShapes.mts";
 
 // Outlines are in screen-local metres, toe towards -y. A foot's inner
 // side is towards the other foot: -x for the right foot, +x for the left.

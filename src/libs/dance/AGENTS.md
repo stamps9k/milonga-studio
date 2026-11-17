@@ -62,7 +62,7 @@ and usable by any renderer.
   floats.
 - A pivot is a `straight` movement with distance 0 plus a changed
   `orientation`. It does not need its own variant.
-- Renderers convert floor space to screen space themselves. `Canvas2D` flips
+- Renderers convert floor space to screen space themselves. `Renderer2D` flips
   Y so floor-north is screen-up. Do not bake screen conventions into the
   model.
 

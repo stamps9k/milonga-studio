@@ -25,7 +25,7 @@ interface UsePlaybackResult {
  * Owns a scrub/playback position (in beats) over a sequence of the
  * given total length, advancing at `bpm` beats a minute while playing
  * (see useTempo). Doesn't know anything about dance data itself --
- * Canvas2D/ActiveStep turn `beat` into an actual Pose via
+ * the 2D renderer and ActiveStep turn `beat` into an actual Pose via
  * sequencePoseAtBeat (see fold.mts).
  */
 export function usePlayback(
