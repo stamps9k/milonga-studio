@@ -58,7 +58,7 @@
     },
     "skipChecks": {
       "type": "array",
-      "items": { "enum": ["crossed feet", "partner spacing"] },
+      "items": { "enum": ["crossed feet", "partner spacing", "hold"] },
       "description": "Checks to leave out, only for figures known to be wrong that are kept until rewritten. Say why in notes."
     },
     "expectEnd": {

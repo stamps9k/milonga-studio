@@ -3,7 +3,7 @@
   "name": "Cruzada",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "The lead walks forward while leading the follow into the cross. Reproduced as originally seeded, which is suspect: both of the follow's steps travel forward for her (towards the lead), as in the original Walking Step direction bug. A cruzada is normally led from the follow walking back. Left unchanged for the owner to correct when describing the tango figures. Exempt from the \"partner spacing\" check (added 2026-11-16) because the follow's steps travel towards the lead, which is the known data problem noted above, and puts her right foot too close to his left. Remove skipChecks when the figure is rewritten from the owner's tango.",
+  "notes": "The lead walks forward while leading the follow into the cross. Reproduced as originally seeded, which is suspect: both of the follow's steps travel forward for her (towards the lead), as in the original Walking Step direction bug. A cruzada is normally led from the follow walking back. Left unchanged for the owner to correct when describing the tango figures. Exempt from the \"partner spacing\" check (added 2026-11-16) because the follow's steps travel towards the lead, which is the known data problem noted above, and puts her right foot too close to his left. Remove skipChecks when the figure is rewritten from the owner's tango. Also exempt from the \"hold\" check (2026-11-17): the follow's steps take her 0.6 from closed hold, part of the same data problem.",
   "steps": [
     {
       "lead": "forward",
@@ -23,7 +23,7 @@
     }
   ],
   "expectBeats": 2,
-  "skipChecks": ["partner spacing"],
+  "skipChecks": ["partner spacing", "hold"],
   "expectEnd": {
     "feet": {
       "lead": {

@@ -103,7 +103,7 @@ const WITH_FEET_END = {
   style: "test",
   time: "3/4",
   start: "crossed promenade",
-  skipChecks: ["crossed feet", "partner spacing"],
+  skipChecks: ["crossed feet", "partner spacing", "hold"],
   steps: [{ follow: { go: "close" }, length: "Q" }],
   expectEnd: {
     feet: {

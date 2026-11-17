@@ -342,12 +342,17 @@ The reset stops, listing every problem with its file and location, if:
 - at any moment, one of the lead's feet comes within 10 cm of one of the
   follow's feet, centre to centre, so one would tread on the other (a foot is
   about 9 cm wide, so walking forward in the offset hold, his foot passing 10 cm
-  beside hers, is allowed).
+  beside hers, is allowed);
+- after any step (once every step on its row has finished), the partners
+  aren't in hold. The follow's weight must be within 20 cm of where closed hold
+  or promenade puts it from the lead's, and she must face within 30° of the
+  way that position faces. Mirrored (`both`) steps keep the hold on their own,
+  so this mostly checks steps written for `lead` and `follow` separately.
 
-The last two are checked through the whole figure, not just at its end. A
+The last three are checked through the whole figure, not just at its end. A
 figure known to be wrong can skip them until it's rewritten, with
-`"skipChecks": ["crossed feet", "partner spacing"]` (either or both). Say why in
-`notes`, and remove it once the figure is fixed.
+`"skipChecks"` listing any of `"crossed feet"`, `"partner spacing"` and
+`"hold"`. Say why in `notes`, and remove it once the figure is fixed.
 
 The sample dances in `db/seed.mts` refer to figures by name. If one of their
 figures is missing (because a file was renamed or removed), that sample is

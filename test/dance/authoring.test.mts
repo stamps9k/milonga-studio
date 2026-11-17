@@ -23,9 +23,9 @@ import { assessJoin } from "../../src/libs/dance/join.mts";
 // offset 0.1 to his right (HOLD_OFFSET).
 
 // Most tests here check one calculation with one dancer moving on their
-// own, often onto the other or across their own feet, so the whole-figure
-// foot checks are off by default; the tests of those checks turn them on
-// with `skipChecks: []`.
+// own, often onto the other or across their own feet or out of hold, so
+// the whole-figure checks are off by default; the tests of those checks
+// turn them on with `skipChecks: ["hold"]`.
 function figure(
   steps: StepRow[],
   extra: Partial<FigureDefinition> = {},
@@ -35,7 +35,7 @@ function figure(
     style: "test",
     time: "4/4",
     steps,
-    skipChecks: ["crossed feet", "partner spacing"],
+    skipChecks: ["crossed feet", "partner spacing", "hold"],
     ...extra,
   });
 }
@@ -410,7 +410,7 @@ test("crossed promenade: a whisk ends in it, measured from where the lead's righ
   assert.doesNotThrow(() =>
     figure(WHISK_STEPS, {
       time: "3/4",
-      skipChecks: [],
+      skipChecks: ["hold"],
       expectEnd: {
         stance: "crossed promenade",
         moved: { forward: 0.5, right: 0.3 },
@@ -513,7 +513,7 @@ test("path around the front: the foot sets off forward and curves round to land 
     name: "Curve",
     style: "test",
     time: "4/4",
-    skipChecks: ["crossed feet", "partner spacing"],
+    skipChecks: ["crossed feet", "partner spacing", "hold"],
     steps: [
       {
         lead: { go: { forward: 0.3, right: 0.3 }, path: "around the front" },
@@ -622,15 +622,19 @@ test("crossed legs: feet uncross the way they crossed, not through each other", 
     { lead: { go: { forward: 1.0, right: -0.4 }, path }, length: "Q" },
   ];
   assert.throws(
-    () => figure(steps(), { skipChecks: ["partner spacing"] }),
+    () => figure(steps(), { skipChecks: ["partner spacing", "hold"] }),
     /step 2\) the lead's left foot has come out in front of the right while the feet are still crossed, so the legs would pass through each other/,
   );
   assert.doesNotThrow(() =>
-    figure(steps("around the back"), { skipChecks: ["partner spacing"] }),
+    figure(steps("around the back"), {
+      skipChecks: ["partner spacing", "hold"],
+    }),
   );
   // It belongs to the crossed-feet check, so skipping that skips it.
   assert.doesNotThrow(() =>
-    figure(steps(), { skipChecks: ["crossed feet", "partner spacing"] }),
+    figure(steps(), {
+      skipChecks: ["crossed feet", "partner spacing", "hold"],
+    }),
   );
 });
 
@@ -650,7 +654,7 @@ test("crossed feet: a step may not put the left foot right of the right foot unl
     { lead: { go: { forward: 0.1, right: 0.4 } }, length: "Q" },
   ];
   assert.throws(
-    () => figure(crossing, { skipChecks: [] }),
+    () => figure(crossing, { skipChecks: ["hold"] }),
     /the lead's left foot is 0\.\d\d to the right of the right foot, so the feet are crossed\. If that's meant, add "cross": true/,
   );
   assert.doesNotThrow(() =>
@@ -661,10 +665,12 @@ test("crossed feet: a step may not put the left foot right of the right foot unl
           length: "Q",
         },
       ],
-      { skipChecks: ["partner spacing"] },
+      { skipChecks: ["partner spacing", "hold"] },
     ),
   );
-  assert.doesNotThrow(() => figure(crossing, { skipChecks: ["crossed feet"] }));
+  assert.doesNotThrow(() =>
+    figure(crossing, { skipChecks: ["crossed feet", "hold"] }),
+  );
 });
 
 test("crossed feet: a figure starting crossed may stay crossed until the feet uncross, but not cross again unannounced", () => {
@@ -674,7 +680,7 @@ test("crossed feet: a figure starting crossed may stay crossed until the feet un
   assert.doesNotThrow(() =>
     figure([{ lead: { go: "side right", by: 0.3 }, length: "Q" }], {
       start: "crossed promenade",
-      skipChecks: ["partner spacing"],
+      skipChecks: ["partner spacing", "hold"],
     }),
   );
   assert.throws(
@@ -684,7 +690,7 @@ test("crossed feet: a figure starting crossed may stay crossed until the feet un
           { lead: { go: "side right", by: 0.3 }, length: "Q" },
           { lead: { go: { forward: 0, right: 0.8 } }, length: "Q" },
         ],
-        { start: "crossed promenade", skipChecks: ["partner spacing"] },
+        { start: "crossed promenade", skipChecks: ["partner spacing", "hold"] },
       ),
     /step 2\) the lead's left foot is .* so the feet are crossed/,
   );
@@ -699,11 +705,11 @@ test("partner spacing: a lead foot may not come within 10 cm of a follow foot", 
     { lead: { forward: 0.35, right: 0.1 }, length: "Q" },
   ];
   assert.throws(
-    () => figure(treading, { skipChecks: [] }),
+    () => figure(treading, { skipChecks: ["hold"] }),
     /at beat 1\.875 the lead's left foot and the follow's right foot are 0\.09 apart, centre to centre \(at least 0\.1 needed\)/,
   );
   assert.doesNotThrow(() =>
-    figure(treading, { skipChecks: ["partner spacing"] }),
+    figure(treading, { skipChecks: ["partner spacing", "hold"] }),
   );
   // Walking forward in the offset hold, his right foot passes between
   // her feet, 10 cm from each: allowed.
@@ -713,9 +719,64 @@ test("partner spacing: a lead foot may not come within 10 cm of a follow foot", 
         { both: "forward", by: 0.4, foot: "L", length: "Q" },
         { both: "forward", by: 0.5, length: "Q" },
       ],
+      { skipChecks: ["hold"] },
+    ),
+  );
+});
+
+test("hold: after every row the partners are in closed hold or promenade, within tolerance", () => {
+  // The follow side-steps alone, her right foot 0.3 to her right (west),
+  // taking weight: her weight goes from her left foot at (0.2, 0.4) to
+  // her right at (-0.3, 0.4), 0.5 from where closed hold puts it (over
+  // her left, since the lead stands on his right).
+  const apart: StepRow[] = [
+    { follow: { go: "side right", by: 0.3 }, length: "Q" },
+  ];
+  assert.throws(
+    () => figure(apart, { skipChecks: [] }),
+    /after step 1 \(beat 2\) the partners aren't in hold: the nearest is closed hold, but the follow is 0\.50 from where it puts her \(at most 0\.2\) and her facing is 0° off \(at most 30°\)/,
+  );
+  assert.doesNotThrow(() => figure(apart, { skipChecks: ["hold"] }));
+
+  // Turning away: her weight stays put but she faces 45° off him.
+  assert.throws(
+    () =>
+      figure(
+        [{ follow: { go: "pivot", turn: { left: "1/8" } }, length: "Q" }],
+        { skipChecks: [] },
+      ),
+    /her facing is 45° off/,
+  );
+
+  // Within tolerance: her right foot 0.1 to her left, taking weight,
+  // leaves her weight 0.1 out, still in hold.
+  assert.doesNotThrow(() =>
+    figure([{ follow: { go: "side left", by: 0.1 }, length: "Q" }], {
+      skipChecks: [],
+    }),
+  );
+
+  // Mirrored steps keep the hold, turning or not, and every promenade
+  // stance counts as in hold.
+  assert.doesNotThrow(() =>
+    figure(
+      [
+        { both: "forward", by: 0.5, length: "Q" },
+        { both: "side right", by: 0.4, turn: { right: "1/4" }, length: "Q" },
+        { both: "close", length: "Q" },
+      ],
       { skipChecks: [] },
     ),
   );
+  for (const start of [
+    "crossed promenade",
+    "promenade apart",
+    "tango promenade",
+  ] as const) {
+    assert.doesNotThrow(() =>
+      figure([{ both: "in place", length: "Q" }], { start, skipChecks: [] }),
+    );
+  }
 });
 
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
@@ -1077,6 +1138,8 @@ test("parseFigureDefinition: turns can be written as fractions of a turn in text
         steps: [
           { follow: { go: "pivot", turn: { left: "1/8" } }, length: "Q" },
         ],
+        // A follow turning on her own isn't in hold.
+        skipChecks: ["hold"],
       },
       "pivot.json",
     ),

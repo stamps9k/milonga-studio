@@ -237,6 +237,22 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   the time of writing that's the three old Argentine tango figures and the
   box turns (except Reverse Box Turn (backward half)), whose feet pass
   too close on count 2, waiting for the figure clean-up.
+- `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
+  the end of every row, the follow's centre of weight must be within
+  `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
+  the lead's, with her facing within `HOLD_FACING_TOLERANCE` (30°) of that
+  position's. The model has no arms, so this stands in for them, catching
+  separately written steps that leave a partner out of reach. Mirrored
+  steps keep the hold by construction. The positions and tolerances are
+  provisional judgement calls. Figures opting out ("hold" in
+  `skipChecks`): Back Corté and Open Natural Turn (out of hold until their
+  turning close, waiting for the clean-up and a couple turn through the
+  close), and the Cruzada and Ocho (Argentine tango, not a ballroom hold).
+- Planned model changes, in the owner's agreed order (2026-11-17): a
+  foot direction separate from the body's facing (the book's alignments
+  and per-partner turn amounts are foot turns, with "body turns less";
+  the bodies stay in hold), then a couple turn that continues through a
+  close.
 
 ## Terminology
 
