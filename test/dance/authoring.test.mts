@@ -350,8 +350,8 @@ test("both: turnCentre needs `both`, a turn and a step on the floor", () => {
   );
 });
 
-test("both: a turn on a close, in place or pivot is rejected, since the hold would come apart", () => {
-  for (const action of ["close", "in place", "pivot"] as const) {
+test("both: a turn on in place or pivot is rejected, since the hold would come apart", () => {
+  for (const action of ["in place", "pivot"] as const) {
     assert.throws(
       () =>
         figure([
@@ -361,6 +361,90 @@ test("both: a turn on a close, in place or pivot is rejected, since the hold wou
       (error: unknown) =>
         error instanceof FigureError &&
         /step 2: with `both`, a turn can't go on/.test(error.message),
+    );
+  }
+});
+
+test("both: a turning close carries its turn back into the feet of the step before, while each body turns on its own count", () => {
+  // A quarter turn split 1/8 on the side step and 1/8 on the close (a
+  // book box turn) puts every foot where the whole quarter on the side
+  // step does; only the bodies' facing differs, and only until the close.
+  const split = figure(
+    [
+      { both: "forward", by: 0.5, length: "Q" },
+      {
+        both: { forward: 0.4, right: 0.5 },
+        turn: { right: "1/8" },
+        length: "Q",
+      },
+      { both: "close", turn: { right: "1/8" }, length: "Q" },
+    ],
+    { skipChecks: ["crossed feet", "partner spacing"] },
+  );
+  const whole = figure([
+    { both: "forward", by: 0.5, length: "Q" },
+    {
+      both: { forward: 0.4, right: 0.5 },
+      turn: { right: "1/4" },
+      length: "Q",
+    },
+    { both: "close", length: "Q" },
+  ]);
+  for (const partner of ["lead", "follow"] as const) {
+    for (const foot of ["left", "right"] as const) {
+      const { x, y } = whole.endPose[partner][foot].position;
+      pointClose(split.endPose[partner][foot].position, [x, y]);
+    }
+  }
+  assert.equal(split.endPose.lead.orientation, 90);
+  assert.equal(split.endPose.follow.orientation, 270);
+  // The side step's bodies have turned only their own eighth.
+  assert.deepEqual(
+    split.steps.slice(2, 4).map((step) => step.orientation),
+    [45, 225],
+  );
+  assert.deepEqual(
+    whole.steps.slice(2, 4).map((step) => step.orientation),
+    [90, 270],
+  );
+  // The hold check passes (it judges the side step against the hold
+  // the turn finishes in), and the figure ends in closed hold. Here the
+  // side step goes straight to the side, so the couple turns round the
+  // point between the moving feet, (0.15, 0.2); his right foot lands at
+  // (0.35, 0.25) and he closes to (0.35, 0.45): his feet are centred
+  // 0.35 forward and 0.35 right of where they started.
+  assert.doesNotThrow(() =>
+    figure(
+      [
+        { both: "forward", by: 0.5, length: "Q" },
+        { both: "side right", by: 0.4, turn: { right: "1/8" }, length: "Q" },
+        { both: "close", turn: { right: "1/8" }, length: "Q" },
+      ],
+      {
+        skipChecks: ["crossed feet", "partner spacing"],
+        expectEnd: {
+          stance: "closed",
+          turned: { right: "1/4" },
+          moved: { forward: 0.35, right: 0.35 },
+        },
+      },
+    ),
+  );
+});
+
+test("both: a turning close needs a mirrored travelling step before it", () => {
+  for (const before of [
+    { lead: "forward", follow: "back", by: 0.4, length: "Q" },
+    { both: "in place", length: "Q" },
+  ] as StepRow[]) {
+    assert.throws(
+      () =>
+        figure([
+          { both: "forward", by: 0.4, length: "Q" },
+          before,
+          { both: "close", turn: { right: "1/8" }, length: "Q" },
+        ]),
+      /step 3: with `both`, a turn on a close needs the step before it to be a mirrored \(`both`\) travelling step/,
     );
   }
 });

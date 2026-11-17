@@ -124,9 +124,21 @@ is Box Turn (forward half)'s count 2: she goes 0.4 back and 0.5 to her left,
 and he lands 0.9 forward and 0.2 right of where his foot was.
 `"turnCentre"` only goes with `both` and a `turn`, on a step that travels.
 
-Put a `both` turn on a travelling step. A turn on a `both` close, in place or
-pivot is an error, because each partner would turn on their own standing foot
-and the hold would come apart.
+Put a `both` turn on a travelling step, or on the close straight after one.
+On a close, the bodies keep turning through it, as a chart's "1/8 between 2 and
+3": the feet were already placed for the whole turn by the step before, so they
+land exactly where they would with all the turn on that step, while each body
+turns on its own count. For example, the book's box turn turns the bodies an
+eighth on the side step and an eighth on the close:
+
+```json
+{ "both": { "forward": 0.4, "right": 0.5 }, "turn": { "right": "1/8" }, "pointing": { "follow": { "right": "1/8" } }, "beat": 2 },
+{ "both": "close", "turn": { "right": "1/8" }, "beat": 3 }
+```
+
+A turn on a `both` close needs a mirrored travelling step before it. A turn on
+a `both` in place or pivot is an error, because each partner would turn on
+their own standing foot and the hold would come apart.
 
 A partner can be written as just an action (`"lead": "forward"`, using the
 options on the row), or as an object with its own options:
