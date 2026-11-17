@@ -5,6 +5,7 @@ import {
   DEG_TO_RAD,
   RAD_TO_DEG,
   addPoints,
+  angleBetweenDegrees,
   headingToUnitVector,
   normalizeDegrees,
   rotatePoint,
@@ -1561,6 +1562,20 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     carriedTurn[index - 1] = turnDegrees(row.turn);
   });
 
+  // In hold the lead's left foot pairs with the follow's right, and his
+  // right with her left (each is in front of the other). A mirrored
+  // turning step only moves one pair, so the other pair is left in the
+  // relation the couple had when it last moved. pairFacing records, per
+  // pair (keyed by the lead's foot), the lead's facing that pair was
+  // last placed for, and a mirrored travelling step turns its pair by
+  // everything since: the turn so far, not just its own. Without this a
+  // turn spread over consecutive steps (begun on count 1, say) leaves
+  // the couple short of the hold by the earlier steps' turn. (2026-11-17)
+  const pairFacing: Record<Foot, number> = {
+    left: startPose.lead.orientation,
+    right: startPose.lead.orientation,
+  };
+
   // Resolve every move in row order, tracking each partner's state so
   // later steps know which foot is free, where "close" lands, etc.
   const slow = definition.slow ?? 2;
@@ -1692,9 +1707,18 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
           leadFrom,
           scalePoint(subPoints(followFrom, leadFrom), t),
         );
-        // The step's own turn, plus any the next close carries back
-        // (carriedTurn): the feet land for the whole turn.
-        const degrees = turnDegrees(move.turn) + carriedTurn[index];
+        // The couple's facing the feet land for: after this step's own
+        // turn, plus any the next close carries back (carriedTurn). The
+        // pair turns from the facing it was last placed for
+        // (pairFacing), which is this step's starting facing unless an
+        // earlier mirrored step turned the couple while this pair stood.
+        const placedFor =
+          state.lead.orientation + turnDegrees(move.turn) + carriedTurn[index];
+        const degrees =
+          turnDegrees(move.turn) +
+          carriedTurn[index] +
+          angleBetweenDegrees(pairFacing[foot], state.lead.orientation);
+        pairFacing[foot] = placedFor;
         const land = (from: Point2D) =>
           addPoints(
             addPoints(pivot, displacement),
@@ -1757,6 +1781,20 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         where: `step ${index + 1}`,
         row: index,
       });
+      // Any other step that places a foot (a close, separately written
+      // steps) leaves its pair in whatever relation the steps give; it
+      // counts as placed for the lead's facing now.
+      const travelledBoth =
+        row.both !== undefined && travels && move.air !== true;
+      if (
+        !travelledBoth &&
+        move.go !== "pivot" &&
+        move.go !== "in place" &&
+        move.air !== true
+      ) {
+        const pairKey = partner === "lead" ? foot : OTHER[foot];
+        pairFacing[pairKey] = state.lead.orientation;
+      }
     }
   });
 

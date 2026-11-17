@@ -3,49 +3,54 @@
   "name": "Box Turn (backward half)",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's description: follows Box Turn (forward half); a backward step on the opposite (left) foot with the same quarter turn clockwise, counts 1-2-3, feet closing on 3. Step sizes and rise are assumptions the owner accepted for now (2026-11-16), the same as the forward half mirrored backwards: 0.5 back, then the right foot lands 0.4 beyond the left in the turned frame; no rise. The whole quarter turn is placed on step 2. Measured from the facing before the turn, step 2 is 0.9 back and 0.2 left. The lead goes back on step 2, so the couple turns round him (the default turning centre) and he takes the step as written while the follow travels round him. Exempt from the \"partner spacing\" check (2026-11-17): with the offset hold she sits to his right, so on count 2 her right foot swings round past his standing right foot, 7.6 cm from it, centre to centre. In technique this is the outside partner having to get past on a natural turn; how her step should go (a heel turn for him, the turn split between counts) is left for the figure clean-up. Remove skipChecks once it's fixed. Turn timing from the book (2026-11-17, a box-step study card: the partner going forward turns 1/8 between 1 and 2 and 1/8 between 2 and 3; the partner going back turns 1/4 between 1 and 2, \"body turns less\", and the body completes the turn on 3): the bodies turn 1/8 right on count 2 and 1/8 on the close, and the lead, going back on the inside of the turn, points the foot a further 1/8 on count 2 (`pointing`), so his feet make the whole quarter between 1 and 2. The close's turn is carried back into count 2's foot placement, so the feet land exactly where they did with the whole quarter on count 2.",
+  "notes": "Owner's description: follows Box Turn (forward half); a backward step on the opposite (left) foot with the same quarter turn clockwise, counts 1-2-3, feet closing on 3. No rise. Turn timing from the book (2026-11-17, a box-step study card: the partner going back, on the inside of the turn, \"commences to turn\" on 1, turns 1/4 between 1 and 2 with the \"body turns less\", and the body completes the turn on 3; the partner going forward turns 1/8 between 1 and 2 and 1/8 between 2 and 3). Written that way (2026-11-17, to stop the follow lunging round the outside of the turn): the bodies turn 1/24 right on count 1 (the turn commencing), 1/8 on count 2 and 1/12 on the close, a quarter in all; the lead, going back on the inside, points his count-2 foot a further 1/8 (`pointing`); the close's turn is carried back into count 2's foot placement. The couple turns round the lead (the default turning centre, since he goes back). Step sizes, provisional (2026-11-17), chosen by measuring the 3D body solver against the figure checks: count 1 is 0.4 back and 0.2 to his left, so her forward step passes his standing right foot with room to spare as the turn begins; count 2 is 0.6 back and 0.3 left of where his right foot was. Before this change (the owner's first sizes: 0.5 back, then the right foot 0.4 beyond the left in the turned frame, measured as 0.9 back and 0.2 left, with the whole quarter on count 2) the follow's count 2 was a 1.4 m stride that sank her hips 0.74-0.78 m, and her right foot passed 7.6 cm from his. Now the hips sink at most 0.08 m and every check passes; the strides are 0.45, 0.67 and 0.11 for the lead (from his standing foot) and 0.45, 1.01 (from her back foot, round the outside) and 0.39 for the follow.",
   "steps": [
     {
-      "both": "back",
-      "by": 0.5,
+      "both": {
+        "forward": -0.4,
+        "right": -0.2
+      },
       "foot": "L",
-      "beat": 1
+      "turn": {
+        "right": "1/24"
+      },
+      "beat": 1,
+      "label": "back, starting to turn"
     },
     {
       "both": {
-        "forward": -0.9,
-        "right": -0.2
+        "forward": -0.6,
+        "right": -0.3
       },
       "turn": {
         "right": "1/8"
       },
-      "beat": 2,
-      "label": "side, turning",
       "pointing": {
         "lead": {
           "right": "1/8"
         }
-      }
+      },
+      "beat": 2,
+      "label": "side, turning"
     },
     {
       "both": "close",
-      "beat": 3,
       "turn": {
-        "right": "1/8"
-      }
+        "right": "1/12"
+      },
+      "beat": 3
     }
   ],
   "expectBeats": 3,
   "expectEnd": {
     "stance": "closed",
     "moved": {
-      "forward": -0.8,
-      "right": -0.1
+      "forward": -0.4019,
+      "right": -0.3451
     },
     "turned": {
       "right": "1/4"
     },
     "leadStandingOn": "L"
-  },
-  "skipChecks": ["partner spacing"]
+  }
 }

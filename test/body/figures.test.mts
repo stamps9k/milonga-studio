@@ -22,17 +22,10 @@ const SAMPLE = 1 / 16;
 const MAX_HIP_DROP = 0.16;
 
 /**
- * Figures known to need more, waiting for the figure clean-up. The
- * turning ones go back on count 2 with the lead on the inside of the
- * turn, and the step written for him (0.9 m, or the Back Corté's long
- * separate steps) swings the follow round the outside on a stride of
- * well over a metre; the others have wide steps in their data.
+ * Figures known to need more, waiting for the figure clean-up: they
+ * have wide steps in their data.
  */
 const KNOWN_DEEP: Record<string, string> = {
-  "Back Corté": "follow's 1.2 m step round the outside of the turn",
-  "Box Turn (backward half)": "follow's count 2 round the outside of the turn",
-  "Reverse Box Turn (backward half)":
-    "follow's count 2 round the outside of the turn",
   "Promenade Chassé": "count 2 lands 0.73-0.80 m from the standing foot",
   "Closed Promenade": "first slow ends with the feet 0.8 m apart",
   Ocho: "old Argentine tango figure, not yet described by the owner",
