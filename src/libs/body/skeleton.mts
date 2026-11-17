@@ -37,7 +37,8 @@ import type { Point3D } from "./vector3.mts";
  * - the arms take hold of the partner (connectHold, in solveSkeleton):
  *   the joined hands meet out beyond the couple, the lead's right hand
  *   is on the follow's left shoulder blade and her left hand on his right
- *   upper arm. A dancer solved alone (solvePartnerSkeleton) holds the
+ *   upper arm, each hand pointing the way it lies (fingertips). A dancer
+ *   solved alone (solvePartnerSkeleton) holds the
  *   same shape relative to their own
  *   chest (a placeholder until the model has a hold).
  *
@@ -99,6 +100,13 @@ export interface PartnerSkeleton {
    *  hips lowered to the ankles' height: 0 when the leg reaches. More
    *  than 0 means the figure's data puts a foot where no leg could. */
   legShortfall: Record<Foot, number>;
+  /** Where the tip of each hand's middle finger is (BodyProportions.hand
+   *  from the wrist), which says which way the hand points: straight on
+   *  from the forearm when the arm is free, laid along the partner's
+   *  back or arm, or upright, in hold (connectHold). The joints alone
+   *  end at the wrist, so without this a character model's hands stuck
+   *  straight out past the partner. */
+  fingertips: Record<Foot, Point3D>;
 }
 
 export type CoupleSkeleton = Record<Partner, PartnerSkeleton>;
@@ -168,7 +176,7 @@ function solveArm(
   body: BodyProportions,
   facing: number,
   side: Foot,
-): { elbow: Point3D; hand: Point3D } {
+): { elbow: Point3D; hand: Point3D; fingertip: Point3D } {
   const outwards = scale(headingVector(facing + 90), side === "left" ? -1 : 1);
   const elbow = twoBoneJoint(
     shoulder,
@@ -183,7 +191,17 @@ function solveArm(
     reach <= body.forearm + 1e-9
       ? wrist
       : add(elbow, scale(toWrist, body.forearm / reach));
-  return { elbow, hand };
+  return { elbow, hand, fingertip: fingersOn(elbow, hand, body) };
+}
+
+/** A free hand's fingertip: straight on from the forearm. */
+function fingersOn(
+  elbow: Point3D,
+  wrist: Point3D,
+  body: BodyProportions,
+): Point3D {
+  const along = normalize(sub(wrist, elbow)) ?? vec(0, 0, -1);
+  return add(wrist, scale(along, body.hand));
 }
 
 /** The skeleton of one dancer at one instant. */
@@ -384,6 +402,7 @@ export function solvePartnerSkeleton(
     facing: pose.orientation,
     hipDrop: standing - hipZ,
     legShortfall,
+    fingertips: { left: leftArm.fingertip, right: rightArm.fingertip },
   };
 }
 
@@ -401,18 +420,35 @@ export function solvePartnerSkeleton(
  *   meet, so the two hands sit palm to palm rather than inside each other.
  * - The lead's right hand on her left shoulder blade: BLADE_BEHIND behind
  *   her left shoulder joint, BLADE_IN towards her spine, BLADE_DOWN below
- *   it.
+ *   it. That is the wrist, at the outer edge of the blade, so the hand
+ *   laid across her back (HAND_DOWN) ends near her spine.
  * - The follow's left hand on his right upper arm: UPPER_ARM_ALONG of the
  *   way from his shoulder to his elbow, resting on top (UPPER_ARM_ABOVE).
+ *
+ * These place the wrists; which way each hand then points is set in
+ * connectHold (and HAND_DOWN, OVER_HIS_ARM below).
  */
 const JOINED_OUT = 0.2;
 const JOINED_ABOVE_HEAD = 0.06;
 const PALM = 0.05;
 const BLADE_BEHIND = 0.06;
-const BLADE_IN = 0.1;
+const BLADE_IN = 0.02;
 const BLADE_DOWN = 0.12;
 const UPPER_ARM_ALONG = 0.35;
 const UPPER_ARM_ABOVE = 0.05;
+/**
+ * Which way the lead's right hand points on her back: across it towards
+ * her spine (her right, level with her back), tilted HAND_DOWN downwards
+ * for each metre across. A provisional judgement call (2026-11-17),
+ * matching the usual description of the hold: hand on the shoulder
+ * blade, fingers together, pointing towards her spine and a little
+ * down.
+ */
+const HAND_DOWN = 0.3;
+/** How far the follow's left hand tips down, and turns towards his
+ *  shoulder, for each metre it points out over his arm. Provisional
+ *  (2026-11-17). */
+const OVER_HIS_ARM = 0.5;
 
 /**
  * When a hold point is further from the shoulder than the arm can reach,
@@ -435,11 +471,14 @@ function lerp3(a: Point3D, b: Point3D, t: number): Point3D {
 
 /** Re-solves one arm of `skeleton` towards a hold point, blending back to
  *  the solo shape (the arm as solved alone) as the point gets out of
- *  reach. */
+ *  reach. `fingers` is the way the hand points while it holds (a
+ *  direction, normalized here); as the arm lets go the hand turns back
+ *  to pointing straight on from the forearm, by the same amount. */
 function reachFor(
   skeleton: PartnerSkeleton,
   side: Foot,
   target: Point3D,
+  fingers: Point3D,
   body: BodyProportions,
 ): PartnerSkeleton {
   const shoulder = skeleton.joints[`${side}UpperArm`];
@@ -449,19 +488,27 @@ function reachFor(
   const holding =
     1 - smoothstep(HOLD_LETS_GO_FROM * arm, HOLD_LET_GO_BY * arm, away);
   const wrist = lerp3(solo, target, holding);
-  const { elbow, hand } = solveArm(
+  const { elbow, hand, fingertip } = solveArm(
     shoulder,
     wrist,
     body,
     skeleton.facing,
     side,
   );
+  const free = sub(fingertip, hand);
+  const held = scale(normalize(fingers) ?? free, body.hand);
+  const pointing =
+    normalize(lerp3(free, held, holding)) ?? scale(free, 1 / body.hand);
   return {
     ...skeleton,
     joints: {
       ...skeleton.joints,
       [`${side}LowerArm`]: elbow,
       [`${side}Hand`]: hand,
+    },
+    fingertips: {
+      ...skeleton.fingertips,
+      [side]: add(hand, scale(pointing, body.hand)),
     },
   };
 }
@@ -506,16 +553,38 @@ function connectHold(
     ),
   );
 
-  let him = reachFor(lead, "left", palmShort(hisShoulder), bodies.lead);
-  him = reachFor(him, "right", blade, bodies.lead);
+  // Which way each hand points in hold:
+  // - his right hand lies flat on her back, fingers towards her spine
+  //   (her right, round the curve of her back) and a little down;
+  // - the joined hands point upwards, palm to palm;
+  // - her left hand lies on his upper arm and drapes over the outside of
+  //   it: fingers out to his right and down (OVER_HIS_ARM), turned a
+  //   little towards his shoulder. Pointed straight along his arm, the
+  //   hand reached past his shoulder onto his neck.
+  const acrossHerBack = add(herRight, scale(UP, -HAND_DOWN));
+
+  let him = reachFor(lead, "left", palmShort(hisShoulder), UP, bodies.lead);
+  him = reachFor(him, "right", blade, acrossHerBack, bodies.lead);
 
   // Her left hand on his right upper arm, where his arm now is.
   const onHisArm = add(
     lerp3(him.joints.rightUpperArm, him.joints.rightLowerArm, UPPER_ARM_ALONG),
     scale(UP, UPPER_ARM_ABOVE),
   );
-  let her = reachFor(follow, "right", palmShort(herShoulder), bodies.follow);
-  her = reachFor(her, "left", onHisArm, bodies.follow);
+  const upHisArm =
+    normalize(sub(him.joints.rightUpperArm, him.joints.rightLowerArm)) ?? UP;
+  const overHisArm = add(
+    headingVector(him.facing + 90),
+    add(scale(UP, -OVER_HIS_ARM), scale(upHisArm, OVER_HIS_ARM)),
+  );
+  let her = reachFor(
+    follow,
+    "right",
+    palmShort(herShoulder),
+    UP,
+    bodies.follow,
+  );
+  her = reachFor(her, "left", onHisArm, overHisArm, bodies.follow);
 
   return { lead: him, follow: her };
 }

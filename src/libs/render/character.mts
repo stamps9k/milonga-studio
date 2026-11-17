@@ -54,6 +54,9 @@ export const MODEL_BONES = {
     upperArm: "upperarm_l",
     lowerArm: "lowerarm_l",
     hand: "hand_l",
+    /** The middle finger's first bone: the hand bone is aimed through
+     *  it, at the skeleton's fingertip. */
+    middle: "middle_01_l",
   },
   right: {
     thigh: "thigh_r",
@@ -64,6 +67,9 @@ export const MODEL_BONES = {
     upperArm: "upperarm_r",
     lowerArm: "lowerarm_r",
     hand: "hand_r",
+    /** The middle finger's first bone: the hand bone is aimed through
+     *  it, at the skeleton's fingertip. */
+    middle: "middle_01_r",
   },
 } as const;
 
@@ -153,6 +159,7 @@ export class CharacterRig {
         upperArm: bone(model, names.upperArm),
         lowerArm: bone(model, names.lowerArm),
         hand: bone(model, names.hand),
+        middle: bone(model, names.middle),
       };
     };
     this.limbs = { left: limb("left"), right: limb("right") };
@@ -267,6 +274,13 @@ export class CharacterRig {
       );
       aim(l.upperArm, l.lowerArm, three(elbow));
       aim(l.lowerArm, l.hand, three(wrist));
+      // Hand: pointing the way the skeleton's does (on her back, up the
+      // lead's arm, upright at the joined hands). Left in its rest pose,
+      // the hand carried straight on from the forearm, so the lead's
+      // right hand stuck out past the follow's back instead of lying on
+      // it. Only the direction is set: the smallest turn that does it,
+      // so the palm keeps the forearm's twist.
+      aim(l.hand, l.middle, three(skeleton.fingertips[side]));
     }
   }
 }

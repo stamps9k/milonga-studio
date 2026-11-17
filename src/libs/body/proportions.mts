@@ -34,6 +34,8 @@ export interface BodyProportions {
   /** Shoulder to elbow, and elbow to wrist. */
   upperArm: number;
   forearm: number;
+  /** Wrist to the tip of the middle finger. */
+  hand: number;
   /** Heel to tip of the toes, and how far the ankle sits in front of
    *  the heel and the ball of the foot behind the tip of the toes. */
   footLength: number;
@@ -64,6 +66,8 @@ export function proportionsForHeight(height: number): BodyProportions {
     shoulderWidth: 0.22 * h,
     upperArm: 0.186 * h,
     forearm: 0.146 * h,
+    // Table: hand length 0.108 h.
+    hand: 0.108 * h,
     footLength: 0.152 * h,
     // Estimates.
     ankleFromHeel: 0.03 * h,

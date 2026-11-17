@@ -45,9 +45,11 @@ function testModel(): THREE.Object3D {
     const upperArm = make(`upperarm_${side}`, 0.2 * sign, 0, 0);
     const lowerArm = make(`lowerarm_${side}`, 0.27 * sign, 0, 0);
     const hand = make(`hand_${side}`, 0.24 * sign, 0, 0);
+    const middle = make(`middle_01_${side}`, 0.1 * sign, 0, 0.01);
     spine.add(upperArm);
     upperArm.add(lowerArm);
     lowerArm.add(hand);
+    hand.add(middle);
   }
   return armature;
 }
@@ -138,6 +140,21 @@ test("CharacterRig: posing keeps the model's bone lengths and doesn't drift", ()
   rig.pose(skeleton);
   rig.pose(skeleton);
   assert.deepEqual(at(rig, "calf_r").toArray(), before);
+});
+
+test("CharacterRig: the hands point at the skeleton's fingertips", () => {
+  const { rig, skeleton } = posed(
+    stancePose("closed", { lead: "right", follow: "left" }),
+  );
+  for (const side of ["l", "r"] as const) {
+    const foot = side === "l" ? "left" : "right";
+    const wrist = at(rig, `hand_${side}`);
+    const toward = new THREE.Vector3(...toThree(skeleton.fingertips[foot]))
+      .sub(wrist)
+      .normalize();
+    const finger = at(rig, `middle_01_${side}`).sub(wrist).normalize();
+    assert.ok(finger.angleTo(toward) < 1e-6, `${side} hand`);
+  }
 });
 
 test("CharacterRig: a model without the expected bones is refused with its name", () => {
