@@ -866,7 +866,7 @@ function applyMove(
 const CROSSED_FEET_TOLERANCE = 0.02;
 
 /** The closest a lead's foot and a follow's foot may come, centre to
- *  centre, in metres: a foot is about 9 cm wide (figureShapes.mts), so
+ *  centre, in metres: a foot is about 9 cm wide (src/libs/render/figureShapes.mts), so
  *  this leaves a few centimetres between them. Provisional (owner's
  *  agreement, 2026-11-16). */
 export const PARTNER_FOOT_CLEARANCE = 0.15;

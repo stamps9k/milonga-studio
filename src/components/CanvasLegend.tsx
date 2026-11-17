@@ -11,12 +11,12 @@ import {
   STANDING_FOOT_FILL_OPACITY,
   TRAIL_OPACITY,
   takenFootprintOpacity,
-} from "./canvasStyle.mts";
-import { BODY, FOOT_PATHS } from "./figureShapes.mts";
+} from "../libs/render/canvasStyle.mts";
+import { BODY, FOOT_PATHS } from "../libs/render/figureShapes.mts";
 
 /**
  * Key to the 2D canvas, overlaid in its top-left corner. Each row shows
- * a miniature of a mark exactly as Canvas2D draws it (same shapes, from
+ * a miniature of a mark exactly as Renderer2D draws it (same shapes, from
  * figureShapes.mts, and the same colours and opacities, from
  * canvasStyle.mts) next to what it means. It is a
  * <details> element, open by default, so it can be collapsed out of the

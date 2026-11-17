@@ -1,5 +1,5 @@
 import type { Partner } from "../libs/dance/step.mts";
-import { PARTNER_COLOR, PARTNER_NAME } from "./canvasStyle.mts";
+import { PARTNER_COLOR, PARTNER_NAME } from "../libs/render/canvasStyle.mts";
 
 interface PartnerToggleProps {
   shown: Record<Partner, boolean>;
