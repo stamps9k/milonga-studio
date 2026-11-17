@@ -58,7 +58,7 @@ test("entriesToSequence: startTransform is the first entry's own transform", () 
   assert.deepEqual(sequence.startTransform, entries[0].transform);
 });
 
-test("entriesToSequence: keeps entries in order and uses placeholder id/name until saving exists", () => {
+test("entriesToSequence: keeps entries in order and uses default id/name for a bare sequence", () => {
   const entries = [entryAt(0, 0, 0), entryAt(1, 0, 0), entryAt(2, 0, 0)];
   const sequence = entriesToSequence(entries);
   assert.deepEqual(sequence.entries, entries);

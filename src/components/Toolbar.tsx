@@ -12,7 +12,7 @@ interface ToolbarProps {
 }
 
 const SHARE_LABEL: Record<ShareStatus, string> = {
-  idle: "Share",
+  idle: "Copy share link",
   copied: "Copied!",
   error: "Couldn't copy",
 };

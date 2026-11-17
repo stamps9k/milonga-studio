@@ -6,7 +6,7 @@ interface ApiResponse<T> {
   error?: string;
 }
 
-async function getJson<T>(url: string): Promise<T> {
+export async function getJson<T>(url: string): Promise<T> {
   const res = await fetch(url);
   const body = (await res.json()) as ApiResponse<T>;
   if (!res.ok || !body.success) {
