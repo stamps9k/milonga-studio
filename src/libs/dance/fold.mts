@@ -120,6 +120,82 @@ function movementPointAt(
  */
 export const PASSING_GAP = 0.1;
 
+/**
+ * A footprint's size, in metres, for keeping a dancer's feet apart: about
+ * 26 cm long and 9 cm wide, as the 2D view draws a foot
+ * (src/libs/render/figureShapes.mts) and close to the body solver's feet
+ * (src/libs/body/proportions.mts). Shared by the passing route here and
+ * the "own feet" check in authoring.mts.
+ */
+export const FOOTPRINT_LENGTH = 0.26;
+export const FOOTPRINT_WIDTH = 0.09;
+
+/** The least room a passing foot leaves between its outline and the
+ *  standing foot's, in metres. With parallel feet that's PASSING_GAP
+ *  between centres. */
+const PASSING_FOOT_CLEARANCE = PASSING_GAP - FOOTPRINT_WIDTH;
+
+/** The closest two points on segments ab and cd come, in 2D. */
+function segmentDistance(
+  a: Point2D,
+  b: Point2D,
+  c: Point2D,
+  d: Point2D,
+): number {
+  const cross = (o: Point2D, p: Point2D, q: Point2D) =>
+    (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  const d1 = cross(c, d, a);
+  const d2 = cross(c, d, b);
+  const d3 = cross(a, b, c);
+  const d4 = cross(a, b, d);
+  if (d1 * d2 < 0 && d3 * d4 < 0) return 0;
+  const toSegment = (p: Point2D, s: Point2D, e: Point2D) => {
+    const se = subPoints(e, s);
+    const lengthSquared = se.x * se.x + se.y * se.y;
+    const t =
+      lengthSquared < 1e-12
+        ? 0
+        : Math.min(
+            1,
+            Math.max(
+              0,
+              ((p.x - s.x) * se.x + (p.y - s.y) * se.y) / lengthSquared,
+            ),
+          );
+    return Math.hypot(p.x - (s.x + se.x * t), p.y - (s.y + se.y * t));
+  };
+  return Math.min(
+    toSegment(a, c, d),
+    toSegment(b, c, d),
+    toSegment(c, a, b),
+    toSegment(d, a, b),
+  );
+}
+
+/**
+ * How much room there is between two footprints, in metres: negative
+ * when they overlap. Each foot is drawn as a rounded strip
+ * FOOTPRINT_LENGTH long and FOOTPRINT_WIDTH wide (a stadium) along the
+ * way it points, centred on its position, which is close to a foot's
+ * outline and makes the gap the distance between their centre lines
+ * less one foot's width.
+ */
+export function footprintGap(
+  a: Point2D,
+  aHeading: number,
+  b: Point2D,
+  bHeading: number,
+): number {
+  const half = (FOOTPRINT_LENGTH - FOOTPRINT_WIDTH) / 2;
+  const ends = (centre: Point2D, heading: number): [Point2D, Point2D] => {
+    const along = scalePoint(headingToUnitVector(heading), half);
+    return [subPoints(centre, along), addPoints(centre, along)];
+  };
+  const [a1, a2] = ends(a, aHeading);
+  const [b1, b2] = ends(b, bHeading);
+  return segmentDistance(a1, a2, b1, b2) - FOOTPRINT_WIDTH;
+}
+
 /** Where along a straight step (0 at its start, 1 at its end) the
  *  standing foot has to be for the moving foot to pass it. Outside this
  *  range the standing foot is level with where the foot sets off or
@@ -261,7 +337,10 @@ const passingCache = new WeakMap<Figure, Map<DanceStep, Passing | undefined>>();
  * for the whole step; if none does, the step stays straight. Decided
  * once per step, from where the feet are when it starts (an endpoint
  * fold, which doesn't depend on the paths), so playback, trails and the
- * figure checks all see the same route. Provisional (2026-11-17).
+ * figure checks all see the same route. The pull is also reduced until
+ * the two feet's outlines (footprintGap) keep PASSING_FOOT_CLEARANCE
+ * between them, so feet pointing different ways, as in a turn, pass a
+ * little wider than parallel ones. Provisional (2026-11-17).
  */
 function stepPassings(figure: Figure): Map<DanceStep, Passing | undefined> {
   const cached = passingCache.get(figure);
@@ -273,6 +352,10 @@ function stepPassings(figure: Figure): Map<DanceStep, Passing | undefined> {
   // Where each foot rests after each step (airborne steps leave it).
   const restAfter = new Map<DanceStep, Point2D>();
   const orientationBefore = new Map<DanceStep, number>();
+  // Which way each foot points as each step starts (see poseAtBeat's
+  // directions), for keeping the passing foot's outline off the
+  // standing foot's.
+  const directionsBefore = new Map<DanceStep, Record<Foot, number>>();
   {
     const positions: Record<Partner, Record<Foot, Point2D>> = {
       lead: { ...positionsOf(figure.startPose.lead) },
@@ -282,8 +365,27 @@ function stepPassings(figure: Figure): Map<DanceStep, Passing | undefined> {
       lead: figure.startPose.lead.orientation,
       follow: figure.startPose.follow.orientation,
     };
+    const directions: Record<Partner, Record<Foot, number>> = {
+      lead: {
+        left: footHeading(figure.startPose.lead, "left"),
+        right: footHeading(figure.startPose.lead, "right"),
+      },
+      follow: {
+        left: footHeading(figure.startPose.follow, "left"),
+        right: footHeading(figure.startPose.follow, "right"),
+      },
+    };
     for (const step of ordered) {
       orientationBefore.set(step, orientations[step.partner]);
+      directionsBefore.set(step, { ...directions[step.partner] });
+      const otherFoot: Foot = step.foot === "left" ? "right" : "left";
+      directions[step.partner][otherFoot] = swivelStandingFoot(
+        directions[step.partner][otherFoot],
+        orientations[step.partner],
+        step.orientation,
+      );
+      directions[step.partner][step.foot] =
+        step.footDirection ?? step.orientation;
       if (step.contact !== "air") {
         positions[step.partner][step.foot] = movementEndpoint(
           positions[step.partner][step.foot],
@@ -336,6 +438,22 @@ function stepPassings(figure: Figure): Map<DanceStep, Passing | undefined> {
         ),
     ).map((foot) => restAt(partner, foot, startOf(step)));
     const onLine = addPoints(start, scalePoint(subPoints(end, start), full.at));
+    const bodyBefore = orientationBefore.get(step)!;
+    const footsBefore = directionsBefore.get(step)!;
+    // Which way the moving and standing feet point partway through the
+    // step, as poseAtBeat turns them.
+    const movingHeading = (u: number) =>
+      lerpAngleDegrees(
+        footsBefore[step.foot],
+        step.footDirection ?? step.orientation,
+        u,
+      );
+    const standingHeading = (u: number) =>
+      swivelStandingFoot(
+        footsBefore[other],
+        bodyBefore,
+        lerpAngleDegrees(bodyBefore, step.orientation, u),
+      );
     let chosen: Passing | undefined;
     for (let pull = 10; pull >= 1; pull--) {
       const candidate = {
@@ -357,6 +475,16 @@ function stepPassings(figure: Figure): Map<DanceStep, Passing | undefined> {
         if (
           still.length > 0 &&
           nearest(point, still) < PASSING_PARTNER_CLEARANCE - 1e-9
+        ) {
+          clear = false;
+        }
+        // Nor so close that the feet's outlines come within
+        // PASSING_FOOT_CLEARANCE of each other: feet pointing different
+        // ways (in a turn) pass a little wider than parallel ones.
+        const u = i / (ARC_TRAIL_SAMPLES * 2);
+        if (
+          footprintGap(point, movingHeading(u), standing, standingHeading(u)) <
+          PASSING_FOOT_CLEARANCE - 1e-9
         ) {
           clear = false;
         }

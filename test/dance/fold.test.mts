@@ -18,6 +18,9 @@ import {
   swivelStandingFoot,
   passingPoint,
   PASSING_GAP,
+  footprintGap,
+  FOOTPRINT_LENGTH,
+  FOOTPRINT_WIDTH,
   footPitchAt,
   risePhase,
   LATE_RISE_SHARE,
@@ -1223,4 +1226,50 @@ test("poseAtBeat: a foot with footwork is tipped only while it travels", () => {
   const end = poseAtBeat(figure, 1);
   assert.equal("pitch" in end.lead.left, false);
   assert.equal("pitch" in end.follow.right, false);
+});
+
+test("footprintGap: the room between two footprints, negative when they overlap", () => {
+  const close = (a: number, b: number) =>
+    assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+  // Side by side, pointing the same way, 0.2 apart: 0.2 less a width.
+  close(
+    footprintGap({ x: 0, y: 0 }, 0, { x: 0.2, y: 0 }, 0),
+    0.2 - FOOTPRINT_WIDTH,
+  );
+  // On the same spot: a whole width into each other.
+  close(footprintGap({ x: 0, y: 0 }, 0, { x: 0, y: 0 }, 90), -FOOTPRINT_WIDTH);
+  // Heel to toe in a line, 0.3 apart: the rounded ends are a foot's
+  // length apart less the gap.
+  close(
+    footprintGap({ x: 0, y: 0 }, 0, { x: 0, y: 0.3 }, 0),
+    0.3 - FOOTPRINT_LENGTH,
+  );
+  // 0.15 apart side by side is clear when parallel, but toes turned in
+  // 45° each bring them into each other.
+  assert.ok(footprintGap({ x: 0, y: 0 }, 0, { x: 0.15, y: 0 }, 0) > 0);
+  assert.ok(footprintGap({ x: 0, y: 0 }, 45, { x: 0.15, y: 0 }, 315) < 0);
+});
+
+test("poseAtBeat: a passing foot keeps its outline clear of a standing foot that points across its route", () => {
+  // As walkPastFigure, but the standing left foot points 45° to the
+  // right, its toes towards the route: the passing foot comes in less
+  // than PASSING_GAP and keeps a centimetre between the outlines.
+  const figure = walkPastFigure([
+    [3, 3],
+    [3.2, 3],
+  ]);
+  figure.startPose.lead.left.direction = 45;
+  let closest = Infinity;
+  let gap = Infinity;
+  for (let beat = 0; beat <= 1; beat += 1 / 64) {
+    const lead = poseAtBeat(figure, beat).lead;
+    const { x, y } = lead.right.position;
+    closest = Math.min(closest, Math.hypot(x + 0.1, y - 0.5));
+    gap = Math.min(
+      gap,
+      footprintGap(lead.left.position, 45, lead.right.position, 0),
+    );
+  }
+  assert.ok(closest > PASSING_GAP + 0.02, `closest ${closest}`);
+  assert.ok(gap >= PASSING_GAP - FOOTPRINT_WIDTH - 1e-6, `gap ${gap}`);
 });

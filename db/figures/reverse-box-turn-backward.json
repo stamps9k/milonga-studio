@@ -3,12 +3,12 @@
   "name": "Reverse Box Turn (backward half)",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's description (2026-11-16): the Box Turn with everything reversed. Follows Reverse Box Turn (forward half); the lead starts back on the right foot, side on the left, close the right, turning a quarter to the left; no rise. Called the Left Box Turn in the American syllabus. Turn timing from the book (2026-11-17, a box-step study card: the partner going back, on the inside of the turn, \"commences to turn\" on 1, turns 1/4 between 1 and 2 with the \"body turns less\", and the body completes the turn on 3; the partner going forward turns 1/8 between 1 and 2 and 1/8 between 2 and 3). Written as the mirror image of Box Turn (backward half) (2026-11-17): the bodies turn 1/24 left on count 1, 1/8 on count 2 and 1/12 on the close; the lead, going back on the inside, points his count-2 foot a further 1/8; the close's turn is carried back into count 2's foot placement; the couple turns round the lead (the default turning centre). Provisional sizes, the same as the Box Turn's mirrored: count 1 0.4 back and 0.2 to his right, count 2 0.6 back and 0.3 right of where his left foot was. Before this change (0.5 back, then 0.9 back and 0.2 right, the whole quarter on count 2) the follow's count 2 was a 1.24 m stride that sank her hips 0.38-0.44 m; now at most 0.08 m, and every check passes.",
+  "notes": "Owner's description (2026-11-16): the Box Turn with everything reversed. Follows Reverse Box Turn (forward half); the lead starts back on the right foot, side on the left, close the right, turning a quarter to the left; no rise. Called the Left Box Turn in the American syllabus. Turn timing from the book (2026-11-17, a box-step study card): the partner going forward \"commences to turn\" on 1, turns 1/8 between 1 and 2 and 1/8 between 2 and 3; the partner going back turns 1/4 between 1 and 2, \"body turns less\", and the body completes the turn on 3. Written that way (2026-11-17): the bodies turn 1/24 left on count 1 (the turn commencing), 1/8 on count 2 and 1/12 on the close, a quarter in all, and the close's turn is carried back into count 2's foot placement. The lead goes back, so the couple turns round the lead (the default turning centre). Step sizes, provisional, chosen by measuring the 3D body solver against every figure check, including \"own feet\" (each dancer's footprints may not overlap): count 1 is 0.4 back and 0.3 to the right; count 2 is 0.6 back and 0.3 to the right. Strides: 0.50, 0.67 and 0.11 for the lead and 0.43, 0.80 and 0.50 for the follow; the hips sink at most 0.15 m. Not drawn yet (2026-11-17): the book's \"body turns less\" for the lead, written as `pointing` his count-2 foot a further eighth round; with the foot pointed even a sixteenth further, its toes land on the other foot (the \"own feet\" check), so the feet point with the body for now. History: the owner's first version put the whole quarter on count 2 with no turn on count 1; the partner on the outside of the turn then lunged round (backward halves, hips sinking up to 0.78 m) or the partner on the inside crossed his feet (forward halves, a foot landing 0.28 on the wrong side of the other), and the forward halves skipped the \"crossed feet\" and \"partner spacing\" checks.",
   "steps": [
     {
       "both": {
         "forward": -0.4,
-        "right": 0.2
+        "right": 0.3
       },
       "foot": "R",
       "turn": {
@@ -24,11 +24,6 @@
       },
       "turn": {
         "left": "1/8"
-      },
-      "pointing": {
-        "lead": {
-          "left": "1/8"
-        }
       },
       "beat": 2,
       "label": "side, turning"
