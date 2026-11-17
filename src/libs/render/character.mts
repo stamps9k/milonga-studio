@@ -1,0 +1,264 @@
+import * as THREE from "three";
+
+import type { BodyProportions } from "../body/proportions.mts";
+import type { PartnerSkeleton } from "../body/skeleton.mts";
+import { headingVector, twoBoneJoint, vec } from "../body/vector3.mts";
+import type { Point3D } from "../body/vector3.mts";
+import type { Foot, Partner } from "../dance/step.mts";
+import { toThree } from "./scene3d.mts";
+
+/**
+ * Character models for the 3D view: rigged human figures that dance the
+ * same skeleton as the mannequin (src/libs/body/), as an alternative look.
+ *
+ * A model brings its own bones, with its own lengths and rest pose. Each
+ * frame, CharacterRig poses those bones from the body solver's skeleton:
+ * it puts the model's hip joints on ours, turns the model to the
+ * dancer's facing, and points each leg and arm bone along our limbs,
+ * with knees and elbows worked out again for the model's own bone
+ * lengths so its feet land exactly on our ankles and its hands on our
+ * wrists. Spine, neck and head keep the model's rest pose, turned with
+ * the body (our skeleton's torso is upright too).
+ *
+ * This file has no WebGL: it works on Three.js bones (plain objects), so
+ * it is tested under node:test with a hand-built rig.
+ */
+
+/** Which model each dancer wears. Files live in public/models/ (served
+ *  from /models/), with their licence and source in a README there. */
+export const CHARACTER_MODELS: Record<Partner, { url: string; name: string }> =
+  {
+    lead: {
+      url: "/models/quaternius/superhero_male.glb",
+      name: "Quaternius Superhero (male)",
+    },
+    follow: {
+      url: "/models/quaternius/superhero_female.glb",
+      name: "Quaternius Superhero (female)",
+    },
+  };
+
+/**
+ * Bone names in the model, for the joints we drive. These are the names
+ * Unreal Engine's standard skeleton uses (also used by Quaternius's
+ * Universal Base Characters and many other rigged models).
+ */
+export const MODEL_BONES = {
+  pelvis: "pelvis",
+  left: {
+    thigh: "thigh_l",
+    calf: "calf_l",
+    foot: "foot_l",
+    ball: "ball_l",
+    toeEnd: "ball_leaf_l",
+    upperArm: "upperarm_l",
+    lowerArm: "lowerarm_l",
+    hand: "hand_l",
+  },
+  right: {
+    thigh: "thigh_r",
+    calf: "calf_r",
+    foot: "foot_r",
+    ball: "ball_r",
+    toeEnd: "ball_leaf_r",
+    upperArm: "upperarm_r",
+    lowerArm: "lowerarm_r",
+    hand: "hand_r",
+  },
+} as const;
+
+type LimbBones = Record<keyof (typeof MODEL_BONES)["left"], THREE.Object3D>;
+
+/** Floor space (x, y, height) from Three.js's axes: toThree reversed. */
+function toFloor(v: THREE.Vector3): Point3D {
+  return vec(v.x, -v.z, v.y);
+}
+
+function three(point: Point3D): THREE.Vector3 {
+  return new THREE.Vector3(...toThree(point));
+}
+
+function worldPosition(object: THREE.Object3D): THREE.Vector3 {
+  return object.getWorldPosition(new THREE.Vector3());
+}
+
+/**
+ * Turns `bone` (keeping its position) so that `child`, wherever it now
+ * sits, lies on the line from the bone towards `target`. The turn is the
+ * smallest one that does it, applied on top of the bone's current
+ * orientation, so the bone keeps its rest twist.
+ */
+function aim(
+  bone: THREE.Object3D,
+  child: THREE.Object3D,
+  target: THREE.Vector3,
+) {
+  bone.updateWorldMatrix(true, true);
+  const origin = worldPosition(bone);
+  const current = worldPosition(child).sub(origin).normalize();
+  const wanted = target.clone().sub(origin);
+  if (wanted.lengthSq() < 1e-12 || current.lengthSq() < 1e-12) return;
+  wanted.normalize();
+  const turn = new THREE.Quaternion().setFromUnitVectors(current, wanted);
+  const world = bone.getWorldQuaternion(new THREE.Quaternion());
+  const parentWorld = bone.parent
+    ? bone.parent.getWorldQuaternion(new THREE.Quaternion())
+    : new THREE.Quaternion();
+  bone.quaternion.copy(parentWorld.invert().multiply(turn.multiply(world)));
+  bone.updateWorldMatrix(false, true);
+}
+
+/** Finds a bone by name, or explains which model lacks it. */
+function bone(model: THREE.Object3D, name: string): THREE.Object3D {
+  const found = model.getObjectByName(name);
+  if (!found) {
+    throw new Error(`the character model has no bone called "${name}"`);
+  }
+  return found;
+}
+
+/**
+ * One dancer's character model, posed from the body solver's skeleton.
+ *
+ * The model is expected to stand in its rest pose facing +Z (glTF's
+ * "front"), feet on the ground, with Unreal-style bone names
+ * (MODEL_BONES). It is scaled so its leg (hip joint to ankle) is as long
+ * as the dancer's (BodyProportions), which keeps its hips at our height
+ * and its stride the same as ours.
+ */
+export class CharacterRig {
+  /** Add this to the scene. */
+  readonly object = new THREE.Group();
+  private readonly pelvis: THREE.Object3D;
+  private readonly limbs: Record<Foot, LimbBones>;
+  /** Every bone we turn, with its rest orientation, to start each frame
+   *  from the rest pose (so nothing drifts from frame to frame). */
+  private readonly rest = new Map<THREE.Object3D, THREE.Quaternion>();
+  private readonly lengths: Record<
+    Foot,
+    { thigh: number; shin: number; upperArm: number; forearm: number }
+  >;
+
+  constructor(model: THREE.Object3D, body: BodyProportions) {
+    this.object.add(model);
+    this.pelvis = bone(model, MODEL_BONES.pelvis);
+    const limb = (side: Foot): LimbBones => {
+      const names = MODEL_BONES[side];
+      return {
+        thigh: bone(model, names.thigh),
+        calf: bone(model, names.calf),
+        foot: bone(model, names.foot),
+        ball: bone(model, names.ball),
+        toeEnd: bone(model, names.toeEnd),
+        upperArm: bone(model, names.upperArm),
+        lowerArm: bone(model, names.lowerArm),
+        hand: bone(model, names.hand),
+      };
+    };
+    this.limbs = { left: limb("left"), right: limb("right") };
+    for (const object of [
+      this.pelvis,
+      ...Object.values(this.limbs.left),
+      ...Object.values(this.limbs.right),
+    ]) {
+      this.rest.set(object, object.quaternion.clone());
+    }
+
+    // Scale so the model's leg matches the dancer's.
+    model.updateWorldMatrix(true, true);
+    const between = (a: THREE.Object3D, b: THREE.Object3D) =>
+      worldPosition(a).distanceTo(worldPosition(b));
+    const left = this.limbs.left;
+    const modelLeg =
+      between(left.thigh, left.calf) + between(left.calf, left.foot);
+    const scale = (body.thigh + body.shin) / modelLeg;
+    this.object.scale.setScalar(scale);
+    // Measured now the model is scaled (world positions include it).
+    const lengths = (side: Foot) => {
+      const l = this.limbs[side];
+      return {
+        thigh: between(l.thigh, l.calf),
+        shin: between(l.calf, l.foot),
+        upperArm: between(l.upperArm, l.lowerArm),
+        forearm: between(l.lowerArm, l.hand),
+      };
+    };
+    this.lengths = { left: lengths("left"), right: lengths("right") };
+
+    model.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        object.castShadow = true;
+        // Skinned meshes are culled by their rest-pose bounds, which a
+        // dancing pose leaves behind.
+        object.frustumCulled = false;
+      }
+    });
+  }
+
+  /** Poses the model as `skeleton` (one dancer, one instant). */
+  pose(skeleton: PartnerSkeleton): void {
+    for (const [object, quaternion] of this.rest) {
+      object.quaternion.copy(quaternion);
+    }
+
+    // Face the dancer's way: the model faces +Z; a compass heading h
+    // faces (sin h, 0, -cos h) in Three.js, which is +Z turned by
+    // (180° - h) about the vertical.
+    this.object.position.set(0, 0, 0);
+    this.object.rotation.set(0, Math.PI - (skeleton.facing * Math.PI) / 180, 0);
+    this.object.updateWorldMatrix(true, true);
+    // Then move the whole model so the point between its hip joints is
+    // on our hips (which is that point in our skeleton). The model's
+    // pelvis bone itself sits a little lower, so placing it instead
+    // would leave the legs a couple of centimetres short of the feet.
+    const between = worldPosition(this.limbs.left.thigh)
+      .add(worldPosition(this.limbs.right.thigh))
+      .multiplyScalar(0.5);
+    const offset = three(skeleton.joints.hips).sub(between);
+    this.object.position.copy(offset);
+    this.object.updateWorldMatrix(true, true);
+
+    const { joints, feet } = skeleton;
+    const forward = headingVector(skeleton.facing);
+    const right = headingVector(skeleton.facing + 90);
+    for (const side of ["left", "right"] as const) {
+      const l = this.limbs[side];
+      const lengths = this.lengths[side];
+
+      // Leg: knee from the model's own thigh and shin lengths, bending
+      // forwards, so the ankle lands exactly on ours.
+      const hip = toFloor(worldPosition(l.thigh));
+      const ankle = joints[`${side}Foot`];
+      const knee = twoBoneJoint(
+        hip,
+        ankle,
+        lengths.thigh,
+        lengths.shin,
+        forward,
+      );
+      aim(l.thigh, l.calf, three(knee));
+      aim(l.calf, l.foot, three(ankle));
+      aim(l.foot, l.ball, three(joints[`${side}Toes`]));
+      aim(l.ball, l.toeEnd, three(feet[side].toeTip));
+
+      // Arm: elbow from the model's own lengths, bending down and out as
+      // the body solver's do, so the wrist lands on ours.
+      const shoulder = toFloor(worldPosition(l.upperArm));
+      const wrist = joints[`${side}Hand`];
+      const outwards = side === "left" ? -1 : 1;
+      const elbow = twoBoneJoint(
+        shoulder,
+        wrist,
+        lengths.upperArm,
+        lengths.forearm,
+        {
+          x: right.x * outwards,
+          y: right.y * outwards,
+          z: -1,
+        },
+      );
+      aim(l.upperArm, l.lowerArm, three(elbow));
+      aim(l.lowerArm, l.hand, three(wrist));
+    }
+  }
+}

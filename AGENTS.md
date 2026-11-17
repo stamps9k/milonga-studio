@@ -34,7 +34,12 @@ frontend and a small Express + SQLite API.
   a preset view (above, side, over either dancer's shoulder).
   `scene3d.mts` holds its WebGL-free parts (the floor-space to Three.js
   axis mapping, the mannequin's bones, the camera framing and presets,
-  footprint outlines), tested under `node:test`.
+  footprint outlines), tested under `node:test`. The dancers can be drawn
+  as mannequins or as character models: `character.mts` poses a rigged
+  glTF model (Unreal-style bone names) from the same skeleton. The models
+  are in `public/models/` (served at `/models/`), with their source and
+  licence in a README beside them; only add models whose licence allows
+  them to be redistributed in this public repository (CC0 is simplest).
   React components create a renderer once and pass it new scenes; they do
   not draw the view themselves.
 - `src/libs/body/` is the body solver for the 3D view: plain functions that
