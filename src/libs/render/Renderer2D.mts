@@ -1,4 +1,4 @@
-import { sequencePoseAtBeat } from "../dance/fold.mts";
+import { footEase, sequencePoseAtBeat } from "../dance/fold.mts";
 import { footprintsAtBeat } from "../dance/footprints.mts";
 import {
   addPoints,
@@ -71,7 +71,9 @@ function svg(
  *   frame; a paused view costs nothing per frame.
  *
  * The picture is the same as when Canvas2D drew it with React: same
- * layers in the same order, same shapes, colours and sizes.
+ * layers in the same order, same shapes, colours and sizes. Moving feet
+ * are eased (footEase in fold.mts), as in the 3D view, so the two views
+ * agree at every instant.
  */
 export class Renderer2D implements SceneRenderer {
   private readonly root: SVGElement;
@@ -211,7 +213,9 @@ export class Renderer2D implements SceneRenderer {
     const layout = this.layout;
     const scene = this.scene;
     const pose =
-      scene === null ? null : sequencePoseAtBeat(scene.entries, beat);
+      scene === null
+        ? null
+        : sequencePoseAtBeat(scene.entries, beat, { footEasing: footEase });
     if (layout === null || scene === null || pose === null) {
       this.foreground.replaceChildren();
       return;

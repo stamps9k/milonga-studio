@@ -8,8 +8,10 @@ import { JOINT_NAMES } from "../../src/libs/body/skeleton.mts";
 import {
   MANNEQUIN_BONES,
   VISIBLE_JOINTS,
+  approach,
   footprintOutline,
   frameSequence,
+  presetCamera,
   toThree,
 } from "../../src/libs/render/scene3d.mts";
 
@@ -105,4 +107,61 @@ test("footprintOutline: the 2D foot silhouette at real size, turned to the footp
   // north (+y, the foot's left).
   const toe = outline.reduce((a, b) => (b.x > a.x ? b : a));
   assert.ok(toe.y > 2 - 0.01);
+});
+
+const subject = (x: number, y: number, facing: number) => ({
+  hips: { x, y, z: 0.9 },
+  facing,
+});
+
+test("presetCamera: each preset keeps the couple in front of the camera", () => {
+  // Closed hold facing north: lead at (0, 0), follow 0.4 north of him.
+  const lead = subject(0, 0, 0);
+  const follow = subject(0, 0.4, 180);
+  assert.equal(presetCamera("orbit", lead, follow), null);
+
+  const above = presetCamera("above", lead, follow);
+  assert.ok(above);
+  // Straight above the middle of the couple, the line of dance up the
+  // screen.
+  assert.deepEqual([above.position.x, above.position.y], [0, 0.2]);
+  assert.ok(above.position.z > 4);
+  assert.deepEqual(above.up, { x: 0, y: 1, z: 0 });
+
+  const side = presetCamera("side", lead, follow);
+  assert.ok(side);
+  // East of the couple, level with them.
+  assert.ok(side.position.x > 3);
+  assert.equal(side.position.y, 0.2);
+  assert.ok(side.position.z > 1 && side.position.z < 2);
+
+  // Behind the lead (south of him), looking past him at the follow.
+  const leads = presetCamera("lead", lead, follow);
+  assert.ok(leads);
+  assert.ok(leads.position.y < -2);
+  assert.ok(leads.target.y > 0.5);
+  // Behind the follow (north of her), looking south.
+  const follows = presetCamera("follow", lead, follow);
+  assert.ok(follows);
+  assert.ok(follows.position.y > 2);
+  assert.ok(follows.target.y < 0);
+});
+
+test("presetCamera: the dancers' views turn with them", () => {
+  // The lead facing east: the camera is west of him, over his right
+  // shoulder (south), looking east.
+  const view = presetCamera("lead", subject(1, 1, 90), subject(1.4, 1, 270));
+  assert.ok(view);
+  assert.ok(view.position.x < 1 - 2);
+  assert.ok(view.position.y < 1);
+  assert.ok(view.target.x > 1);
+});
+
+test("approach: covers half the way per half-life, whatever the frame rate", () => {
+  assert.equal(approach(0, 0.35), 0);
+  assert.ok(Math.abs(approach(0.35, 0.35) - 0.5) < 1e-12);
+  // Two half frames cover the same as one whole frame.
+  const half = approach(0.1, 0.35);
+  const whole = approach(0.2, 0.35);
+  assert.ok(Math.abs(1 - (1 - half) * (1 - half) - whole) < 1e-12);
 });
