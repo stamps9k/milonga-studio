@@ -36,6 +36,12 @@ export function applyTransform(transform: FloorTransform, pose: Pose): Pose {
         transform.position,
       ),
       weight: foot.weight,
+      // A pointed foot turns with the figure, like the body's facing.
+      ...(foot.direction !== undefined
+        ? {
+            direction: normalizeDegrees(foot.direction + transform.rotation),
+          }
+        : {}),
     });
 
     return {

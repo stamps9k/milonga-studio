@@ -317,3 +317,27 @@ test("fitTransform: the follow's facing doesn't affect placement", () => {
   const target = makePose({ followOrientation: 45 });
   assert.equal(fitTransform(source, target).rotation, 0);
 });
+
+test("applyTransform: a pointed foot's direction turns with the figure; an unpointed foot stays without one", () => {
+  const pose: Pose = {
+    lead: {
+      left: { position: { x: -0.1, y: 0 }, weight: 0, direction: 30 },
+      right: { position: { x: 0.1, y: 0 }, weight: 1 },
+      orientation: 0,
+      rise: 0,
+    },
+    follow: {
+      left: { position: { x: 0.2, y: 0.4 }, weight: 1 },
+      right: { position: { x: 0, y: 0.4 }, weight: 0, direction: 350 },
+      orientation: 180,
+      rise: 0,
+    },
+  };
+  const turned = applyTransform(
+    { position: { x: 1, y: 2 }, rotation: 90 },
+    pose,
+  );
+  assert.equal(turned.lead.left.direction, 120);
+  assert.equal(turned.follow.right.direction, 80);
+  assert.equal("direction" in turned.lead.right, false);
+});

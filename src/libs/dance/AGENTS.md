@@ -168,10 +168,25 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - `fitTransform` takes the couple's facing from the lead's frame alone and
   ignores the follow's, which can legitimately differ (the Ocho). Any
   follow facing difference is reported by `assessJoin` instead.
-- A footprint points the way its partner's frame faces when the step
-  finishes (`footprints.mts`). The model has no separate foot direction,
-  so turned-out feet and feet placed before the body finishes turning
-  aren't shown.
+- Feet have their own direction (added 2026-11-17, the owner's agreed
+  order of model changes): `DanceStep.footDirection` is where the
+  stepping foot points as it lands, and `FootState.direction` where a
+  foot points in a pose. Both are left out when the foot points the way
+  the body faces, so data without them means what it always did; read a
+  pose's with `footHeading`. `orientation` stays the body's facing, which
+  the hold, the mirroring and the turning centre all use. A stepping foot
+  turns as it travels, arriving at its direction. The other foot follows
+  `swivelStandingFoot` (provisional): it is never twisted further from
+  the body than it already was, so it holds while the body turns towards
+  it (a chart's "body completes the turn") and swivels with the body
+  once the body passes it or turns away. With nothing pointed that's the
+  foot turning with the body, as before. Footprints, the 2D feet, the
+  skeleton's feet and the knees (which bend over the toes) use the foot's
+  direction. Figure files point a foot with `pointing`, measured from the
+  body's facing after the step, so a chart's "3/8 between 1 and 2, body
+  turns less" is `turn` 1/4 plus `pointing` 1/8. Turned-out feet, and a
+  foot pointing differently from the step's facing at a join, aren't
+  checked.
 - `assessJoin`'s tolerances (`JOIN_FOOT_GAP_TOLERANCE`, 5 cm, and
   `JOIN_FACING_TOLERANCE`, 10 degrees) are judgement calls, not technique.
 - Seed figures (`db/seed.mts`) are plausible test data, not syllabus
@@ -249,10 +264,8 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   turning close, waiting for the clean-up and a couple turn through the
   close), and the Cruzada and Ocho (Argentine tango, not a ballroom hold).
 - Planned model changes, in the owner's agreed order (2026-11-17): a
-  foot direction separate from the body's facing (the book's alignments
-  and per-partner turn amounts are foot turns, with "body turns less";
-  the bodies stay in hold), then a couple turn that continues through a
-  close.
+  foot direction separate from the body's facing (done, see above), then
+  a couple turn that continues through a close.
 
 ## Terminology
 

@@ -295,3 +295,27 @@ test("solveSkeleton: partners out of reach let go, back to the solo hold shape",
     assert.ok(gap(together.lead.joints[joint], alone.joints[joint]) < 1e-9);
   }
 });
+
+test("solvePartnerSkeleton: a pointed foot lies along its direction, and its knee bends that way", () => {
+  // The lead stands on his left with his right foot pointing 45° right
+  // of his facing (0).
+  const pose = lead([-0.1, 0], [0.1, 0.1], 1);
+  pose.right.direction = 45;
+  const skeleton = solvePartnerSkeleton(pose, LEAD, "lead");
+  const { heel, toeTip } = skeleton.feet.right;
+  const along = sub(toeTip, heel);
+  close(Math.atan2(along.x, along.y) * (180 / Math.PI), 45, 1e-6);
+  // The left foot still points the way he faces.
+  const left = sub(skeleton.feet.left.toeTip, skeleton.feet.left.heel);
+  close(left.x, 0, 1e-9);
+  // The knee is ahead of the line from hip to ankle along the foot's
+  // direction, not straight ahead.
+  const knee = skeleton.joints.rightLowerLeg;
+  const ankle = skeleton.joints.rightFoot;
+  const hip = skeleton.joints.rightUpperLeg;
+  const mid = { x: (hip.x + ankle.x) / 2, y: (hip.y + ankle.y) / 2 };
+  const out = { x: knee.x - mid.x, y: knee.y - mid.y };
+  if (Math.hypot(out.x, out.y) > 1e-6) {
+    close(Math.atan2(out.x, out.y) * (180 / Math.PI), 45, 1);
+  }
+});

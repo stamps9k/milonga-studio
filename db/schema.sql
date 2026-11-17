@@ -46,6 +46,7 @@ CREATE TABLE foot_states (
 	x        REAL    NOT NULL, -- floor position, floor units
 	y        REAL    NOT NULL,
 	weight   REAL    NOT NULL CHECK (weight >= 0 AND weight <= 1),
+	direction REAL, -- degrees, which way the foot points; NULL = the partner's orientation (FootState.direction)
 	PRIMARY KEY (pose_id, partner, foot),
 	FOREIGN KEY (pose_id, partner) REFERENCES partner_poses(pose_id, partner) ON DELETE CASCADE
 );
@@ -150,6 +151,7 @@ CREATE TABLE dance_steps (
 	weight      REAL    NOT NULL CHECK (weight >= 0 AND weight <= 1),
 	weight_timing TEXT  NOT NULL DEFAULT 'even' CHECK (weight_timing IN ('even', 'late')), -- WeightTiming in step.mts
 	orientation REAL    NOT NULL, -- degrees, absolute frame heading at end of step
+	foot_direction REAL, -- degrees, which way the stepping foot points at the end; NULL = orientation (DanceStep.footDirection)
 	rise        REAL    NOT NULL,
 	beat        REAL    NOT NULL, -- position within the measure
 	duration    REAL    NOT NULL, -- in beats

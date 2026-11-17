@@ -1,13 +1,16 @@
 import type { DanceStep, Figure, Foot, Movement, Partner } from "./step.mts";
+import { footHeading } from "./pose.mts";
 import type { PartnerPose, Point2D, Pose } from "./pose.mts";
 import type { FloorTransform } from "./sequence.mts";
 import { applyTransform } from "./floor.mts";
 import {
   RAD_TO_DEG,
   addPoints,
+  angleBetweenDegrees,
   headingToUnitVector,
   lerp,
   lerpAngleDegrees,
+  normalizeDegrees,
   rotatePoint,
   scalePoint,
   subPoints,
@@ -413,6 +416,39 @@ export function footEase(progress: number): number {
   return t * t * (3 - 2 * t);
 }
 
+/**
+ * Which way the foot that isn't stepping points after the body turns
+ * from `bodyBefore` to `bodyAfter` over it (degrees, compass headings).
+ *
+ * The rule (provisional, 2026-11-17): a standing foot is never twisted
+ * further from the body than it already was. Its offset from the body's
+ * facing can only shrink towards zero, never grow or change sign:
+ * - while the body turns towards the way the foot points, the foot
+ *   stays put and the body catches up (a ballroom chart's "body
+ *   completes the turn" over a foot already placed further round);
+ * - once the body faces the way the foot points, or when it turns away
+ *   from it, the foot swivels with the body (turning on the ball of the
+ *   standing foot).
+ * With the foot pointing the way the body faces (offset 0), this is
+ * the foot turning with the body, which is how every foot moved before
+ * feet had their own direction, so figures that don't point a foot
+ * play exactly as before.
+ */
+export function swivelStandingFoot(
+  direction: number,
+  bodyBefore: number,
+  bodyAfter: number,
+): number {
+  const offset = angleBetweenDegrees(bodyBefore, direction);
+  const turn = angleBetweenDegrees(bodyBefore, bodyAfter);
+  const wanted = offset - turn;
+  const kept =
+    offset >= 0
+      ? Math.min(Math.max(wanted, 0), offset)
+      : Math.max(Math.min(wanted, 0), offset);
+  return normalizeDegrees(bodyAfter + kept);
+}
+
 export function poseAtBeat(
   figure: Figure,
   localBeat: number,
@@ -447,6 +483,19 @@ export function poseAtBeat(
     lead: figure.startPose.lead.rise,
     follow: figure.startPose.follow.rise,
   };
+  // Which way each foot points. A stepping foot turns to the step's
+  // footDirection (the body's facing when it has none); the other foot
+  // swivels with the body or holds (swivelStandingFoot).
+  const directions: Record<Partner, Record<Foot, number>> = {
+    lead: {
+      left: footHeading(figure.startPose.lead, "left"),
+      right: footHeading(figure.startPose.lead, "right"),
+    },
+    follow: {
+      left: footHeading(figure.startPose.follow, "left"),
+      right: footHeading(figure.startPose.follow, "right"),
+    },
+  };
 
   const orderedSteps: DanceStep[] = [...figure.steps].sort(
     (a, b) => a.beat - b.beat,
@@ -472,6 +521,13 @@ export function poseAtBeat(
       }
       weights[step.partner][step.foot] = step.weight;
       weights[step.partner][otherFoot] = 1 - step.weight;
+      directions[step.partner][otherFoot] = swivelStandingFoot(
+        directions[step.partner][otherFoot],
+        orientations[step.partner],
+        step.orientation,
+      );
+      directions[step.partner][step.foot] =
+        step.footDirection ?? step.orientation;
       orientations[step.partner] = step.orientation;
       rises[step.partner] = step.rise;
       continue;
@@ -509,20 +565,43 @@ export function poseAtBeat(
       weightProgress,
     );
     weights[step.partner][otherFoot] = 1 - weights[step.partner][step.foot];
-    orientations[step.partner] = lerpAngleDegrees(
+    const bodyNow = lerpAngleDegrees(
       orientations[step.partner],
       step.orientation,
       progress,
     );
+    directions[step.partner][otherFoot] = swivelStandingFoot(
+      directions[step.partner][otherFoot],
+      orientations[step.partner],
+      bodyNow,
+    );
+    // The stepping foot turns as it travels, arriving pointed when it
+    // lands.
+    directions[step.partner][step.foot] = lerpAngleDegrees(
+      directions[step.partner][step.foot],
+      step.footDirection ?? step.orientation,
+      footProgress,
+    );
+    orientations[step.partner] = bodyNow;
     rises[step.partner] = lerp(rises[step.partner], step.rise, progress);
   }
 
+  // A foot's direction is only given when it differs from the body's
+  // facing (see FootState.direction), so poses of figures that never
+  // point a foot are unchanged.
+  const footState = (partner: Partner, foot: Foot) => {
+    const direction = directions[partner][foot];
+    const pointed =
+      Math.abs(angleBetweenDegrees(orientations[partner], direction)) > 1e-9;
+    return {
+      position: positions[partner][foot],
+      weight: weights[partner][foot],
+      ...(pointed ? { direction } : {}),
+    };
+  };
   const buildPartnerPose = (partner: Partner): PartnerPose => ({
-    left: { position: positions[partner].left, weight: weights[partner].left },
-    right: {
-      position: positions[partner].right,
-      weight: weights[partner].right,
-    },
+    left: footState(partner, "left"),
+    right: footState(partner, "right"),
     orientation: orientations[partner],
     rise: rises[partner],
   });

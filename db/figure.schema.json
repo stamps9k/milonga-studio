@@ -137,6 +137,10 @@
       "type": "number",
       "description": "Rise at the end of the step, in metres. Default 0."
     },
+    "pointing": {
+      "description": "How much further round than the body the moving foot points when it lands, from the body's facing after the step's turn (a chart's \"body turns less\"). Default: the way the body faces.",
+      "allOf": [{ "$ref": "#/definitions/turn" }]
+    },
     "weight": {
       "type": "boolean",
       "description": "false for a step without weight (a tap): the foot moves, the weight stays."
@@ -171,6 +175,7 @@
             "foot": { "$ref": "#/definitions/foot" },
             "by": { "$ref": "#/definitions/by" },
             "turn": { "$ref": "#/definitions/turn" },
+            "pointing": { "$ref": "#/definitions/pointing" },
             "rise": { "$ref": "#/definitions/rise" },
             "weight": { "$ref": "#/definitions/weight" },
             "air": { "$ref": "#/definitions/air" },
@@ -219,6 +224,21 @@
         "foot": { "$ref": "#/definitions/foot" },
         "by": { "$ref": "#/definitions/by" },
         "turn": { "$ref": "#/definitions/turn" },
+        "pointing": {
+          "description": "How much further round than the body the moving foot points: one amount, or one per partner ({ \"follow\": { \"right\": \"1/8\" } }).",
+          "anyOf": [
+            { "$ref": "#/definitions/pointing" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "lead": { "$ref": "#/definitions/pointing" },
+                "follow": { "$ref": "#/definitions/pointing" }
+              }
+            }
+          ]
+        },
         "rise": { "$ref": "#/definitions/rise" },
         "weight": { "$ref": "#/definitions/weight" },
         "air": { "$ref": "#/definitions/air" },

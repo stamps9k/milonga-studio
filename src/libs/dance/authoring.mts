@@ -531,6 +531,16 @@ export interface MoveOptions {
    *  for "close", "in place" or "pivot". */
   by?: number;
   turn?: Turn;
+  /** How much further round than the body the moving foot points when
+   *  it lands, measured from the body's facing after the step's turn:
+   *  `{ "right": "1/8" }` points the toes an eighth clockwise of the
+   *  body. A ballroom chart's "3/8 between 1 and 2, body turns less" is
+   *  a step with `turn` 1/4 (the body) and `pointing` 1/8 right (the foot
+   *  the rest of the way). Default: the foot points the way the body
+   *  faces. The other foot holds its direction while the body turns
+   *  towards it, and otherwise swivels with the body
+   *  (swivelStandingFoot in fold.mts). Owner's request, 2026-11-17. */
+  pointing?: Turn;
   /** Rise at the end of the step, in metres above normal standing
    *  height (waltz/foxtrot rise and fall). Default 0. */
   rise?: number;
@@ -574,7 +584,12 @@ export interface PartnerMove extends MoveOptions {
  * to `lead`/`follow` written as a plain action; a partner written as an
  * object uses only its own options.
  */
-export interface StepRow extends Omit<MoveOptions, "label"> {
+export interface StepRow extends Omit<MoveOptions, "label" | "pointing"> {
+  /** See MoveOptions.pointing. On a row, either one amount for each
+   *  partner it applies to, or one each: `{ "follow": { "right": "1/8" } }`
+   *  (on a turning `both` step the partners usually point differently:
+   *  the one on the inside of the turn points further round). */
+  pointing?: Turn | { lead?: Turn; follow?: Turn };
   both?: Action;
   /** On a turning `both` step, what the couple turns around (see
    *  TurnCentre). Default: whoever the step sends backward. Only
@@ -778,6 +793,12 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
   };
   const labelFor = (partner: Partner) =>
     typeof row.label === "string" ? row.label : row.label?.[partner];
+  const pointingFor = (partner: Partner): Turn | undefined =>
+    row.pointing === undefined
+      ? undefined
+      : "lead" in row.pointing || "follow" in row.pointing
+        ? (row.pointing as { lead?: Turn; follow?: Turn })[partner]
+        : (row.pointing as Turn);
 
   if (row.both !== undefined) {
     if (row.lead !== undefined || row.follow !== undefined) {
@@ -785,7 +806,10 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
         `${where}: use either \`both\` or \`lead\`/\`follow\`, not both`,
       );
     }
-    const lead = resolveOffset({ ...shared, go: row.both }, where);
+    const lead = resolveOffset(
+      { ...shared, pointing: pointingFor("lead"), go: row.both },
+      where,
+    );
     let leadLabel = labelFor("lead") ?? "";
     let followLabel = labelFor("follow") ?? "";
     if (isOffset(row.both)) {
@@ -807,7 +831,11 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     // Her foot and her travel are filled in once the lead's step is
     // known: see defineFigure, which keeps her placed relative to him
     // so that the couple turns together.
-    const follow: PlainMove = { ...lead, foot: undefined };
+    const follow: PlainMove = {
+      ...lead,
+      foot: undefined,
+      pointing: pointingFor("follow"),
+    };
     return [
       { partner: "lead", move: lead, label: leadLabel },
       { partner: "follow", move: follow, label: followLabel },
@@ -823,7 +851,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     const written: PartnerMove =
       typeof value === "object" && "go" in value
         ? value
-        : { ...shared, go: value };
+        : { ...shared, pointing: pointingFor(partner), go: value };
     let label = written.label ?? labelFor(partner) ?? "";
     if (isOffset(written.go)) {
       // Label from the offset as written, before it becomes degrees.
@@ -976,6 +1004,10 @@ function applyMove(
       ? { weightTiming: "late" as const }
       : {}),
     orientation: after,
+    // Left out when the foot points the way the body faces.
+    ...(turnDegrees(move.pointing) !== 0
+      ? { footDirection: normalizeDegrees(after + turnDegrees(move.pointing)) }
+      : {}),
     rise: move.rise ?? 0,
     label: label || defaultLabel(move.go, move.turn, air),
   };
@@ -1921,16 +1953,32 @@ export function parseFigureDefinition(
     "foot",
     "by",
     "turn",
+    "pointing",
     "rise",
     "weight",
     "air",
     "path",
     "cross",
   ] as const;
-  function checkMoveOptions(path: string, object: Record<string, unknown>) {
+  function checkMoveOptions(
+    path: string,
+    object: Record<string, unknown>,
+    rowLevel = false,
+  ) {
     checkOneOf(`${path}foot`, object.foot, ["L", "R"]);
     checkNumber(`${path}by`, object.by, { positive: true });
     checkTurn(`${path}turn`, object.turn);
+    if (
+      rowLevel &&
+      isObject(object.pointing) &&
+      ("lead" in object.pointing || "follow" in object.pointing)
+    ) {
+      checkKeys(`${path}pointing`, object.pointing, ["lead", "follow"]);
+      checkTurn(`${path}pointing.lead`, object.pointing.lead);
+      checkTurn(`${path}pointing.follow`, object.pointing.follow);
+    } else {
+      checkTurn(`${path}pointing`, object.pointing);
+    }
     checkNumber(`${path}rise`, object.rise);
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
@@ -2072,7 +2120,7 @@ export function parseFigureDefinition(
       checkOneOf(`${path}.turnCentre`, row.turnCentre, TURN_CENTRES);
       checkPartner(`${path}.lead`, row.lead);
       checkPartner(`${path}.follow`, row.follow);
-      checkMoveOptions(`${path}.`, row);
+      checkMoveOptions(`${path}.`, row, true);
       checkNumber(`${path}.beat`, row.beat, { positive: true });
       checkOneOf(`${path}.length`, row.length, ["S", "Q"]);
       if (typeof row.label === "string") {

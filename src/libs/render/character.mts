@@ -226,15 +226,23 @@ export class CharacterRig {
       const lengths = this.lengths[side];
 
       // Leg: knee from the model's own thigh and shin lengths, bending
-      // forwards, so the ankle lands exactly on ours.
+      // the way the toes point (heel to toe along the floor, which is
+      // the body's facing unless the foot is pointed further round), so
+      // the ankle lands exactly on ours.
       const hip = toFloor(worldPosition(l.thigh));
       const ankle = joints[`${side}Foot`];
+      const { heel, toeTip } = feet[side];
+      const toes = Math.hypot(toeTip.x - heel.x, toeTip.y - heel.y);
+      const kneePole =
+        toes > 1e-9
+          ? vec((toeTip.x - heel.x) / toes, (toeTip.y - heel.y) / toes, 0)
+          : forward;
       const knee = twoBoneJoint(
         hip,
         ankle,
         lengths.thigh,
         lengths.shin,
-        forward,
+        kneePole,
       );
       aim(l.thigh, l.calf, three(knee));
       aim(l.calf, l.foot, three(ankle));

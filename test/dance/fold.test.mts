@@ -15,8 +15,12 @@ import {
   sequenceEntrySpans,
   sequenceEntryIndexAtBeat,
   stepPhases,
+  swivelStandingFoot,
   LATE_WEIGHT_FOOT_SHARE,
 } from "../../src/libs/dance/fold.mts";
+import { defineFigure } from "../../src/libs/dance/authoring.mts";
+import type { StepRow } from "../../src/libs/dance/authoring.mts";
+import { footHeading } from "../../src/libs/dance/pose.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import type { FloorTransform } from "../../src/libs/dance/sequence.mts";
@@ -959,4 +963,94 @@ test("stepPhases: even follows the step; late splits it at LATE_WEIGHT_FOOT_SHAR
   assert.deepEqual(at(0), { foot: 0, weight: 0 });
   assert.deepEqual(at(LATE_WEIGHT_FOOT_SHARE), { foot: 1, weight: 0 });
   assert.deepEqual(at(1), { foot: 1, weight: 1 });
+});
+
+test("swivelStandingFoot: the foot holds while the body turns towards it, and swivels once the body passes it or turns away", () => {
+  // Pointing with the body: it turns with the body, either way.
+  assert.equal(swivelStandingFoot(0, 0, 90), 90);
+  assert.equal(swivelStandingFoot(0, 0, 315), 315);
+  // Pointing 45 right of the body: the body turns 45 right to meet it,
+  // and the foot stays (a chart's "body completes the turn").
+  assert.equal(swivelStandingFoot(45, 0, 45), 45);
+  // Half way, it still holds.
+  assert.equal(swivelStandingFoot(45, 0, 20), 45);
+  // The body turns 90 right, past it: the foot stays until the body
+  // faces it, then swivels with it.
+  assert.equal(swivelStandingFoot(45, 0, 90), 90);
+  // The body turns away (left): the foot keeps its 45 offset, swivelling
+  // with the body rather than being twisted further.
+  assert.equal(swivelStandingFoot(45, 0, 330), 15);
+  // The same, mirrored, for a foot pointing left of the body.
+  assert.equal(swivelStandingFoot(315, 0, 330), 315);
+  assert.equal(swivelStandingFoot(315, 0, 30), 345);
+});
+
+function authored(rows: StepRow[]): Figure {
+  const figure = defineFigure({
+    name: "Test",
+    style: "test",
+    time: "4/4",
+    steps: rows,
+    skipChecks: ["crossed feet", "partner spacing", "hold"],
+  });
+  return {
+    ...figure,
+    id: "test",
+    steps: figure.steps.map((step, index) => ({ ...step, id: String(index) })),
+  };
+}
+
+test("poseAtBeat: a pointed foot turns as it travels, and the body completes the turn over it", () => {
+  // The follow (facing 180) steps back on her right turning a quarter
+  // right with her foot an eighth further round (to 315), then closes
+  // her left, turning the last eighth with her body.
+  const figure = authored([
+    {
+      follow: {
+        go: "back",
+        by: 0.4,
+        turn: { right: "1/4" },
+        pointing: { right: "1/8" },
+      },
+      length: "Q",
+    },
+    { follow: { go: "close", turn: { right: "1/8" } }, length: "Q" },
+  ]);
+  // Half way through the first step the body has turned 45 and the
+  // foot, travelling linearly here, 67.5 (half of 135).
+  const midway = poseAtBeat(figure, 0.5).follow;
+  assert.equal(midway.orientation, 225);
+  assert.equal(footHeading(midway, "right"), 247.5);
+  // Her left (pointing with her body before the step) swivels with it.
+  assert.equal(footHeading(midway, "left"), 225);
+
+  const stepped = poseAtBeat(figure, 1).follow;
+  assert.equal(stepped.orientation, 270);
+  assert.equal(stepped.right.direction, 315);
+  // A foot pointing the way the body faces has no direction of its own.
+  assert.equal("direction" in stepped.left, false);
+
+  // On the close the body turns the last eighth to 315, towards where
+  // her right foot already points, so it stays; the closing foot points
+  // the way she now faces.
+  const closed = poseAtBeat(figure, 2).follow;
+  assert.equal(closed.orientation, 315);
+  assert.equal(footHeading(closed, "right"), 315);
+  assert.equal(footHeading(closed, "left"), 315);
+  assert.equal("direction" in closed.right, false);
+});
+
+test("poseAtBeat: without pointing, poses have no foot directions, as before", () => {
+  const figure = authored([
+    { both: "forward", by: 0.5, turn: { right: "1/4" }, length: "Q" },
+    { both: "close", length: "Q" },
+  ]);
+  for (const beat of [0, 0.5, 1, 1.5, 2]) {
+    const pose = poseAtBeat(figure, beat);
+    for (const partner of ["lead", "follow"] as const) {
+      for (const foot of ["left", "right"] as const) {
+        assert.equal("direction" in pose[partner][foot], false);
+      }
+    }
+  }
 });

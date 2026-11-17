@@ -76,8 +76,8 @@ if (existingFigures > 0) {
 interface PartnerPoseSpec {
   orientation: number;
   rise: number;
-  left: [number, number, number]; // [x, y, weight]
-  right: [number, number, number];
+  left: [number, number, number, number | null]; // [x, y, weight, direction]
+  right: [number, number, number, number | null];
 }
 
 interface PoseSpec {
@@ -90,7 +90,7 @@ const insertPartnerPose = db.prepare(
   "INSERT INTO partner_poses (pose_id, partner, orientation, rise) VALUES (?, ?, ?, ?)",
 );
 const insertFootState = db.prepare(
-  "INSERT INTO foot_states (pose_id, partner, foot, x, y, weight) VALUES (?, ?, ?, ?, ?, ?)",
+  "INSERT INTO foot_states (pose_id, partner, foot, x, y, weight, direction) VALUES (?, ?, ?, ?, ?, ?, ?)",
 );
 const insertMovement = db.prepare("INSERT INTO movements (type) VALUES (?)");
 const insertMovementStraight = db.prepare(
@@ -105,8 +105,8 @@ const insertFigure = db.prepare(
 );
 const insertStep = db.prepare(
   `INSERT INTO dance_steps
-	 (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, rise, beat, duration, label)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	 (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, beat, duration, label)
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 );
 const insertTransform = db.prepare(
   "INSERT INTO floor_transforms (x, y, rotation) VALUES (?, ?, ?)",
@@ -130,8 +130,8 @@ function seedPose(spec: PoseSpec): number {
     const p = spec[partner];
     insertPartnerPose.run(poseId, partner, p.orientation, p.rise);
     for (const foot of ["left", "right"] as const) {
-      const [x, y, weight] = p[foot];
-      insertFootState.run(poseId, partner, foot, x, y, weight);
+      const [x, y, weight, direction] = p[foot];
+      insertFootState.run(poseId, partner, foot, x, y, weight, direction);
     }
   }
   return poseId;
@@ -157,8 +157,18 @@ function poseToSpec(pose: Pose): PoseSpec {
   const partner = (p: Pose["lead"]): PartnerPoseSpec => ({
     orientation: p.orientation,
     rise: p.rise,
-    left: [p.left.position.x, p.left.position.y, p.left.weight],
-    right: [p.right.position.x, p.right.position.y, p.right.weight],
+    left: [
+      p.left.position.x,
+      p.left.position.y,
+      p.left.weight,
+      p.left.direction ?? null,
+    ],
+    right: [
+      p.right.position.x,
+      p.right.position.y,
+      p.right.weight,
+      p.right.direction ?? null,
+    ],
   });
   return { lead: partner(pose.lead), follow: partner(pose.follow) };
 }
@@ -207,6 +217,7 @@ function seedFigure(figure: AuthoredFigure): SeededFigure {
       step.weight,
       step.weightTiming ?? "even",
       step.orientation,
+      step.footDirection ?? null,
       step.rise,
       step.beat,
       step.duration,
