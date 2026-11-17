@@ -247,6 +247,53 @@ for (const stance of [
   });
 }
 
+test("solveSkeleton: in closed hold his right hand lies across her back; the joined hands point up", () => {
+  const { lead: him, follow: her } = solveSkeleton(
+    stancePose("closed", { lead: "right", follow: "left" }),
+  );
+  /** Unit direction from wrist to fingertip, and its length. */
+  const pointing = (skeleton: PartnerSkeleton, side: "left" | "right") => {
+    const along = sub(
+      skeleton.fingertips[side],
+      skeleton.joints[`${side}Hand`],
+    );
+    const length = Math.hypot(along.x, along.y, along.z);
+    return {
+      x: along.x / length,
+      y: along.y / length,
+      z: along.z / length,
+      length,
+    };
+  };
+  for (const [skeleton, body] of [
+    [him, DEFAULT_PROPORTIONS.lead],
+    [her, DEFAULT_PROPORTIONS.follow],
+  ] as const) {
+    for (const side of ["left", "right"] as const) {
+      close(pointing(skeleton, side).length, body.hand, 1e-9);
+    }
+  }
+  // She faces south, so her right (towards her spine from her left
+  // shoulder blade) is west: his fingers point west and a little down,
+  // not north out past her back the way his forearm points.
+  const hisRight = pointing(him, "right");
+  assert.ok(hisRight.x < -0.9, `fingers ${JSON.stringify(hisRight)}`);
+  assert.ok(hisRight.z < 0 && hisRight.z > -0.5);
+  assert.ok(Math.abs(hisRight.y) < 0.1);
+  // The joined hands point straight up.
+  assert.ok(pointing(him, "left").z > 0.99);
+  assert.ok(pointing(her, "right").z > 0.99);
+  // Her left hand drapes over the outside of his upper arm: out to his
+  // right (east, as he faces north), downwards, and not up onto his neck.
+  const herLeft = pointing(her, "left");
+  assert.ok(herLeft.x > 0.5 && herLeft.z < 0, `${JSON.stringify(herLeft)}`);
+  assert.ok(her.fingertips.left.z < him.joints.rightUpperArm.z);
+  // His fingertips end near her spine (the line through her neck and
+  // hips), not out beyond her right side.
+  const spineX = her.joints.neck.x;
+  assert.ok(Math.abs(him.fingertips.right.x - spineX) < 0.05);
+});
+
 test("solveSkeleton: the hold changes smoothly from closed to promenade and back", () => {
   // The Whisk goes from closed hold into crossed promenade.
   const whisk = loadFigures().find((figure) => figure.name === "Whisk");
@@ -272,6 +319,15 @@ test("solveSkeleton: the hold changes smoothly from closed to promenade and back
           `${partner} ${joint} jumps at beat ${beat}`,
         );
       }
+      for (const side of ["left", "right"] as const) {
+        assert.ok(
+          gap(
+            previous[partner].fingertips[side],
+            now[partner].fingertips[side],
+          ) < 0.03,
+          `${partner} ${side} fingertip jumps at beat ${beat}`,
+        );
+      }
     }
     assert.ok(
       gap(now.lead.joints.leftHand, now.follow.joints.rightHand) < 0.12,
@@ -293,6 +349,12 @@ test("solveSkeleton: partners out of reach let go, back to the solo hold shape",
   const alone = solvePartnerSkeleton(pose.lead, LEAD, "lead");
   for (const joint of ["leftHand", "rightHand"] as const) {
     assert.ok(gap(together.lead.joints[joint], alone.joints[joint]) < 1e-9);
+  }
+  // The hands point straight on from the forearms again, as when alone.
+  for (const side of ["left", "right"] as const) {
+    assert.ok(
+      gap(together.lead.fingertips[side], alone.fingertips[side]) < 1e-9,
+    );
   }
 });
 
