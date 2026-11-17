@@ -1,11 +1,11 @@
-import type { Foot } from "../libs/dance/step.mts";
+import type { Foot } from "../dance/step.mts";
 
 /**
- * The shapes Canvas2D draws for feet and dancers, seen from above.
+ * The shapes the 2D renderer (Renderer2D) draws for feet and dancers, seen from above.
  *
  * All shapes are in metres at roughly real size, in screen-local
  * coordinates: centred on the origin, facing up the screen (toe or nose
- * towards -y, since SVG's y points down). Canvas2D places each one with
+ * towards -y, since SVG's y points down). Renderer2D places each one with
  * `translate(x y) rotate(heading)`. SVG's rotate turns clockwise on
  * screen, and with floor-north drawn up the screen that is the same
  * direction as the model's compass headings, so a heading can be used
