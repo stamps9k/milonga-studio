@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import type { Partner } from "../libs/dance/step.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
 import { RenderLoop } from "../libs/render/renderer.mts";
-import type { Renderer3D } from "../libs/render/Renderer3D.mts";
+import type {
+  CharacterStatus,
+  FigureStyle,
+  Renderer3D,
+} from "../libs/render/Renderer3D.mts";
 import { CAMERA_MODES } from "../libs/render/scene3d.mts";
 import type { CameraMode } from "../libs/render/scene3d.mts";
 import PartnerToggle from "./PartnerToggle";
@@ -56,9 +60,14 @@ const Canvas3D = ({
   const [failed, setFailed] = useState<string | null>(null);
   const [cameraMode, setCameraMode] = useState<CameraMode>("orbit");
   const [followCouple, setFollowCouple] = useState(true);
+  const [figureStyle, setFigureStyle] = useState<FigureStyle>("mannequin");
+  const [characterStatus, setCharacterStatus] = useState<{
+    status: CharacterStatus;
+    error?: string;
+  }>({ status: "not loaded" });
   // The renderer starts with these; later changes are passed on by the
   // handlers below.
-  const cameraRef = useRef({ cameraMode, followCouple });
+  const cameraRef = useRef({ cameraMode, followCouple, figureStyle });
 
   useEffect(() => {
     beatRef.current = currentBeat;
@@ -78,6 +87,9 @@ const Canvas3D = ({
         const renderer = new Renderer3D(host);
         renderer.setCameraMode(cameraRef.current.cameraMode);
         renderer.setFollowCouple(cameraRef.current.followCouple);
+        renderer.onCharacterStatus = (status, error) =>
+          setCharacterStatus({ status, error });
+        renderer.setFigureStyle(cameraRef.current.figureStyle);
         // A drag in a preset view switches the camera to orbit.
         renderer.onCameraModeChange = (mode) => {
           cameraRef.current.cameraMode = mode;
@@ -112,6 +124,11 @@ const Canvas3D = ({
     cameraRef.current.cameraMode = mode;
     setCameraMode(mode);
     rendererRef.current?.setCameraMode(mode);
+  };
+  const chooseFigure = (style: FigureStyle) => {
+    cameraRef.current.figureStyle = style;
+    setFigureStyle(style);
+    rendererRef.current?.setFigureStyle(style);
   };
   const toggleFollow = () => {
     const follow = !followCouple;
@@ -162,6 +179,42 @@ const Canvas3D = ({
                 </button>
               ))}
             </div>
+            <div
+              className="btn-group btn-group-sm"
+              role="group"
+              aria-label="Figures">
+              {(["mannequin", "character"] as const).map((style) => (
+                <button
+                  key={style}
+                  type="button"
+                  aria-pressed={figureStyle === style}
+                  title={
+                    style === "mannequin"
+                      ? "Jointed figures showing where every joint is"
+                      : "Character models dancing the same steps"
+                  }
+                  className={
+                    "btn " +
+                    (figureStyle === style ? "btn-light" : "btn-outline-light")
+                  }
+                  onClick={() => chooseFigure(style)}>
+                  {style === "mannequin" ? "Mannequin" : "Character"}
+                </button>
+              ))}
+            </div>
+            {figureStyle === "character" &&
+              characterStatus.status === "loading" && (
+                <span className="small text-body-secondary">
+                  Loading characters&hellip;
+                </span>
+              )}
+            {figureStyle === "character" &&
+              characterStatus.status === "failed" && (
+                <span className="small text-warning">
+                  Couldn&rsquo;t load the characters
+                  {characterStatus.error ? `: ${characterStatus.error}` : ""}
+                </span>
+              )}
             {cameraMode === "orbit" && (
               <>
                 <button

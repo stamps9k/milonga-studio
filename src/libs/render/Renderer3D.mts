@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
+import { DEFAULT_PROPORTIONS } from "../body/proportions.mts";
 import { solveSkeleton } from "../body/skeleton.mts";
 import type { PartnerSkeleton } from "../body/skeleton.mts";
 import type { Point3D } from "../body/vector3.mts";
@@ -23,6 +25,7 @@ import {
 } from "./canvasStyle.mts";
 import { FEET, PARTNERS } from "./layout2d.mts";
 import type { RenderScene, SceneRenderer } from "./renderer.mts";
+import { CHARACTER_MODELS, CharacterRig } from "./character.mts";
 import {
   MANNEQUIN_BONES,
   VISIBLE_JOINTS,
@@ -47,6 +50,17 @@ const FALLBACK_COLOR: Record<Partner, string> = {
 const LEFT_SIDE_SHADE = 0.55;
 
 const FLOOR_COLOR = 0x1b1e26;
+
+/**
+ * How the dancers are drawn: as the jointed mannequin (where every joint
+ * the body solver places is visible, for learning), or as character
+ * models (character.mts), for a real dance feel. Both dance the same
+ * skeleton.
+ */
+export type FigureStyle = "mannequin" | "character";
+
+/** Where loading the character models has got to. */
+export type CharacterStatus = "not loaded" | "loading" | "ready" | "failed";
 
 /** How quickly the camera catches up with where it should be: it covers
  *  half the remaining way in this many seconds. Long enough to glide
@@ -87,6 +101,24 @@ function stretchBetween(
     mesh.quaternion.setFromUnitVectors(UP, along.divideScalar(length));
   }
   mesh.scale.y = Math.max(length, 1e-6);
+}
+
+/** Frees the GPU resources of everything under `root`: geometries,
+ *  materials and their textures. */
+function disposeObject(root: THREE.Object3D) {
+  root.traverse((object) => {
+    if (!(object instanceof THREE.Mesh)) return;
+    object.geometry.dispose();
+    const materials = Array.isArray(object.material)
+      ? object.material
+      : [object.material];
+    for (const material of materials) {
+      for (const value of Object.values(material)) {
+        if (value instanceof THREE.Texture) value.dispose();
+      }
+      material.dispose();
+    }
+  });
 }
 
 /** One dancer's mannequin: rods for bones, balls for joints, a head with
@@ -217,6 +249,16 @@ export class Renderer3D implements SceneRenderer {
   private readonly controls: OrbitControls;
   private readonly resizeObserver: ResizeObserver;
   private readonly mannequins: Record<Partner, Mannequin>;
+  private figureStyle: FigureStyle = "mannequin";
+  /** The character models, once loaded (loaded the first time they're
+   *  asked for, since they're a few megabytes). */
+  private characters: Record<Partner, CharacterRig> | null = null;
+  private characterStatus: CharacterStatus = "not loaded";
+  private disposed = false;
+  /** Called as the character models load (or fail to), so the page can
+   *  say so. */
+  onCharacterStatus:
+    ((status: CharacterStatus, error?: string) => void) | null = null;
   /** Geometries and materials to free on dispose. */
   private readonly resources: THREE.BufferGeometry[] = [];
   /** Everything that depends on the sequence: footprints and trails. */
@@ -287,9 +329,7 @@ export class Renderer3D implements SceneRenderer {
       this.subjects = null;
       this.placeOrbitCamera();
     }
-    for (const partner of PARTNERS) {
-      this.mannequins[partner].group.visible = scene.shown[partner];
-    }
+    this.applyFigureVisibility();
     this.drawnBeat = null;
     this.needsFrame = true;
   }
@@ -422,18 +462,78 @@ export class Renderer3D implements SceneRenderer {
     return away > CAMERA_SETTLED;
   }
 
+  /**
+   * Draws the dancers as mannequins or as character models. The models
+   * load the first time they're asked for; until they're ready (or if
+   * they fail to load) the mannequins stay on screen.
+   */
+  setFigureStyle(style: FigureStyle): void {
+    this.figureStyle = style;
+    if (style === "character" && this.characterStatus === "not loaded") {
+      void this.loadCharacters();
+    }
+    this.applyFigureVisibility();
+    this.drawnBeat = null;
+    this.needsFrame = true;
+  }
+
+  private async loadCharacters() {
+    this.setCharacterStatus("loading");
+    const loader = new GLTFLoader();
+    try {
+      const [lead, follow] = await Promise.all(
+        PARTNERS.map((partner) =>
+          loader.loadAsync(CHARACTER_MODELS[partner].url),
+        ),
+      );
+      if (this.disposed) {
+        for (const gltf of [lead, follow]) disposeObject(gltf.scene);
+        return;
+      }
+      this.characters = {
+        lead: new CharacterRig(lead.scene, DEFAULT_PROPORTIONS.lead),
+        follow: new CharacterRig(follow.scene, DEFAULT_PROPORTIONS.follow),
+      };
+      for (const partner of PARTNERS) {
+        this.scene.add(this.characters[partner].object);
+      }
+      this.setCharacterStatus("ready");
+    } catch (error) {
+      if (this.disposed) return;
+      this.setCharacterStatus(
+        "failed",
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    this.applyFigureVisibility();
+    this.drawnBeat = null;
+    this.needsFrame = true;
+  }
+
+  private setCharacterStatus(status: CharacterStatus, error?: string) {
+    this.characterStatus = status;
+    this.onCharacterStatus?.(status, error);
+  }
+
+  /** Shows the mannequins or the characters, for the dancers shown. */
+  private applyFigureVisibility() {
+    const useCharacters =
+      this.figureStyle === "character" && this.characters !== null;
+    for (const partner of PARTNERS) {
+      const shown = this.sceneData?.shown[partner] ?? true;
+      this.mannequins[partner].group.visible = shown && !useCharacters;
+      if (this.characters !== null) {
+        this.characters[partner].object.visible = shown && useCharacters;
+      }
+    }
+  }
+
   dispose(): void {
+    this.disposed = true;
     this.resizeObserver.disconnect();
     this.controls.dispose();
     this.clearFloorMarks();
-    this.scene.traverse((object) => {
-      if (object instanceof THREE.Mesh) {
-        const materials = Array.isArray(object.material)
-          ? object.material
-          : [object.material];
-        materials.forEach((material) => material.dispose());
-      }
-    });
+    disposeObject(this.scene);
     this.resources.forEach((geometry) => geometry.dispose());
     this.grid.dispose();
     this.renderer.dispose();
@@ -598,6 +698,7 @@ export class Renderer3D implements SceneRenderer {
       const skeletons = solveSkeleton(pose);
       for (const partner of PARTNERS) {
         this.mannequins[partner].update(skeletons[partner]);
+        this.characters?.[partner].pose(skeletons[partner]);
       }
       const firstPose = this.subjects === null;
       this.subjects = {
