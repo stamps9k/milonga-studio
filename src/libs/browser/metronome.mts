@@ -21,6 +21,11 @@ const BEAT_VOLUME = 0.3;
 export interface ClickPlayer {
   /** Current time on the audio clock, in seconds. */
   now(): number;
+  /** How long after its scheduled time a sound actually comes out of the
+   *  speakers, in seconds, as the browser reports it: processing plus
+   *  output latency. Usually around 0.01-0.05 s, but Bluetooth speakers
+   *  and headphones can add 0.1-0.3 s. 0 where the browser doesn't say. */
+  latency(): number;
   /** Schedule a click at `atTime` on the audio clock. Returns a function
    *  that cancels it if it hasn't played yet. */
   click(atTime: number, accent: boolean): () => void;
@@ -38,6 +43,7 @@ export function createClickPlayer(): ClickPlayer | null {
 
   return {
     now: () => context.currentTime,
+    latency: () => (context.baseLatency ?? 0) + (context.outputLatency ?? 0),
     resume: () => context.resume(),
     click(atTime, accent) {
       const start = Math.max(atTime, context.currentTime);

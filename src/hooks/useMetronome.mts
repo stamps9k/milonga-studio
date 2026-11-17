@@ -30,9 +30,10 @@ interface UseMetronomeOptions {
  * Plays the metronome in time with playback. On every update of the
  * playback position it schedules, on the audio clock, the clicks due in
  * the next LOOKAHEAD_SECONDS that haven't been scheduled yet: a click at
- * beat b is due (b - beat) beats from now, at 60 / bpm seconds a beat.
+ * beat b is due (b - beat) beats from now, at 60 / bpm seconds a beat,
+ * less the speakers' reported latency so it is heard on time.
  * Pausing, turning the metronome off or seeking cancels whatever is
- * still pending.
+ * still pending; reaching the end lets the final click play.
  *
  * Returns `prime`, which creates and starts the audio. Browsers only
  * allow audio to start in response to a user gesture, so call it from
@@ -67,7 +68,20 @@ export function useMetronome({
   useEffect(() => {
     const player = playerRef.current;
     if (!enabled || !playing || !player) {
-      cancelPending();
+      // When playback stops by reaching the end, the last click is due
+      // right now (the last count lands on the final beat): let it
+      // play. Any other stop (pause, switch-off) cancels what's pending.
+      const lastClick = clicks.at(-1);
+      const reachedEnd =
+        lastClick !== undefined &&
+        lastBeatRef.current !== null &&
+        beat >= lastClick.beat - 1e-6;
+      if (reachedEnd) {
+        pendingRef.current = [];
+        scheduledUntilRef.current = null;
+      } else {
+        cancelPending();
+      }
       lastBeatRef.current = null;
       return;
     }
@@ -78,13 +92,22 @@ export function useMetronome({
     lastBeatRef.current = beat;
 
     const secondsPerBeat = 60 / bpm;
-    const from = scheduledUntilRef.current ?? beat;
-    const to = beat + LOOKAHEAD_SECONDS / secondsPerBeat;
+    // Each click is scheduled early by the speakers' latency so it is
+    // heard on the beat rather than that much after it, and the window
+    // looks that much further ahead so there's still time to do so.
+    const latency = player.latency();
+    // On starting (or after a seek), a click exactly at the current
+    // position has already landed, so begin just after it.
+    const from = scheduledUntilRef.current ?? beat + 1e-9;
+    const to = beat + (LOOKAHEAD_SECONDS + latency) / secondsPerBeat;
     if (to <= from) return;
     const now = player.now();
     for (const click of clicksBetween(clicks, from, to)) {
       pendingRef.current.push(
-        player.click(now + (click.beat - beat) * secondsPerBeat, click.accent),
+        player.click(
+          now + (click.beat - beat) * secondsPerBeat - latency,
+          click.accent,
+        ),
       );
     }
     // Only the last few can still be pending; drop the rest so the list

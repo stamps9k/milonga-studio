@@ -29,8 +29,8 @@ implementation's choice, not a confirmed dance rule.
   are taken or coming up at an instant (`footprintsAtBeat`).
 - `serialize.mts`: converts builder state into a `Sequence` record.
 - `tempo.mts`: the playback tempo range and the metronome's clicks for a
-  sequence (`metronomeClicks`: every whole beat, the first beat of each
-  bar accented, bars running on across figures).
+  sequence (`metronomeClicks`: one as each count lands, at the end of its
+  beat, count 1 of each bar accented, bars running on across figures).
 - `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
   and which foot is the standing foot.
 - `authoring.mts`: `defineFigure`, which turns a dancer-level description

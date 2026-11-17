@@ -29,17 +29,25 @@ export function clampTempo(bpm: number): number {
   return Math.min(Math.max(Math.round(bpm), MIN_TEMPO), MAX_TEMPO);
 }
 
-/** One metronome click: on a whole beat, accented on the first beat of
- *  a bar. */
+/** One metronome click: on a whole beat, where a count lands, accented
+ *  on count 1 of a bar. */
 export interface MetronomeClick {
   beat: number;
   accent: boolean;
 }
 
 /**
- * The metronome's clicks for a sequence: one on every whole beat from 0
- * up to (not including) the end, with the first beat of each bar
- * accented.
+ * The metronome's clicks for a sequence: one on each count, at the
+ * moment the count's step lands, with count 1 of each bar accented.
+ *
+ * A step on count n occupies beats [n - 1, n) (see Timing in AGENTS.md)
+ * and its foot arrives at beat n, so that is where the count is heard
+ * and seen. The clicks are therefore on the whole beats after the start
+ * up to and including the end: none at beat 0, where nothing has
+ * landed yet, and one at the end, where the last step lands. A waltz
+ * figure clicks at 1, 2 and 3; three of them at 1 to 9, accented on 1,
+ * 4 and 7. (The owner, 2026-11-17: clicking at 0 and not at the end
+ * sounded a beat early.)
  *
  * Bars run continuously through the sequence rather than restarting at
  * each figure, because figures don't have to fill whole bars: a tango
@@ -62,15 +70,18 @@ export function metronomeClicks(
     const perBar = entry.figure.timeSignature.beatsPerMeasure;
     if (beatsPerBar !== perBar) {
       // First figure, or a change of time signature: a new bar starts
-      // on this figure's first whole beat.
-      barStart = Math.ceil(startBeat);
+      // with this figure, its count 1 landing a beat later.
+      barStart = startBeat;
       beatsPerBar = perBar;
     }
-    for (let beat = Math.ceil(startBeat); beat < endBeat; beat++) {
+    // Whole beats in (startBeat, endBeat]: each count lands at the end
+    // of its beat.
+    for (let beat = Math.floor(startBeat) + 1; beat <= endBeat; beat++) {
       if (clicks.length > 0 && clicks[clicks.length - 1].beat >= beat) {
         continue;
       }
-      clicks.push({ beat, accent: (beat - barStart) % perBar === 0 });
+      const countInBar = (beat - barStart - 1) % perBar;
+      clicks.push({ beat, accent: Math.abs(countInBar) < 1e-9 });
     }
   }
   return clicks;
