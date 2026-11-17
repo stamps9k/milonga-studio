@@ -167,3 +167,21 @@ test("footprintsAtBeat: taken, landing and next, per partner", () => {
     "2:later:0",
   ]);
 });
+
+test("sequenceFootprints: a pointed foot's print points the way the foot does", () => {
+  const pointed = figure([
+    {
+      both: "forward",
+      by: 0.4,
+      pointing: { lead: { right: "1/8" } },
+      length: "Q",
+    },
+  ]);
+  const footprints = sequenceFootprints([
+    { figure: pointed, transform: IDENTITY },
+  ]);
+  const step = footprints.find((print) => print.count !== "");
+  assert.equal(step?.orientation, 45);
+  // The starting prints point the way each body faces.
+  assert.equal(footprints[0].orientation, 0);
+});

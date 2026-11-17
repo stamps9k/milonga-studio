@@ -779,6 +779,48 @@ test("hold: after every row the partners are in closed hold or promenade, within
   }
 });
 
+test("pointing: the moving foot points that much further round than the body, for one partner or both", () => {
+  // A natural turn's first half, inside partner pointing further: both
+  // turn a quarter right, and the follow's foot points another eighth.
+  const { steps } = figure([
+    {
+      both: "forward",
+      by: 0.4,
+      turn: { right: "1/4" },
+      pointing: { follow: { right: "1/8" } },
+      length: "Q",
+    },
+  ]);
+  const [lead, follow] = steps;
+  assert.equal(lead.orientation, 90);
+  assert.equal("footDirection" in lead, false);
+  assert.equal(follow.orientation, 270);
+  assert.equal(follow.footDirection, 315);
+
+  // One amount on the row applies to each partner it covers; a partner
+  // object uses its own.
+  const both = figure([
+    { both: "side left", by: 0.3, pointing: { left: "1/16" }, length: "Q" },
+  ]);
+  assert.deepEqual(
+    both.steps.map((step) => step.footDirection),
+    [337.5, 157.5],
+  );
+  const own = figure([
+    {
+      lead: { go: "forward", by: 0.3, pointing: { right: 0.25 } },
+      follow: "back",
+      by: 0.3,
+      pointing: { left: "1/8" },
+      length: "Q",
+    },
+  ]);
+  assert.deepEqual(
+    own.steps.map((step) => step.footDirection),
+    [90, 135],
+  );
+});
+
 test("close lands beside the standing foot at stance width, across the facing after any turn", () => {
   const { endPose } = figure([
     { both: "forward", by: 0.4, length: "Q" },
@@ -1125,6 +1167,30 @@ test("parseFigureDefinition: an offset needs forward or right in metres, and not
   assert.match(
     withStep({ follow: { go: { left: 0.2 } }, beat: 1 }),
     /steps\[0\]\.follow\.go\.left: unknown field/,
+  );
+});
+
+test("parseFigureDefinition: pointing is a turn, or one per partner on a row", () => {
+  const file = (row: Record<string, unknown>) => ({
+    ...VALID_FILE,
+    steps: [{ both: "forward", by: 0.3, beat: 1, ...row }],
+  });
+  assert.doesNotThrow(() =>
+    parseFigureDefinition(file({ pointing: { right: "1/8" } }), "a.json"),
+  );
+  assert.doesNotThrow(() =>
+    parseFigureDefinition(
+      file({ pointing: { lead: { left: 0.1 } } }),
+      "a.json",
+    ),
+  );
+  assert.match(
+    problemsOf(file({ pointing: { lead: { up: 1 } } })),
+    /steps\[0\]\.pointing\.lead: should be \{ "right": … \} or \{ "left": … \}/,
+  );
+  assert.match(
+    problemsOf(file({ pointing: { lead: { left: 0.1 }, everyone: 1 } })),
+    /steps\[0\]\.pointing\.everyone: unknown field/,
   );
 });
 

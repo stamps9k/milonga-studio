@@ -1,5 +1,6 @@
 import { applyTransform } from "./floor.mts";
 import { figureDurationBeats, poseAtBeat } from "./fold.mts";
+import { footHeading } from "./pose.mts";
 import type { Point2D } from "./pose.mts";
 import type { FloorTransform } from "./sequence.mts";
 import type { Figure, Foot, Partner } from "./step.mts";
@@ -24,13 +25,10 @@ export interface Footprint {
    *  transform). */
   position: Point2D;
   /**
-   * Which way the footprint points: the partner's frame orientation at
-   * the end of the step, in compass degrees (0 = +Y, clockwise).
-   *
-   * Provisional: the model has no separate foot direction, so a foot is
-   * assumed to point the way the body faces. Turned-out feet, or a foot
-   * placed before the body finishes turning (an ocho, a heel turn),
-   * aren't shown.
+   * Which way the footprint points as the step finishes, in compass
+   * degrees (0 = +Y, clockwise): the foot's own direction
+   * (DanceStep.footDirection), which is the partner's facing unless the
+   * step points the foot further round.
    */
   orientation: number;
   /** Which sequence entry the step belongs to. */
@@ -82,7 +80,7 @@ export function sequenceFootprints(
             partner,
             foot,
             position: start[partner][foot].position,
-            orientation: start[partner].orientation,
+            orientation: footHeading(start[partner], foot),
             entryIndex,
             startBeat: 0,
             endBeat: 0,
@@ -104,7 +102,7 @@ export function sequenceFootprints(
         partner: step.partner,
         foot: step.foot,
         position: landed[step.partner][step.foot].position,
-        orientation: landed[step.partner].orientation,
+        orientation: footHeading(landed[step.partner], step.foot),
         entryIndex,
         startBeat: elapsed + step.beat - 1,
         endBeat: elapsed + localEnd,

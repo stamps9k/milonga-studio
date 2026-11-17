@@ -102,6 +102,15 @@ export interface DanceStep {
    *  to express and keeps the 3D IK step simple: it's just a target. */
   orientation: number;
 
+  /** Absolute heading the stepping foot points at the end of this step,
+   *  in degrees (same convention as `orientation`). Left out when the
+   *  foot points the way the body faces (`orientation`), as every step
+   *  did before this field existed. A ballroom chart's "body turns
+   *  less" is a step whose foot points further round than the body. How
+   *  the other foot turns is worked out in fold.mts
+   *  (swivelStandingFoot). */
+  footDirection?: number;
+
   /** Vertical displacement of the body at this step, relative to a neutral
    *  standing height, in metres. Structural for waltz-style rise and
    *  fall, left at 0 for flat styles like most tango/blues. */

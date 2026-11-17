@@ -63,3 +63,11 @@ export function lerpAngleDegrees(a: number, b: number, t: number): number {
   const shortestDelta = normalizeDegrees(b - a + 180) - 180;
   return normalizeDegrees(a + shortestDelta * t);
 }
+
+/** The signed turn from heading `from` to heading `to`, the short way
+ *  round: in [-180, 180), positive clockwise. The same turn
+ *  lerpAngleDegrees takes, so a half turn counts as anticlockwise in
+ *  both. */
+export function angleBetweenDegrees(from: number, to: number): number {
+  return normalizeDegrees(to - from + 180) - 180;
+}

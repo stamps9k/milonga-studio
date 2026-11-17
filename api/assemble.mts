@@ -46,13 +46,14 @@ interface FootStateRow {
   x: number;
   y: number;
   weight: number;
+  direction: number | null;
 }
 
 const partnerPoseStmt = db.prepare(
   "SELECT partner, orientation, rise FROM partner_poses WHERE pose_id = ?",
 );
 const footStateStmt = db.prepare(
-  "SELECT partner, foot, x, y, weight FROM foot_states WHERE pose_id = ?",
+  "SELECT partner, foot, x, y, weight, direction FROM foot_states WHERE pose_id = ?",
 );
 
 export function assemblePose(poseId: number): Pose {
@@ -77,7 +78,13 @@ export function assemblePose(poseId: number): Pose {
         );
       }
       const position: Point2D = { x: footRow.x, y: footRow.y };
-      return { position, weight: footRow.weight };
+      return {
+        position,
+        weight: footRow.weight,
+        // NULL means the foot points the way the body faces, which
+        // FootState leaves out.
+        ...(footRow.direction !== null ? { direction: footRow.direction } : {}),
+      };
     };
 
     return {
@@ -171,6 +178,7 @@ interface DanceStepRow {
   weight: number;
   weight_timing: WeightTiming;
   orientation: number;
+  foot_direction: number | null;
   rise: number;
   beat: number;
   duration: number;
@@ -179,7 +187,7 @@ interface DanceStepRow {
 
 const figureStmt = db.prepare("SELECT * FROM figures WHERE id = ?");
 const figureStepsStmt = db.prepare(
-  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, rise, beat, duration, label
+  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, beat, duration, label
 	 FROM dance_steps WHERE figure_id = ? ORDER BY step_index`,
 );
 
@@ -200,6 +208,9 @@ export function assembleFigure(figureId: number): Figure {
     // "even" is the default and is left out, like an unset label.
     ...(step.weight_timing === "late" ? { weightTiming: "late" as const } : {}),
     orientation: step.orientation,
+    ...(step.foot_direction !== null
+      ? { footDirection: step.foot_direction }
+      : {}),
     rise: step.rise,
     beat: step.beat,
     duration: step.duration,

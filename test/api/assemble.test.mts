@@ -207,6 +207,29 @@ test("assembleFigure: a late weight change is kept, and the default even timing 
   assert.equal("weightTiming" in even, false);
 });
 
+test("assembleFigure and assemblePose: a pointed foot's direction comes back, and NULL is left out", () => {
+  const figureId = insertFigure("Foot Direction Test");
+  const [firstStep] = db
+    .prepare(
+      "SELECT id FROM dance_steps WHERE figure_id = ? ORDER BY step_index",
+    )
+    .all(figureId) as { id: number }[];
+  db.prepare("UPDATE dance_steps SET foot_direction = 65 WHERE id = ?").run(
+    firstStep.id,
+  );
+  const [pointed, plain] = assemble.assembleFigure(figureId).steps;
+  assert.equal(pointed.footDirection, 65);
+  assert.equal("footDirection" in plain, false);
+
+  const poseId = insertPose();
+  db.prepare(
+    "UPDATE foot_states SET direction = 225 WHERE pose_id = ? AND partner = 'follow' AND foot = 'right'",
+  ).run(poseId);
+  const pose = assemble.assemblePose(poseId);
+  assert.equal(pose.follow.right.direction, 225);
+  assert.equal("direction" in pose.follow.left, false);
+});
+
 test("assembleFigure: a missing figure throws a descriptive error", () => {
   assert.throws(
     () => assemble.assembleFigure(424242),

@@ -1,3 +1,4 @@
+import { footHeading } from "../dance/pose.mts";
 import type { PartnerPose, Pose } from "../dance/pose.mts";
 import type { Foot, Partner } from "../dance/step.mts";
 import { centerOfWeight } from "../dance/weight.mts";
@@ -216,14 +217,18 @@ export function solvePartnerSkeleton(
   // as far as its leg needs to reach the hips at standing height, up to
   // MAX_PEEL_DEGREES. A standing foot stays flat (apart from the rise).
   const foot = (side: Foot) => {
+    // Along the foot: the way it points (footHeading), which is the
+    // body's facing unless the step pointed it further round.
+    const toes = headingVector(footHeading(pose, side));
+    const alongFoot = (from: Point3D, f: number, u: number): Point3D =>
+      add(from, add(scale(toes, f), scale(UP, u)));
     const middle = vec(pose[side].position.x, pose[side].position.y, 0);
-    const heel = along(middle, -body.footLength / 2, 0, pose.rise);
-    const ball = along(middle, body.footLength / 2 - body.ballFromToe, 0, 0);
-    const toeTip = along(middle, body.footLength / 2, 0, 0);
-    const ankle = along(
+    const heel = alongFoot(middle, -body.footLength / 2, pose.rise);
+    const ball = alongFoot(middle, body.footLength / 2 - body.ballFromToe, 0);
+    const toeTip = alongFoot(middle, body.footLength / 2, 0);
+    const ankle = alongFoot(
       middle,
       -body.footLength / 2 + body.ankleFromHeel,
-      0,
       body.ankleHeight + pose.rise,
     );
     const flat = { ankle, ball, ends: { heel, toeTip } };
@@ -247,12 +252,12 @@ export function solvePartnerSkeleton(
       const angle = ((degrees * Math.PI) / 180) * (behind ? 1 : -1);
       const turn = (point: Point3D) => {
         const offset = sub(point, pivot);
-        const f = offset.x * forward.x + offset.y * forward.y;
-        // A rotation in the (forward, up) plane by `angle` towards the
-        // back: a point behind the pivot goes up.
+        const f = offset.x * toes.x + offset.y * toes.y;
+        // A rotation in the (toes, up) plane by `angle` towards the
+        // heel: a point behind the pivot goes up.
         const fNew = f * Math.cos(angle) + offset.z * Math.sin(angle);
         const zNew = -f * Math.sin(angle) + offset.z * Math.cos(angle);
-        return add(pivot, add(scale(forward, fNew), vec(0, 0, zNew)));
+        return add(pivot, add(scale(toes, fNew), vec(0, 0, zNew)));
       };
       return turn;
     };
@@ -299,7 +304,13 @@ export function solvePartnerSkeleton(
   const leftUpperLeg = hipJoint("left");
   const rightUpperLeg = hipJoint("right");
   const knee = (side: Foot, hip: Point3D) =>
-    twoBoneJoint(hip, feet[side].ankle, body.thigh, body.shin, forward);
+    twoBoneJoint(
+      hip,
+      feet[side].ankle,
+      body.thigh,
+      body.shin,
+      headingVector(footHeading(pose, side)),
+    );
 
   // Torso: straight up from the hips, keeping its standing proportions.
   const above = (height: number) =>

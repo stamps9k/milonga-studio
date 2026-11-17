@@ -5,6 +5,7 @@ import {
   headingToUnitVector,
   scalePoint,
 } from "../dance/heading.mts";
+import { footHeading } from "../dance/pose.mts";
 import type { Pose } from "../dance/pose.mts";
 import type { Partner } from "../dance/step.mts";
 import { centerOfWeight, isStandingFoot } from "../dance/weight.mts";
@@ -272,7 +273,7 @@ export class Renderer2D implements SceneRenderer {
           d: FOOT_PATHS[foot],
           transform: placeAt(
             toScreen(partnerPose[foot].position),
-            partnerPose.orientation,
+            footHeading(partnerPose, foot),
           ),
           fill: PARTNER_COLOR[partner],
           "fill-opacity": isStandingFoot(partnerPose, foot)
