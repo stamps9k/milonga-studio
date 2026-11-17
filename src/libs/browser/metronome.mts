@@ -9,14 +9,19 @@
  * each beat falls and asks for the click slightly ahead of time.
  */
 
-/** Click pitches in Hz: higher on the first beat of a bar so the bar
- *  can be heard. */
-const ACCENT_PITCH = 1600;
-const BEAT_PITCH = 1000;
-/** Click length in seconds, and its peak volume (0 to 1). */
+import type { ClickKind } from "../dance/tempo.mts";
+
+/** Each kind of click's pitch (Hz) and peak volume (0 to 1): highest and
+ *  loudest on count 1 of a bar so the bar can be heard, and lowest and
+ *  quietest on the optional half beats so they fill in without hiding
+ *  the counts. */
+const CLICK_SOUND: Record<ClickKind, { pitch: number; volume: number }> = {
+  accent: { pitch: 1600, volume: 0.5 },
+  beat: { pitch: 1000, volume: 0.3 },
+  half: { pitch: 800, volume: 0.15 },
+};
+/** Click length in seconds. */
 const CLICK_SECONDS = 0.04;
-const ACCENT_VOLUME = 0.5;
-const BEAT_VOLUME = 0.3;
 
 export interface ClickPlayer {
   /** Current time on the audio clock, in seconds. */
@@ -28,7 +33,7 @@ export interface ClickPlayer {
   latency(): number;
   /** Schedule a click at `atTime` on the audio clock. Returns a function
    *  that cancels it if it hasn't played yet. */
-  click(atTime: number, accent: boolean): () => void;
+  click(atTime: number, kind: ClickKind): () => void;
   /** Start the audio clock. Browsers only allow this in response to a
    *  user gesture (a click or key press), so call it from one. */
   resume(): Promise<void>;
@@ -45,18 +50,16 @@ export function createClickPlayer(): ClickPlayer | null {
     now: () => context.currentTime,
     latency: () => (context.baseLatency ?? 0) + (context.outputLatency ?? 0),
     resume: () => context.resume(),
-    click(atTime, accent) {
+    click(atTime, kind) {
+      const sound = CLICK_SOUND[kind];
       const start = Math.max(atTime, context.currentTime);
       const oscillator = context.createOscillator();
       const gain = context.createGain();
-      oscillator.frequency.value = accent ? ACCENT_PITCH : BEAT_PITCH;
+      oscillator.frequency.value = sound.pitch;
       // A fast attack and exponential decay sounds like a tick rather
       // than a beep. Exponential ramps can't reach 0, hence 0.001.
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(
-        accent ? ACCENT_VOLUME : BEAT_VOLUME,
-        start + 0.002,
-      );
+      gain.gain.linearRampToValueAtTime(sound.volume, start + 0.002);
       gain.gain.exponentialRampToValueAtTime(0.001, start + CLICK_SECONDS);
       oscillator.connect(gain).connect(context.destination);
       oscillator.start(start);

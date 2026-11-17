@@ -5,7 +5,9 @@ import {
   FALLBACK_TEMPO,
   MAX_TEMPO,
   MIN_TEMPO,
+  type MetronomeClick,
   clampTempo,
+  clicksPerBeat,
   clicksBetween,
   metronomeClicks,
 } from "../../src/libs/dance/tempo.mts";
@@ -25,8 +27,10 @@ function entry(beatsPerMeasure: number, lengthBeats: number): SequenceEntry {
 }
 
 const beats = (clicks: { beat: number }[]) => clicks.map((c) => c.beat);
-const accented = (clicks: { beat: number; accent: boolean }[]) =>
-  clicks.filter((c) => c.accent).map((c) => c.beat);
+const accented = (clicks: MetronomeClick[]) =>
+  clicks.filter((c) => c.kind === "accent").map((c) => c.beat);
+const halves = (clicks: MetronomeClick[]) =>
+  clicks.filter((c) => c.kind === "half").map((c) => c.beat);
 
 test("metronomeClicks: two waltz figures click as each count lands, accenting count 1", () => {
   // Counts land at the end of their beat: 1, 2, 3, then 4, 5, 6. Nothing
@@ -62,6 +66,28 @@ test("metronomeClicks: a change of time signature starts a new bar", () => {
 
 test("metronomeClicks: an empty sequence has no clicks", () => {
   assert.deepEqual(metronomeClicks([]), []);
+});
+
+test("metronomeClicks: half beats add quieter clicks between the counts, which stay put", () => {
+  // A 3-beat tango figure in 2/4: counts land at 1, 2, 3 (accent on 1
+  // and 3) as before, with half clicks at 0.5, 1.5 and 2.5 in between.
+  // Felt as four to a 2/4 bar: 0.5, 1, 1.5, 2.
+  const clicks = metronomeClicks([entry(2, 3)], "half beat");
+  assert.deepEqual(beats(clicks), [0.5, 1, 1.5, 2, 2.5, 3]);
+  assert.deepEqual(accented(clicks), [1, 3]);
+  assert.deepEqual(halves(clicks), [0.5, 1.5, 2.5]);
+  assert.deepEqual(
+    clicks.filter((c) => c.kind !== "half"),
+    metronomeClicks([entry(2, 3)]),
+  );
+  assert.equal(clicksPerBeat("half beat"), 2);
+});
+
+test("metronomeClicks: half beats run on through figures ending on a half beat", () => {
+  // 1.5 + 1.5 beats: clicks every half beat from 0.5 to 3, none twice.
+  const clicks = metronomeClicks([entry(2, 1.5), entry(2, 1.5)], "half beat");
+  assert.deepEqual(beats(clicks), [0.5, 1, 1.5, 2, 2.5, 3]);
+  assert.deepEqual(accented(clicks), [1, 3]);
 });
 
 test("clicksBetween: half-open, so back-to-back windows never repeat a click", () => {

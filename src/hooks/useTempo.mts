@@ -1,7 +1,12 @@
 import { useCallback, useRef, useState } from "react";
 
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
-import { FALLBACK_TEMPO, clampTempo } from "../libs/dance/tempo.mts";
+import {
+  type ClickDivision,
+  FALLBACK_TEMPO,
+  clampTempo,
+  clicksPerBeat,
+} from "../libs/dance/tempo.mts";
 
 /**
  * Starting tempo per dance style, in BPM. These are the middle of the
@@ -89,7 +94,8 @@ interface UseTempoResult {
   adjusted: boolean;
   setBpm: (bpm: number) => void;
   /** Register a tap at the current time; sets the tempo once there are
-   *  two taps in a run. */
+   *  two taps in a run. Taps are taken as the metronome's clicks, so with
+   *  half-beat clicks two taps make one beat. */
   tap: () => void;
   /** Go back to following the sequence's default tempo. */
   reset: () => void;
@@ -98,11 +104,16 @@ interface UseTempoResult {
 /**
  * The playback tempo. It starts at the sequence's default (by dance
  * style) and follows it until the user changes it with setBpm or tap;
- * from then on it stays where they put it until reset. Nothing is saved:
+ * from then on it stays where they put it until reset. The tempo is
+ * always in the beats the figures are written in; `division` only says
+ * what the user is tapping along to (see tap). Nothing is saved:
  * the tempo is a setting for this session only (owner's decision,
  * 2026-11-17), so a reload starts again from the default.
  */
-export function useTempo(entries: readonly SequenceEntry[]): UseTempoResult {
+export function useTempo(
+  entries: readonly SequenceEntry[],
+  division: ClickDivision = "beat",
+): UseTempoResult {
   const defaultBpm = defaultTempo(entries);
   const [chosen, setChosen] = useState<number | null>(null);
   const tapsRef = useRef<number[]>([]);
@@ -115,8 +126,11 @@ export function useTempo(entries: readonly SequenceEntry[]): UseTempoResult {
     const taps = [...tapsRef.current, performance.now()].slice(-TAP_WINDOW);
     tapsRef.current = taps;
     const tapped = tapTempo(taps);
-    if (tapped !== null) setChosen(tapped);
-  }, []);
+    // Someone tapping along to half-beat clicks (or to tango music's
+    // four-to-a-bar pulse with them on) taps twice a beat.
+    if (tapped !== null)
+      setChosen(clampTempo(tapped / clicksPerBeat(division)));
+  }, [division]);
 
   const reset = useCallback(() => {
     tapsRef.current = [];

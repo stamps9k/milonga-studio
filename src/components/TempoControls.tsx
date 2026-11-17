@@ -1,6 +1,11 @@
 import { useState } from "react";
 
-import { MAX_TEMPO, MIN_TEMPO } from "../libs/dance/tempo.mts";
+import {
+  type ClickDivision,
+  MAX_TEMPO,
+  MIN_TEMPO,
+  clicksPerBeat,
+} from "../libs/dance/tempo.mts";
 
 interface TempoControlsProps {
   bpm: number;
@@ -14,13 +19,17 @@ interface TempoControlsProps {
   onReset: () => void;
   metronomeOn: boolean;
   onMetronomeToggle: () => void;
+  clickDivision: ClickDivision;
+  onClickDivisionChange: (division: ClickDivision) => void;
 }
 
 /**
  * The playback tempo row under the timeline: the BPM (typed, or nudged
  * one at a time with − and +), a Tap button to set it by tapping along
- * to music, a Reset back to the dance's default, and the metronome
- * switch.
+ * to music, a Reset back to the dance's default, the metronome switch,
+ * and whether it clicks every beat or every half beat. With half beats,
+ * a note gives the clicks a minute, which is the number a music app or
+ * track listing would show for tango's four-to-a-bar pulse.
  *
  * The number field keeps what is being typed as a draft and only
  * applies it on Enter or when the field loses focus, so typing "120"
@@ -36,7 +45,10 @@ const TempoControls = ({
   onReset,
   metronomeOn,
   onMetronomeToggle,
+  clickDivision,
+  onClickDivisionChange,
 }: TempoControlsProps) => {
+  const perBeat = clicksPerBeat(clickDivision);
   const [draft, setDraft] = useState<string | null>(null);
 
   const commit = () => {
@@ -94,7 +106,11 @@ const TempoControls = ({
       <button
         type="button"
         className="btn btn-outline-light btn-sm ms-2"
-        title="Tap along to the beat of the music to set the tempo"
+        title={
+          perBeat > 1
+            ? "Tap along with the clicks (two a beat) to set the tempo"
+            : "Tap along with the clicks (one a beat) to set the tempo"
+        }
         onClick={onTap}>
         Tap
       </button>
@@ -111,6 +127,11 @@ const TempoControls = ({
           (this dance&apos;s default)
         </span>
       )}
+      {perBeat > 1 && (
+        <span className="text-body-secondary tempo-default">
+          {bpm * perBeat} clicks a minute
+        </span>
+      )}
       <div className="form-check form-switch ms-auto mb-0">
         <input
           className="form-check-input"
@@ -124,6 +145,16 @@ const TempoControls = ({
           Metronome
         </label>
       </div>
+      <select
+        className="form-select form-select-sm bg-transparent border-secondary-subtle text-body w-auto"
+        aria-label="Metronome clicks"
+        value={clickDivision}
+        onChange={(event) =>
+          onClickDivisionChange(event.target.value as ClickDivision)
+        }>
+        <option value="beat">Every beat</option>
+        <option value="half beat">Every half beat</option>
+      </select>
     </div>
   );
 };

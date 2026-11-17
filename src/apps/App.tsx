@@ -20,19 +20,23 @@ import {
   sequenceEntryIndexAtBeat,
   sequenceEntrySpans,
 } from "../libs/dance/fold.mts";
-import { metronomeClicks } from "../libs/dance/tempo.mts";
+import { type ClickDivision, metronomeClicks } from "../libs/dance/tempo.mts";
 
 const App = () => {
   const { entries, activeFigureId, addFigure, removeFigure, loading, error } =
     useSequenceBuilder();
   const totalBeats = sequenceDurationBeats(entries);
-  const tempo = useTempo(entries);
+  const [clickDivision, setClickDivision] = useState<ClickDivision>("beat");
+  const tempo = useTempo(entries, clickDivision);
   const { beat, playing, toggle, seek, stepBy } = usePlayback(
     totalBeats,
     tempo.bpm,
   );
   const [metronomeOn, setMetronomeOn] = useState(false);
-  const clicks = useMemo(() => metronomeClicks(entries), [entries]);
+  const clicks = useMemo(
+    () => metronomeClicks(entries, clickDivision),
+    [entries, clickDivision],
+  );
   const { prime: primeMetronome } = useMetronome({
     enabled: metronomeOn,
     playing,
@@ -135,6 +139,8 @@ const App = () => {
                       onReset={tempo.reset}
                       metronomeOn={metronomeOn}
                       onMetronomeToggle={toggleMetronome}
+                      clickDivision={clickDivision}
+                      onClickDivisionChange={setClickDivision}
                     />
                   </div>
                 </div>

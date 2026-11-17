@@ -106,7 +106,7 @@ export function useMetronome({
       pendingRef.current.push(
         player.click(
           now + (click.beat - beat) * secondsPerBeat - latency,
-          click.accent,
+          click.kind,
         ),
       );
     }

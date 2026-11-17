@@ -29,11 +29,31 @@ export function clampTempo(bpm: number): number {
   return Math.min(Math.max(Math.round(bpm), MIN_TEMPO), MAX_TEMPO);
 }
 
-/** One metronome click: on a whole beat, where a count lands, accented
- *  on count 1 of a bar. */
+/** How a click sounds: "accent" on count 1 of a bar, "beat" on the other
+ *  counts, "half" on the optional half-beat clicks between counts. */
+export type ClickKind = "accent" | "beat" | "half";
+
+/** One metronome click, at a position in beats. */
 export interface MetronomeClick {
   beat: number;
-  accent: boolean;
+  kind: ClickKind;
+}
+
+/** How often the metronome clicks: on every beat the figures are
+ *  written in, or on every half beat too. Half beats let a beginner hear
+ *  ballroom tango, which the book writes in 2/4 (a slow is one beat), in
+ *  the four-to-a-bar pulse of the music, without changing the figures
+ *  (owner, 2026-11-17). */
+export type ClickDivision = "beat" | "half beat";
+
+const CLICKS_PER_BEAT: Record<ClickDivision, number> = {
+  beat: 1,
+  "half beat": 2,
+};
+
+/** Clicks a beat for a division: 1 or 2. */
+export function clicksPerBeat(division: ClickDivision): number {
+  return CLICKS_PER_BEAT[division];
 }
 
 /**
@@ -49,6 +69,12 @@ export interface MetronomeClick {
  * 4 and 7. (The owner, 2026-11-17: clicking at 0 and not at the end
  * sounded a beat early.)
  *
+ * With `division` "half beat", a quieter "half" click is added halfway
+ * through each beat, at the same end-of-interval convention: a 2/4 tango
+ * bar clicks at 0.5 (half), 1 (accent), 1.5 (half), 2 (beat). The
+ * accents and beat clicks stay exactly where they are without the
+ * half beats, so switching only adds clicks in between.
+ *
  * Bars run continuously through the sequence rather than restarting at
  * each figure, because figures don't have to fill whole bars: a tango
  * Closed Promenade (S Q Q S) is three beats, a bar and a half of 2/4,
@@ -60,7 +86,9 @@ export interface MetronomeClick {
  */
 export function metronomeClicks(
   entries: readonly SequenceEntry[],
+  division: ClickDivision = "beat",
 ): MetronomeClick[] {
+  const perBeat = clicksPerBeat(division);
   const spans = sequenceEntrySpans([...entries]);
   const clicks: MetronomeClick[] = [];
   let barStart = 0;
@@ -74,14 +102,27 @@ export function metronomeClicks(
       barStart = startBeat;
       beatsPerBar = perBar;
     }
-    // Whole beats in (startBeat, endBeat]: each count lands at the end
-    // of its beat.
-    for (let beat = Math.floor(startBeat) + 1; beat <= endBeat; beat++) {
+    // Click positions in (startBeat, endBeat], every 1 / perBeat of a
+    // beat: each count lands at the end of its beat (half beats at the
+    // end of their half). Counted in whole clicks to avoid drifting
+    // through repeated fractional additions.
+    const first = Math.floor(startBeat * perBeat + 1e-9) + 1;
+    const last = Math.floor(endBeat * perBeat + 1e-9);
+    for (let index = first; index <= last; index++) {
+      const beat = index / perBeat;
       if (clicks.length > 0 && clicks[clicks.length - 1].beat >= beat) {
         continue;
       }
+      const onBeat = Math.abs(beat - Math.round(beat)) < 1e-9;
       const countInBar = (beat - barStart - 1) % perBar;
-      clicks.push({ beat, accent: Math.abs(countInBar) < 1e-9 });
+      clicks.push({
+        beat,
+        kind: !onBeat
+          ? "half"
+          : Math.abs(countInBar) < 1e-9
+            ? "accent"
+            : "beat",
+      });
     }
   }
   return clicks;
