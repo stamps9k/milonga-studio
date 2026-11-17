@@ -6,6 +6,7 @@ import { DEFAULT_PROPORTIONS } from "./proportions.mts";
 import type { BodyProportions } from "./proportions.mts";
 import {
   add,
+  dot,
   headingVector,
   normalize,
   scale,
@@ -37,10 +38,11 @@ import type { Point3D } from "./vector3.mts";
  * - the arms take hold of the partner (connectHold, in solveSkeleton):
  *   the joined hands meet out beyond the couple, the lead's right hand
  *   is on the follow's left shoulder blade and her left hand on his right
- *   upper arm, each hand pointing the way it lies (fingertips). A dancer
- *   solved alone (solvePartnerSkeleton) holds the
- *   same shape relative to their own
- *   chest (a placeholder until the model has a hold).
+ *   upper arm, each hand pointing the way it lies (fingertips), its palm
+ *   facing the partner (palms) and the joined hands clasped (grips). A
+ *   dancer solved alone (solvePartnerSkeleton) holds the same shape
+ *   relative to their own chest (a placeholder until the model has a
+ *   hold).
  *
  * Plain data and pure functions, no 3D library: any renderer (the
  * mannequin now, a character model later) draws from the same skeleton,
@@ -107,6 +109,28 @@ export interface PartnerSkeleton {
    *  end at the wrist, so without this a character model's hands stuck
    *  straight out past the partner. */
   fingertips: Record<Foot, Point3D>;
+  /** Which way each palm faces (a unit vector at right angles to the
+   *  way the hand points): in towards the body when the arm is free, onto
+   *  the partner in hold, and palm to palm at the joined hands. */
+  palms: Record<Foot, Point3D>;
+  /** How far each hand's fingers close: 0 is the hand as modelled (open,
+   *  fingers lightly bent), 1 a loose fist. The joined hands close round
+   *  each other; a hand resting on the partner stays nearly open. */
+  grips: Record<Foot, number>;
+}
+
+/** How a hand is held: the way its fingers point, the way its palm
+ *  faces (both directions, normalized where used) and its grip. */
+interface HandShape {
+  fingers: Point3D;
+  palm: Point3D;
+  grip: number;
+}
+
+/** `direction` with its part along `axis` (a unit vector) removed,
+ *  normalized; null if nothing is left. */
+function square(direction: Point3D, axis: Point3D): Point3D | null {
+  return normalize(sub(direction, scale(axis, dot(direction, axis))));
 }
 
 export type CoupleSkeleton = Record<Partner, PartnerSkeleton>;
@@ -176,7 +200,12 @@ function solveArm(
   body: BodyProportions,
   facing: number,
   side: Foot,
-): { elbow: Point3D; hand: Point3D; fingertip: Point3D } {
+): {
+  elbow: Point3D;
+  hand: Point3D;
+  fingertip: Point3D;
+  palm: Point3D;
+} {
   const outwards = scale(headingVector(facing + 90), side === "left" ? -1 : 1);
   const elbow = twoBoneJoint(
     shoulder,
@@ -191,7 +220,15 @@ function solveArm(
     reach <= body.forearm + 1e-9
       ? wrist
       : add(elbow, scale(toWrist, body.forearm / reach));
-  return { elbow, hand, fingertip: fingersOn(elbow, hand, body) };
+  const fingertip = fingersOn(elbow, hand, body);
+  // A free hand's palm faces in towards the body (away from `outwards`),
+  // as an arm held up in front of you does.
+  const pointing = normalize(sub(fingertip, hand)) ?? vec(0, 0, -1);
+  const palm =
+    square(scale(outwards, -1), pointing) ??
+    square(vec(0, 0, -1), pointing) ??
+    vec(1, 0, 0);
+  return { elbow, hand, fingertip, palm };
 }
 
 /** A free hand's fingertip: straight on from the forearm. */
@@ -403,6 +440,8 @@ export function solvePartnerSkeleton(
     hipDrop: standing - hipZ,
     legShortfall,
     fingertips: { left: leftArm.fingertip, right: rightArm.fingertip },
+    palms: { left: leftArm.palm, right: rightArm.palm },
+    grips: { left: 0, right: 0 },
   };
 }
 
@@ -418,6 +457,7 @@ export function solvePartnerSkeleton(
  *   follow's skull, about her eye level.
  * - PALM: how far each wrist stops short of the point where the hands
  *   meet, so the two hands sit palm to palm rather than inside each other.
+ *   2.5 cm each: about half a hand's thickness, so the palms touch.
  * - The lead's right hand on her left shoulder blade: BLADE_BEHIND behind
  *   her left shoulder joint, BLADE_IN towards her spine, BLADE_DOWN below
  *   it. That is the wrist, at the outer edge of the blade, so the hand
@@ -432,7 +472,7 @@ export function solvePartnerSkeleton(
  */
 const JOINED_OUT = 0.2;
 const JOINED_ABOVE_HEAD = 0.06;
-const PALM = 0.05;
+const PALM = 0.025;
 const BLADE_BEHIND = 0.06;
 const BLADE_IN = 0.02;
 const BLADE_DOWN = 0.12;
@@ -454,6 +494,20 @@ const HAND_DOWN = 0.3;
  *  (on its surface) at his shoulder, in closed hold and promenade.
  *  Provisional (2026-11-17). */
 const OVER_HIS_ARM = 0.2;
+/**
+ * The joined hands' clasp. JOINED_CROSS (radians) is how far each hand
+ * leans from upright, his out away from the couple and hers in towards
+ * it, so the hands cross a little rather than lying finger on finger and
+ * her fingers come over the web of his thumb. JOINED_GRIP is how far the
+ * fingers close round the other hand, and RESTING_GRIP how far a hand
+ * resting on the partner (his on her back, hers on his arm) curves to
+ * them. Provisional judgement calls (2026-11-17), from the usual
+ * description of the hold: her right hand in his left, palms together,
+ * his fingers closing gently round her hand.
+ */
+const JOINED_CROSS = (20 * Math.PI) / 180;
+const JOINED_GRIP = 0.6;
+const RESTING_GRIP = 0.15;
 
 /**
  * When a hold point is further from the shoulder than the arm can reach,
@@ -476,14 +530,15 @@ function lerp3(a: Point3D, b: Point3D, t: number): Point3D {
 
 /** Re-solves one arm of `skeleton` towards a hold point, blending back to
  *  the solo shape (the arm as solved alone) as the point gets out of
- *  reach. `fingers` is the way the hand points while it holds (a
- *  direction, normalized here); as the arm lets go the hand turns back
- *  to pointing straight on from the forearm, by the same amount. */
+ *  reach. `shape` is how the hand is held while it holds: the way it
+ *  points, the way its palm faces and its grip. As the arm lets go the
+ *  hand turns back to the free hand's shape (pointing straight on from
+ *  the forearm, palm in, open), by the same amount as the wrist. */
 function reachFor(
   skeleton: PartnerSkeleton,
   side: Foot,
   target: Point3D,
-  fingers: Point3D,
+  shape: HandShape,
   body: BodyProportions,
 ): PartnerSkeleton {
   const shoulder = skeleton.joints[`${side}UpperArm`];
@@ -493,7 +548,7 @@ function reachFor(
   const holding =
     1 - smoothstep(HOLD_LETS_GO_FROM * arm, HOLD_LET_GO_BY * arm, away);
   const wrist = lerp3(solo, target, holding);
-  const { elbow, hand, fingertip } = solveArm(
+  const { elbow, hand, fingertip, palm } = solveArm(
     shoulder,
     wrist,
     body,
@@ -501,9 +556,13 @@ function reachFor(
     side,
   );
   const free = sub(fingertip, hand);
-  const held = scale(normalize(fingers) ?? free, body.hand);
+  const held = scale(normalize(shape.fingers) ?? free, body.hand);
   const pointing =
     normalize(lerp3(free, held, holding)) ?? scale(free, 1 / body.hand);
+  const facing =
+    square(lerp3(palm, normalize(shape.palm) ?? palm, holding), pointing) ??
+    square(palm, pointing) ??
+    palm;
   return {
     ...skeleton,
     joints: {
@@ -515,6 +574,8 @@ function reachFor(
       ...skeleton.fingertips,
       [side]: add(hand, scale(pointing, body.hand)),
     },
+    palms: { ...skeleton.palms, [side]: facing },
+    grips: { ...skeleton.grips, [side]: shape.grip * holding },
   };
 }
 
@@ -558,19 +619,44 @@ function connectHold(
     ),
   );
 
-  // Which way each hand points in hold:
-  // - his right hand lies flat on her back, fingers towards her spine
-  //   (her right, round the curve of her back) and a little down;
-  // - the joined hands point upwards, palm to palm;
-  // - her left hand lies along his upper arm, fingers towards his
-  //   shoulder, tipped a little out and down over the outside of it
-  //   (OVER_HIS_ARM), so the fingertips rest on the cap of his shoulder.
-  //   Pointed out to his side instead, the hand stuck out past his arm
-  //   into the air.
+  // How each hand is held:
+  // - The joined hands (his left, her right) clasp, palm to palm: his
+  //   palm faces her hand and hers faces his. Both point upwards, crossed
+  //   a little (JOINED_CROSS) -- his fingers lean out away from the
+  //   couple, hers in over the web of his thumb -- and close round each
+  //   other (JOINED_GRIP), so his fingers wrap the back of her hand and
+  //   hers lie over his.
+  // - His right hand lies flat on her back, palm on her (facing the way
+  //   she faces), fingers towards her spine and a little down.
+  // - Her left hand lies along his upper arm, palm down on it, fingers
+  //   towards his shoulder, tipped a little out and down over the outside
+  //   of it (OVER_HIS_ARM), so the fingertips rest on the cap of his
+  //   shoulder, slightly cupped round it (RESTING_GRIP). Pointed out to
+  //   his side instead, the hand stuck out past his arm into the air.
+  const hisJoined = palmShort(hisShoulder);
+  const herJoined = palmShort(herShoulder);
+  const towardsHer = normalize(sub(herJoined, hisJoined)) ?? herForward;
+  const lean = (sign: number) =>
+    add(
+      scale(UP, Math.cos(JOINED_CROSS)),
+      scale(outward, sign * Math.sin(JOINED_CROSS)),
+    );
   const acrossHerBack = add(herRight, scale(UP, -HAND_DOWN));
 
-  let him = reachFor(lead, "left", palmShort(hisShoulder), UP, bodies.lead);
-  him = reachFor(him, "right", blade, acrossHerBack, bodies.lead);
+  let him = reachFor(
+    lead,
+    "left",
+    hisJoined,
+    { fingers: lean(1), palm: towardsHer, grip: JOINED_GRIP },
+    bodies.lead,
+  );
+  him = reachFor(
+    him,
+    "right",
+    blade,
+    { fingers: acrossHerBack, palm: herForward, grip: RESTING_GRIP },
+    bodies.lead,
+  );
 
   // Her left hand on his right upper arm, where his arm now is.
   const onHisArm = add(
@@ -586,11 +672,17 @@ function connectHold(
   let her = reachFor(
     follow,
     "right",
-    palmShort(herShoulder),
-    UP,
+    herJoined,
+    { fingers: lean(-1), palm: scale(towardsHer, -1), grip: JOINED_GRIP },
     bodies.follow,
   );
-  her = reachFor(her, "left", onHisArm, overHisArm, bodies.follow);
+  her = reachFor(
+    her,
+    "left",
+    onHisArm,
+    { fingers: overHisArm, palm: scale(UP, -1), grip: RESTING_GRIP },
+    bodies.follow,
+  );
 
   return { lead: him, follow: her };
 }
