@@ -19,8 +19,8 @@ frontend and a small Express + SQLite API.
 - `src/components/`, `src/hooks/` and `src/apps/` are the React UI. Hooks own
   state and playback (`usePlayback` drives the requestAnimationFrame clock,
   `useSequenceBuilder` places figures with `fitTransform`); components render.
-  `Canvas2D` hosts the 2D renderer; `Canvas3D` is a placeholder for the
-  future 3D renderer.
+  `Canvas2D` and `Canvas3D` host the 2D and 3D renderers. `Canvas3D` loads
+  its renderer (and Three.js) only when the 3D view is first opened.
 - `src/libs/render/` holds the view renderers, which draw outside React.
   `renderer.mts` is the contract every view follows (`SceneRenderer`, fed a
   `RenderScene`, driven by a `RenderLoop` that reads the current beat each
@@ -28,6 +28,11 @@ frontend and a small Express + SQLite API.
   calls; `layout2d.mts` holds its DOM-free layout, which is tested under
   `node:test`; `canvasStyle.mts`, `figureShapes.mts` and `scaleBar.mts` are
   the 2D view's colours, shapes and scale bar, shared with the legend.
+  `Renderer3D.mts` draws the couple as jointed mannequins (from the body
+  solver's skeletons) on a floor with the same footprints and paths, with
+  Three.js and an orbit camera; `scene3d.mts` holds its WebGL-free parts
+  (the floor-space to Three.js axis mapping, the mannequin's bones, the
+  camera framing, footprint outlines), tested under `node:test`.
   React components create a renderer once and pass it new scenes; they do
   not draw the view themselves.
 - `src/libs/body/` is the body solver for the 3D view: plain functions that

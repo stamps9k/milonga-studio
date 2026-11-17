@@ -1,159 +1,116 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * Placeholder for the real 3D renderer -- deliberately not wired to any
- * dance data yet (see the design discussion: the actual pose->3D
- * pipeline is its own project for later). This just spins a plain CSS
- * cube continuously so the pane isn't dead space, and so the Toolbar's
- * eventual 2D/3D view switch has something real to toggle to.
- */
+import type { Partner } from "../libs/dance/step.mts";
+import type { SequenceEntry } from "../libs/dance/sequence.mts";
+import { RenderLoop } from "../libs/render/renderer.mts";
+import type { Renderer3D } from "../libs/render/Renderer3D.mts";
+import PartnerToggle from "./PartnerToggle";
 
-const CUBE_SIZE = 100;
-const HALF = CUBE_SIZE / 2;
-
-interface Face {
-  key: string;
-  transform: string;
-  color: string;
+interface Canvas3DProps {
+  entries: SequenceEntry[];
+  /** Current scrub/playback position, in beats along the whole
+   *  sequence (see usePlayback). */
+  currentBeat: number;
+  /** Which dancers to draw (shared with the 2D view). */
+  shown: Record<Partner, boolean>;
+  onToggleShown: (partner: Partner) => void;
 }
 
-const FACES: Face[] = [
-  { key: "front", transform: `translateZ(${HALF}px)`, color: "var(--amber)" },
-  {
-    key: "back",
-    transform: `rotateY(180deg) translateZ(${HALF}px)`,
-    color: "var(--amber)",
-  },
-  {
-    key: "right",
-    transform: `rotateY(90deg) translateZ(${HALF}px)`,
-    color: "var(--teal)",
-  },
-  {
-    key: "left",
-    transform: `rotateY(-90deg) translateZ(${HALF}px)`,
-    color: "var(--teal)",
-  },
-  {
-    key: "top",
-    transform: `rotateX(90deg) translateZ(${HALF}px)`,
-    color: "rgba(255,255,255,0.5)",
-  },
-  {
-    key: "bottom",
-    transform: `rotateX(-90deg) translateZ(${HALF}px)`,
-    color: "rgba(255,255,255,0.5)",
-  },
-];
-
-// Degrees per second around each axis -- arbitrary, just enough to read
-// as a rotating solid rather than a flat spinning square.
-const SPIN_X_DEG_PER_SEC = 18;
-const SPIN_Y_DEG_PER_SEC = 27;
-
-function useContinuousRotation() {
-  const [angles, setAngles] = useState({ x: 0, y: 0 });
-  const frameRef = useRef<number | undefined>(undefined);
-  const lastTimeRef = useRef<number | null>(null);
+/**
+ * The 3D view's place on the page: hosts Renderer3D (src/libs/render/)
+ * the way Canvas2D hosts Renderer2D. The renderer, and Three.js with it,
+ * is loaded only when the 3D view is first opened, so the 2D view
+ * doesn't wait for it. React draws only what goes round the view: the
+ * empty-state message, the Lead/Follow toggle, the reset button and the
+ * controls hint.
+ */
+const Canvas3D = ({
+  entries,
+  currentBeat,
+  shown,
+  onToggleShown,
+}: Canvas3DProps) => {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const rendererRef = useRef<Renderer3D | null>(null);
+  const beatRef = useRef(currentBeat);
+  const sceneRef = useRef({ entries, shown });
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
 
   useEffect(() => {
-    const tick = (time: number) => {
-      if (lastTimeRef.current !== null) {
-        const deltaSeconds = (time - lastTimeRef.current) / 1000;
-        setAngles((previous) => ({
-          x: (previous.x + SPIN_X_DEG_PER_SEC * deltaSeconds) % 360,
-          y: (previous.y + SPIN_Y_DEG_PER_SEC * deltaSeconds) % 360,
-        }));
-      }
-      lastTimeRef.current = time;
-      frameRef.current = requestAnimationFrame(tick);
-    };
+    beatRef.current = currentBeat;
+  }, [currentBeat]);
 
-    frameRef.current = requestAnimationFrame(tick);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (host === null) return;
+    // The import resolves after this effect returns, possibly after it
+    // has already been cleaned up (StrictMode mounts twice): `cancelled`
+    // stops a late renderer from being created.
+    let cancelled = false;
+    let loop: RenderLoop | null = null;
+    import("../libs/render/Renderer3D.mts")
+      .then(({ Renderer3D }) => {
+        if (cancelled) return;
+        const renderer = new Renderer3D(host);
+        renderer.setScene(sceneRef.current);
+        rendererRef.current = renderer;
+        loop = new RenderLoop(renderer, () => beatRef.current);
+        loop.start();
+        setReady(true);
+      })
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setFailed(error instanceof Error ? error.message : String(error));
+        }
+      });
     return () => {
-      if (frameRef.current !== undefined)
-        cancelAnimationFrame(frameRef.current);
+      cancelled = true;
+      loop?.stop();
+      rendererRef.current?.dispose();
+      rendererRef.current = null;
+      setReady(false);
     };
   }, []);
 
-  return angles;
-}
+  useEffect(() => {
+    sceneRef.current = { entries, shown };
+    rendererRef.current?.setScene({ entries, shown });
+  }, [entries, shown]);
 
-const Canvas3D = () => {
-  const { x, y } = useContinuousRotation();
+  const empty = entries.length === 0;
 
   return (
-    <div
-      id="view3d"
-      className="position-relative"
-      style={{ minHeight: "50vh" }}>
-      <span className="badge bg-amber-dim text-amber border position-absolute top-0 start-0 m-3 font-mono fw-bold">
-        PREVIEW &mdash; RENDERER IN DEVELOPMENT
-      </span>
-      <div className="position-absolute top-0 end-0 m-3 d-flex gap-2">
-        <button
-          className="btn btn-outline-light btn-sm p-2"
-          type="button"
-          disabled
-          title="Orbit controls -- coming with the full 3D renderer">
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5">
-            <ellipse cx="10" cy="10" rx="8" ry="4" />
-            <circle cx="10" cy="10" r="1.8" fill="currentColor" stroke="none" />
-          </svg>
-        </button>
-        <button
-          className="btn btn-outline-light btn-sm p-2"
-          type="button"
-          disabled
-          title="Zoom -- coming with the full 3D renderer">
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round">
-            <circle cx="9" cy="9" r="6" />
-            <line x1="13.5" y1="13.5" x2="18" y2="18" />
-            <line x1="6.5" y1="9" x2="11.5" y2="9" />
-          </svg>
-        </button>
-      </div>
-
-      <div
-        className="d-flex align-items-center justify-content-center"
-        style={{ height: "50vh", perspective: 700 }}>
-        <div
-          style={{
-            width: CUBE_SIZE,
-            height: CUBE_SIZE,
-            position: "relative",
-            transformStyle: "preserve-3d",
-            transform: `rotateX(${x}deg) rotateY(${y}deg)`,
-          }}>
-          {FACES.map((face) => (
-            <div
-              key={face.key}
-              style={{
-                position: "absolute",
-                width: CUBE_SIZE,
-                height: CUBE_SIZE,
-                border: "1.5px solid rgba(255,255,255,0.35)",
-                background: face.color,
-                opacity: 0.75,
-                transform: face.transform,
-              }}
-            />
-          ))}
+    <div id="view3d" className="position-relative" style={{ height: "50vh" }}>
+      {empty && (
+        <div className="d-flex align-items-center justify-content-center h-100 text-body-secondary small">
+          Select figures from the library to see them here.
         </div>
-      </div>
+      )}
+      {failed !== null && (
+        <div className="position-absolute top-50 start-50 translate-middle text-body-secondary small">
+          The 3D view couldn&rsquo;t start: {failed}
+        </div>
+      )}
+      {/* Kept mounted while the sequence is empty, so the renderer
+          survives a sequence being emptied and refilled. */}
+      <div ref={hostRef} className={empty ? "d-none" : "h-100"} />
+      {!empty && ready && (
+        <>
+          <PartnerToggle shown={shown} onToggle={onToggleShown} />
+          <button
+            type="button"
+            className="btn btn-outline-light btn-sm position-absolute top-0 start-0 m-2"
+            onClick={() => rendererRef.current?.resetView()}>
+            Reset view
+          </button>
+          <div
+            className="position-absolute bottom-0 start-0 m-2 small text-body-secondary"
+            style={{ pointerEvents: "none" }}>
+            Drag to turn &middot; scroll to zoom &middot; right-drag to move
+          </div>
+        </>
+      )}
     </div>
   );
 };

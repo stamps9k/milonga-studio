@@ -109,7 +109,12 @@ const App = () => {
                           onToggleShown={toggleShownPartner}
                         />
                       ) : (
-                        <Canvas3D />
+                        <Canvas3D
+                          entries={entries}
+                          currentBeat={beat}
+                          shown={shownPartners}
+                          onToggleShown={toggleShownPartner}
+                        />
                       )}
                       <ActiveStep entries={entries} currentBeat={beat} />
                     </div>
