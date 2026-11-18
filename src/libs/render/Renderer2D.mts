@@ -8,7 +8,7 @@ import {
 import { footHeading } from "../dance/pose.mts";
 import type { Pose } from "../dance/pose.mts";
 import type { Partner } from "../dance/step.mts";
-import { centerOfWeight, isStandingFoot } from "../dance/weight.mts";
+import { bodyPosition, isStandingFoot } from "../dance/weight.mts";
 import {
   BODY_FILL_OPACITY,
   COUNT_HALO_COLOR,
@@ -286,9 +286,8 @@ export class Renderer2D implements SceneRenderer {
     );
 
     // Layer 4: the dancers, seen from above, over their weight
-    // (centerOfWeight), so a weight change shows as the body moving from
-    // one foot to the other. Lightly filled so the feet underneath show
-    // through.
+    // (bodyPosition, including any authored offset). Weight transfer moves
+    // the body between feet. Lightly filled so the feet underneath show.
     const bodies = partners.map((partner) =>
       dancer(pose, partner, strokeWidth),
     );
@@ -342,7 +341,7 @@ function dancer(pose: Pose, partner: Partner, strokeWidth: number) {
     "g",
     {
       transform: placeAt(
-        toScreen(centerOfWeight(partnerPose)),
+        toScreen(bodyPosition(partnerPose)),
         partnerPose.orientation,
       ),
       stroke: color,

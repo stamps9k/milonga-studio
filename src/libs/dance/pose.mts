@@ -45,6 +45,9 @@ export interface PartnerPose {
   orientation: number;
   /** Vertical displacement, matching DanceStep.rise. */
   rise: number;
+  /** Horizontal pelvis displacement from the weighted feet, in metres in
+   * floor space. Optional zero keeps legacy poses unchanged. */
+  bodyOffset?: Point2D;
 }
 
 /** Fully resolved state of both partners at one instant. */

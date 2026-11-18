@@ -4,31 +4,67 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description (2026-11-17): a simple promenade, slow, quick, quick, slow, starting in promenade (where the Progressive Link ends) and finishing facing each other in closed position; the change from promenade to facing happens on the last step. Named after the standard figure it matches, the Closed Promenade. Lead: slow, left foot along the line of travel in promenade; quick, right foot forward and across in front of the left (a deliberate cross, owner confirmed); quick, left foot along the line again, a little towards his partner, uncrossing; slow, right foot closes to the left, turning an eighth to the right to face his partner. The follow mirrors: right, left across in front of the right, right, left closes, turning an eighth to the left. The feet close on the last slow (owner confirmed). Sizes (owner: as earlier): the link has already put the outside foot 0.6 out, so the first slow moves it only 0.2 more (a 0.8 stride; a further 0.5 would make it 1.1); the cross lands 0.5 past the other foot; the third step lands 0.4 past the crossed foot and 0.15 across the line, the lead slightly forward and the follow slightly back as in the book, which keeps them 0.4 apart and lets his left foot clear his right as it passes. These sizes are provisional. Timing: 2/4, a slow is one beat and a quick half. The lead's third step goes round the back of his right foot (`path: \"around the back\"`): his right foot crossed in front, so a straight path took his left foot through the right leg (found by the legs check added 2026-11-17). Provisional, applying the owner's rule from the Open Natural Turn (feet uncross the way they crossed); the follow's third step already passes behind her crossed foot. Exempt from the \"own feet\" check (added 2026-11-17): on count 3 the follow's feet overlap by 7 cm, the same foot collision noted for the lead's count 2 (a foot travelling through where the other stands). Left for the figure clean-up.",
+  "notes": "Owner's description: S Q Q S in three beats, from tango promenade after Two Walks and Progressive Link into closed hold for Back Corte. Provisional geometry for the owner's review (2026-11-18): first outer feet advance just 4 cm from the existing 60 cm stance and widen 6 cm each. Both stepping feet point along travel so the knees do not turn into the passing channel. The pelvis moves 13.5 cm inward relative to the weighted feet during the first slow, keeping the hips nearly touching as lead right / follow left pass through. The inner feet travel 1.14 m and land 12 cm inward; the pelvis offset finishes 5 cm outward, then moves 8 cm back along travel and 3 cm inward on the uncross to avoid reaching away from the trailing foot, returning to zero on the final close. This offset describes horizontal body placement, not a change in foot support. Both outer feet uncross on shallow arcs departing 50 degrees towards their own side from the body heading, almost along travel. This replaces the 135-degree preset that sent the outer legs in a wide backward swing; the feet pass close beneath the hips while clearing the standing legs. Third-step offsets compensate exactly for the first step, preserving all original start/end foot positions, facing, weights, rise and timing. Extra decimal places preserve connectivity, not technique precision. No geometry/body check exemptions. Default mannequin leg capsules clear throughout eased playback; hip lowering stays below the shared 16 cm limit. All dimensions and paths are a modelling proposal for the owner to judge.",
   "start": "tango promenade",
   "steps": [
     {
       "lead": {
-        "go": "diagonal forward left",
-        "by": 0.2
+        "go": {
+          "forward": -0.014142135623730932,
+          "right": -0.07071067811865475
+        },
+        "pointing": {
+          "left": "1/8"
+        },
+        "bodyOffset": {
+          "forward": 0.0954594154601839,
+          "right": 0.09545941546018394
+        }
       },
       "follow": {
-        "go": "diagonal forward right",
-        "by": 0.2
+        "go": {
+          "forward": -0.014142135623730963,
+          "right": 0.07071067811865475
+        },
+        "pointing": {
+          "right": "1/8"
+        },
+        "bodyOffset": {
+          "forward": 0.09545941546018394,
+          "right": -0.09545941546018391
+        }
       },
       "length": "S",
       "label": "side, in promenade"
     },
     {
       "lead": {
-        "go": "diagonal forward left",
-        "by": 1.3,
-        "cross": true
+        "go": {
+          "forward": 0.8909545442950499,
+          "right": -0.7212489168102781
+        },
+        "cross": true,
+        "pointing": {
+          "left": "1/8"
+        },
+        "bodyOffset": {
+          "forward": -0.03535533905932737,
+          "right": -0.03535533905932738
+        }
       },
       "follow": {
-        "go": "diagonal forward right",
-        "by": 1.3,
-        "cross": true
+        "go": {
+          "forward": 0.8909545442950497,
+          "right": 0.7212489168102786
+        },
+        "cross": true,
+        "pointing": {
+          "right": "1/8"
+        },
+        "bodyOffset": {
+          "forward": -0.03535533905932738,
+          "right": 0.035355339059327376
+        }
       },
       "length": "Q",
       "label": "forward and across"
@@ -36,16 +72,27 @@
     {
       "lead": {
         "go": {
-          "forward": 0.742,
-          "right": -0.53
+          "forward": 0.8975634918711923,
+          "right": -0.6007106781288084
         },
-        "path": "around the back"
+        "path": "around the back",
+        "bodyOffset": {
+          "forward": -0.0353553390593274,
+          "right": 0.07778174593052022
+        },
+        "pathSetOff": -50
       },
       "follow": {
         "go": {
-          "forward": 0.53,
-          "right": 0.742
-        }
+          "forward": 0.6855634918711943,
+          "right": 0.8127106781288066
+        },
+        "path": "around the back",
+        "bodyOffset": {
+          "forward": -0.03535533905932736,
+          "right": -0.07778174593052024
+        },
+        "pathSetOff": 50
       },
       "length": "Q",
       "label": "side, uncrossing"
@@ -75,6 +122,5 @@
       "right": -1.6
     },
     "leadStandingOn": "R"
-  },
-  "skipChecks": ["own feet"]
+  }
 }

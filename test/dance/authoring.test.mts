@@ -1495,3 +1495,34 @@ test("parseFigureDefinition: required fields, bad fractions and incomplete expec
     /rock-step\.json: should contain a single JSON object/,
   );
 });
+
+test("pathSetOff: a custom departure changes the arc while preserving its landing point", () => {
+  // Lead starts at (-.1,0), sets off east, and follows a quarter circle
+  // turning left to (.2,.3). The radius is .3 and centre is (-.1,.3).
+  const authored = figure([
+    {
+      lead: {
+        go: { forward: 0.3, right: 0.3 },
+        path: "around the front",
+        pathSetOff: 90,
+      },
+      length: "Q",
+    },
+  ]);
+  const step = authored.steps[0];
+  assert.equal(step.movement.type, "arc");
+  if (step.movement.type === "arc") {
+    assert.equal(step.movement.setOff, 90);
+    assert.ok(Math.abs(step.movement.curvature + 1 / 0.3) < 1e-9);
+  }
+  pointClose(authored.endPose.lead.left.position, [0.2, 0.3]);
+  const f = { ...authored, id: "departure", steps: [{ ...step, id: "0" }] };
+  pointClose(poseAtBeat(f, 0.5).lead.left.position, [
+    -0.1 + 0.3 * Math.SQRT1_2,
+    0.3 - 0.3 * Math.SQRT1_2,
+  ]);
+  assert.throws(
+    () => figure([{ both: "forward", by: 0.3, pathSetOff: 45, length: "Q" }]),
+    /pathSetOff.*needs a curved/,
+  );
+});

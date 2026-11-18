@@ -38,7 +38,8 @@ implementation's choice, not a confirmed dance rule.
   sequence (`metronomeClicks`: one as each count lands, at the end of its
   beat, count 1 of each bar accented, bars running on across figures).
 - `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
-  and which foot is the standing foot.
+  and which foot is the standing foot; `bodyPosition` adds the optional
+  horizontal pelvis displacement for both renderers.
 - `authoring.mts`: `defineFigure`, which turns a dancer-level description
   (relative directions, mirrored steps, counts) into a figure's steps and
   poses and checks it, and `parseFigureDefinition`, which checks the shape
@@ -150,8 +151,12 @@ the owner before building more on top of them.
   for a step's `path` (`curveAround`): `"around the front"` sets off the
   way the dancer faces, `"around the back"` diagonally back towards the
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
-  Turn's and the Closed Promenade's uncrossing steps use `"around the
-back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
+  Turn's uncrossing uses `"around the back"`. Closed Promenade overrides
+  that preset with authoring-only `pathSetOff` (degrees clockwise from each
+  dancer before the step): -50 lead / +50 follow, making shallow arcs
+  almost along travel instead of the wide 135-degree back swing. The
+  result uses existing `Movement.arc.setOff`; no new persisted field.
+  Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - A straight step's foot passes close beside the standing foot when its
   line runs past it (a walk, forward or back, or a diagonal that passes
   the standing foot), as feet brush past each other, rather than
@@ -200,8 +205,24 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   all the dances they do (waltz, tango, blues, jitterbug, cha-cha);
   travelling steps stay even until a figure needs otherwise, when a
   per-step option in the figure format is the planned next step.
-- `centerOfWeight` places the body directly over the weight-averaged feet.
-  It can't express weight held off-centre, such as a lunge.
+- `centerOfWeight` remains the weighted-foot support point. `bodyPosition`
+  adds optional `bodyOffset` (metres in floor space). The fold interpolates
+  that offset linearly to each step target; omission returns to zero. Floor
+  placement rotates this vector without translating it. Both renderers and
+  the hold check use `bodyPosition`. Figure authoring uses forward/right in
+  each dancer's facing after the turn, independently of foot mirroring.
+  This additive optional field stays in snapshot schemaVersion 1; old
+  snapshots have zero displacement. SQLite needs a reset for the new columns.
+- `body/balance.mts` provides lateral balance diagnostics, enforced by
+  dense catalogue tests for all figures (no deep-figure exemptions). In each
+  dancer's frame, the pelvis may lean at most 10 degrees sideways from the
+  weighted-foot support point, measured over the solved hip-to-weighted-ankle
+  height. Loaded hip-to-ankle leg angles use a normalised weight RMS, limited
+  to 20 degrees; a free leg contributes zero, opposite leans cannot cancel,
+  and transfers stay continuous. These are provisional ordinary-dance
+  plausibility limits, not human fall thresholds. They ignore forward travel,
+  momentum, torso centre-of-mass changes and partner support. Playback and
+  imported snapshots are not clamped or rejected by these diagnostics.
 - An airborne step's excursion goes out along its movement for the first
   half of the step and retraces it for the second half
   (`airborneExcursionAt` in `fold.mts`).
@@ -312,16 +333,28 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   or swing its toes into it unnoticed (the forward box halves did).
   Figures known to be wrong opt out with `skipChecks` and a note; at the
   time of writing that's the old Argentine tango figures, and for "own
-  feet" the Back Corté, Closed Promenade, Open Natural Turn and Promenade
-  Chassé, waiting for the figure clean-up. The box turns pass every check.
+  feet" the Back Corté, Open Natural Turn and Promenade Chassé, waiting for the
+  figure clean-up. The box turns pass every check. Closed Promenade also
+  passes every check after its provisional 2026-11-18 adjustment: the first
+  slow advances 4 cm and widens each outer foot 6 cm from the unchanged
+  starting stance. Authored body offsets bring the hips nearly into contact
+  as the inner legs pass, with feet pointing along travel; both partners
+  uncross on shallow arcs close beneath the hips. Intermediate offsets return
+  to zero on the close.
+  Original connection poses and timing are preserved. Dense regression tests
+  check full mannequin thigh/shin capsules as well as footprints and reach.
+  These are provisional dimensions for the owner's subjective review.
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
-  the end of every row, the follow's centre of weight must be within
+  the end of every row, the follow's body position must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
   the lead's, with her facing within `HOLD_FACING_TOLERANCE` (30°) of that
   position's. The model has no arms, so this stands in for them, catching
   separately written steps that leave a partner out of reach. Mirrored
   steps keep the hold by construction. The positions and tolerances are
-  provisional judgement calls. Figures opting out ("hold" in
+  provisional judgement calls. Explicit body shaping also allows a close
+  promenade reference (27 cm centre separation) with the same tolerances,
+  reflecting hip contact while supporting feet open a passing channel.
+  Unshaped figures keep the original checks. Figures opting out ("hold" in
   `skipChecks`): Back Corté and Open Natural Turn (out of hold until their
   turning close, waiting for the clean-up and a couple turn through the
   close), and the Cruzada and Ocho (Argentine tango, not a ballroom hold).

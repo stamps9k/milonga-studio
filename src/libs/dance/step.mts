@@ -1,4 +1,4 @@
-import type { Pose } from "./pose.mts";
+import type { Pose, Point2D } from "./pose.mts";
 
 /**
  * Core step-level data model for Milonga Studio.
@@ -125,6 +125,10 @@ export interface DanceStep {
    *  standing height, in metres. Structural for waltz-style rise and
    *  fall, left at 0 for flat styles like most tango/blues. */
   rise: number;
+  /** Target pelvis displacement from the weighted feet at this step's end,
+   * in metres in the figure's floor frame. Interpolated independently of
+   * the feet; omitted means return to zero rather than inherit a lean. */
+  bodyOffset?: Point2D;
 
   /** How the rise changes during the step (see RiseTiming). Left out for
    *  "even", so steps stored before this field existed play as they

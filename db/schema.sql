@@ -35,7 +35,9 @@ CREATE TABLE partner_poses (
 	pose_id     INTEGER NOT NULL REFERENCES poses(id) ON DELETE CASCADE,
 	partner     TEXT    NOT NULL CHECK (partner IN ('lead', 'follow')),
 	orientation REAL    NOT NULL, -- degrees, frame/torso heading
-	rise        REAL    NOT NULL, -- vertical displacement, floor units
+	rise        REAL    NOT NULL, -- vertical displacement, metres
+	body_offset_x REAL NOT NULL DEFAULT 0, -- horizontal pelvis offset, floor vector in metres
+	body_offset_y REAL NOT NULL DEFAULT 0,
 	PRIMARY KEY (pose_id, partner)
 );
 
@@ -153,6 +155,8 @@ CREATE TABLE dance_steps (
 	orientation REAL    NOT NULL, -- degrees, absolute frame heading at end of step
 	foot_direction REAL, -- degrees, which way the stepping foot points at the end; NULL = orientation (DanceStep.footDirection)
 	rise        REAL    NOT NULL,
+	body_offset_x REAL NOT NULL DEFAULT 0,
+	body_offset_y REAL NOT NULL DEFAULT 0,
 	rise_timing TEXT    NOT NULL DEFAULT 'even' CHECK (rise_timing IN ('even', 'late')), -- RiseTiming in step.mts
 	footwork    TEXT, -- chart footwork such as 'HT' or 'T' (DanceStep.footwork); NULL = none given
 	beat        REAL    NOT NULL, -- position within the measure

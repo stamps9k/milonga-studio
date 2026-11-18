@@ -51,6 +51,12 @@ export function applyTransform(transform: FloorTransform, pose: Pose): Pose {
         partnerPose.orientation + transform.rotation,
       ),
       rise: partnerPose.rise,
+      // An offset is a vector: rotate it with the floor, never translate it.
+      ...(partnerPose.bodyOffset
+        ? {
+            bodyOffset: rotatePoint(partnerPose.bodyOffset, transform.rotation),
+          }
+        : {}),
     };
   };
 

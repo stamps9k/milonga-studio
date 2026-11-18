@@ -76,6 +76,9 @@ function partner(value: unknown, path: string): PartnerPose {
     right: foot(row.right, `${path}.right`),
     orientation: angle(row.orientation, `${path}.orientation`),
     rise: number(row.rise, `${path}.rise`),
+    ...(row.bodyOffset === undefined
+      ? {}
+      : { bodyOffset: point(row.bodyOffset, `${path}.bodyOffset`) }),
   };
 }
 function pose(value: unknown, path: string): Pose {
@@ -124,6 +127,9 @@ function step(value: unknown, path: string): DanceStep {
     weight: number(row.weight, `${path}.weight`, 0, 1),
     orientation: angle(row.orientation, `${path}.orientation`),
     rise: number(row.rise, `${path}.rise`),
+    ...(row.bodyOffset === undefined
+      ? {}
+      : { bodyOffset: point(row.bodyOffset, `${path}.bodyOffset`) }),
     beat: number(row.beat, `${path}.beat`, 1, MAX_TOTAL_BEATS),
     duration: number(row.duration, `${path}.duration`, 1e-6, MAX_TOTAL_BEATS),
     ...(row.footDirection === undefined
