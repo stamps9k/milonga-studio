@@ -224,6 +224,15 @@ foot walking between the follow's feet stays nearly straight. Side steps and
 closes go straight. Use `"path"` for a foot that should go round the front or
 the back instead.
 
+On a row, `path` and `pathSetOff` can name partners separately, for example
+`"path": { "lead": "around the back" }` and
+`"pathSetOff": { "lead": -144 }`. An omitted partner keeps the ordinary route.
+The angles use each dancer's facing before the step. This lets the lead in
+Back Corté pass round the standing foot without changing the follow's route
+or either landing point. A partner written as an object with `go` still uses
+only its own options. These authoring options compile to existing movements;
+there is no new database or snapshot field.
+
 ### Foot direction
 
 `turn` turns the body; a foot points the way the body faces unless the step

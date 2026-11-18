@@ -1,10 +1,10 @@
 {
   "$schema": "../figure.schema.json",
-  "name": "Back Corté",
+  "name": "Back Cort\u00e9",
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description (2026-11-17): slow, quick, quick, slow, the lead stepping directly backward and the feet closing on the last slow, turning a quarter to the left across the last two steps (45° each); starts and ends in closed position, from where the Closed Promenade ends. Named after the standard figure the owner agreed it matches. Differences from the book, kept as the owner dances it: the book's Back Corté starts on the lead's right foot and its third step is side and slightly forward; here the lead starts on his left (the Closed Promenade leaves him standing on his right) and every travelling step goes straight back. Lead: slow, left back; quick, right back past it; quick, left back and slightly to his right, turning 1/8 left; slow, right closes to the left, turning 1/8 left. The follow walks forward to match (right, left, right, left closes), turning with him. Steps 3 and 4 are mirrored (`both`) steps (2026-11-17), so the couple turns as one: the bodies turn 1/8 left on step 3 and 1/8 on the close, and the close's turn is carried back into step 3's foot placement, so the couple ends exactly in closed hold. The lead goes back, so the couple turns round him and the follow travels round the outside. His third step is 0.7 back and 0.3 to his right (it was 0.9 back and 0.15 right, from the owner's change after watching a video, 2026-11-17, to share the travel; the extra side is closer to the book's side step): measured against the 3D body solver, this keeps every check passing and the hips within 0.12 m, where the old version sank the follow's hips 0.54 m on a 1.2 m step round him and left her 0.32 m out of hold until the close. His stride on that quick is 0.76 from his standing foot and hers 1.02. Provisional (owner: same as the walks): strides of 0.5 from the standing foot, so the passing steps move 1.0. No rise. Timing: 2/4, a slow is one beat and a quick half. Exempt from the \"own feet\" check (added 2026-11-17): on step 3 the lead's side step brings his foot 0.6 cm into his standing foot's outline as it passes; small changes to the step don't clear it. Left for the figure clean-up.",
+  "notes": "Owner's description (2026-11-17): slow, quick, quick, slow, the lead stepping directly backward and the feet closing on the last slow, turning a quarter to the left across the last two steps (45\u00b0 each); starts and ends in closed position, from where the Closed Promenade ends. Named after the standard figure the owner agreed it matches. Differences from the book, kept as the owner dances it: the book's Back Cort\u00e9 starts on the lead's right foot and its third step is side and slightly forward; here the lead starts on his left (the Closed Promenade leaves him standing on his right) and every travelling step goes straight back. Lead: slow, left back; quick, right back past it; quick, left back and slightly to his right, turning 1/8 left; slow, right closes to the left, turning 1/8 left. The follow walks forward to match (right, left, right, left closes), turning with him. Steps 3 and 4 are mirrored (`both`) steps (2026-11-17), so the couple turns as one: the bodies turn 1/8 left on step 3 and 1/8 on the close, and the close's turn is carried back into step 3's foot placement, so the couple ends exactly in closed hold. The lead goes back, so the couple turns round him and the follow travels round the outside. His third step is 0.7 back and 0.3 to his right (it was 0.9 back and 0.15 right, from the owner's change after watching a video, 2026-11-17, to share the travel; the extra side is closer to the book's side step): measured against the 3D body solver, this keeps every check passing and the hips within 0.12 m, where the old version sank the follow's hips 0.54 m on a 1.2 m step round him and left her 0.32 m out of hold until the close. His stride on that quick is 0.76 from his standing foot and hers 1.02. Provisional (owner: same as the walks): strides of 0.5 from the standing foot, so the passing steps move 1.0. No rise. Timing: 2/4, a slow is one beat and a quick half. Provisional foot-clearance repair (2026-11-18): only the lead's third-step route and foot pointing change. The left foot follows a compact arc setting off 144 degrees left of the original body facing, passing outside the standing right foot. It points an extra eighth left on landing, placing it for the final closed facing while the body completes its remaining eighth on the close. Keeping the foot aligned with the body on count 3 left the outlines overlapping even at landing; changing the route alone could not solve that. Per-partner path options leave the follow's straight/passing route unchanged, and the first two steps, every landing position, weight, body turn, rise and timing stay unchanged. All figure checks now run without exemptions. Dense linear/eased sampling gives approximately 1 cm own-foot clearance and 1.3 cm default mannequin leg-capsule clearance through the turn/close. The earlier walking phase is unchanged; the full mannequin capsule proxy has a pre-existing approximately 1 cm inter-partner overlap there, outside this targeted repair. Body reach, lowering and balance remain within their ordinary limits. This is a modelling proposal for the owner's subjective review, preserving their described version of the figure.",
   "steps": [
     {
       "both": "back",
@@ -18,7 +18,7 @@
     },
     {
       "both": "back",
-      "by": 1.0,
+      "by": 1,
       "length": "Q",
       "label": {
         "lead": "back",
@@ -37,6 +37,17 @@
       "label": {
         "lead": "back and to the side, turning",
         "follow": "forward, turning"
+      },
+      "path": {
+        "lead": "around the back"
+      },
+      "pathSetOff": {
+        "lead": -144
+      },
+      "pointing": {
+        "lead": {
+          "left": "1/8"
+        }
       }
     },
     {
@@ -59,6 +70,5 @@
       "left": "1/4"
     },
     "leadStandingOn": "R"
-  },
-  "skipChecks": ["own feet"]
+  }
 }

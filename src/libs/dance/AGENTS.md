@@ -155,6 +155,9 @@ the owner before building more on top of them.
   that preset with authoring-only `pathSetOff` (degrees clockwise from each
   dancer before the step): -50 lead / +50 follow, making shallow arcs
   almost along travel instead of the wide 135-degree back swing. The
+  Row `path` and `pathSetOff` can also name lead/follow separately; an
+  omitted partner keeps the ordinary route. This lets Back Corté curve only
+  the lead's third step without changing the follow's mirrored placement. The
   result uses existing `Movement.arc.setOff`; no new persisted field.
   Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - A straight step's foot passes close beside the standing foot when its
@@ -333,7 +336,7 @@ the owner before building more on top of them.
   or swing its toes into it unnoticed (the forward box halves did).
   Figures known to be wrong opt out with `skipChecks` and a note; at the
   time of writing that's the old Argentine tango figures, and for "own
-  feet" the Back Corté, Open Natural Turn and Promenade Chassé, waiting for the
+  feet" Open Natural Turn and Promenade Chassé, waiting for the
   figure clean-up. The box turns pass every check. Closed Promenade also
   passes every check after its provisional 2026-11-18 adjustment: the first
   slow advances 4 cm and widens each outer foot 6 cm from the unchanged
@@ -344,6 +347,14 @@ the owner before building more on top of them.
   Original connection poses and timing are preserved. Dense regression tests
   check full mannequin thigh/shin capsules as well as footprints and reach.
   These are provisional dimensions for the owner's subjective review.
+  Back Corté now passes all authoring checks too: the lead's third step
+  departs 144 degrees left on a compact arc, with the foot pointed another
+  eighth left to its final heading while the body completes the turn on the
+  close. All landings and connection poses, the first two steps, and the
+  follow's route are unchanged. Dense tests check footprint clearance for
+  the whole figure and full mannequin leg capsules during the repaired turn
+  and close. The unchanged first walking phase has a pre-existing ~1 cm
+  inter-partner capsule-proxy overlap, outside this targeted foot repair.
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
@@ -355,9 +366,10 @@ the owner before building more on top of them.
   promenade reference (27 cm centre separation) with the same tolerances,
   reflecting hip contact while supporting feet open a passing channel.
   Unshaped figures keep the original checks. Figures opting out ("hold" in
-  `skipChecks`): Back Corté and Open Natural Turn (out of hold until their
-  turning close, waiting for the clean-up and a couple turn through the
-  close), and the Cruzada and Ocho (Argentine tango, not a ballroom hold).
+  `skipChecks`): Open Natural Turn (out of hold until its turning close,
+  waiting for the clean-up), and the Cruzada and Ocho (Argentine tango,
+  not a ballroom hold). Back Corté's earlier hold exemption was already
+  removed when its turn was shared through the close.
 - The model changes agreed with the owner on 2026-11-17 (a hold check,
   foot direction separate from the body's facing, a couple turn that
   continues through a close) are all done; see above. The box turns use
