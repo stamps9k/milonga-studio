@@ -3,29 +3,29 @@
   "name": "Side Step",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "One sideways step to the lead's right. Reproduced as originally seeded: the lead moves his free (left) foot to the right and the follow mirrors with her right foot, so both end with their feet crossed. That may not be what's intended -- a side step to the right would usually start from the right foot -- and is left for the owner to confirm. Exempt from the \"crossed feet\" check (added 2026-11-16) because both partners end with their feet crossed, which is the known data problem noted above. Remove skipChecks when the figure is rewritten from the owner's tango. Also exempt from the \"own feet\" check (2026-11-17): the feet cross, part of the same data problem.",
+  "notes": "One ordinary side step to the lead's right, mirrored as follow left. Provisional repair for the owner's subjective review (2026-11-18): specify lead right foot so neither dancer crosses the supporting leg. Retain 35 cm travel, one Q count, the original closed foot positions, body facings and flat rise. Starting support is now lead left/follow right; ending support is lead right/follow left, matching a rightward step and the adjacent Walking Step/Cruzada foot order. The lead's right lands at (0.45, 0), follow's left at (0.55, 0.4); supporting feet remain at lead left (-0.1, 0), follow right (0, 0.4). The old crossed exit and opposite weight assignment were the seed bug and are corrected. No curves, shaping, turnout, cross flags or skipChecks are needed. Dense linear/eased tests cover all footprint pairs, every thigh/shin capsule pair, hold, reach, hip lowering and balance throughout. Default mannequins have over 4.9 cm leg clearance and under 6 cm hip lowering. This removes the catalogue's final figure-level authoring exclusions; all catalogue figures now run all standard checks. Existing tango sequence foot-position gaps remain separate data work: correcting foot order removes weighted-foot warnings but does not close the gaps. Dimensions remain provisional; shared geometry, body and hold limits are unchanged.",
   "steps": [
     {
       "both": "side right",
       "by": 0.35,
       "length": "Q",
       "label": {
-        "lead": "side step",
-        "follow": "side step (mirrored)"
-      }
+        "lead": "side right on right",
+        "follow": "side left on left"
+      },
+      "foot": "R"
     }
   ],
   "expectBeats": 1,
-  "skipChecks": ["crossed feet", "own feet"],
   "expectEnd": {
     "feet": {
       "lead": {
-        "L": [0.25, 0],
-        "R": [0.1, 0]
+        "L": [-0.1, 0],
+        "R": [0.45, 0]
       },
       "follow": {
-        "L": [0.2, 0.4],
-        "R": [0.35, 0.4]
+        "L": [0.55, 0.4],
+        "R": [0, 0.4]
       }
     },
     "facing": {
