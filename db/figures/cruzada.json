@@ -3,11 +3,17 @@
   "name": "Cruzada",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "The lead walks forward while leading the follow into the cross. Reproduced as originally seeded, which is suspect: both of the follow's steps travel forward for her (towards the lead), as in the original Walking Step direction bug. A cruzada is normally led from the follow walking back. Left unchanged for the owner to correct when describing the tango figures. Exempt from the \"partner spacing\" check (added 2026-11-16) because the follow's steps travel towards the lead, which is the known data problem noted above, and puts her right foot too close to his left. Remove skipChecks when the figure is rewritten from the owner's tango. Also exempt from the \"hold\" check (2026-11-17): the follow's steps take her 0.6 from closed hold, part of the same data problem.",
+  "notes": "Usual left-in-front Cruzada confirmed by the owner (2026-11-18): lead walks forward while follow walks back, then follow collects the left foot across in front of the right. Provisional clearance repair for subjective review: preserve the original closed entry, lead's 30 cm left-foot walk, two Q counts, body facings, flat rise and finishing support (both on left). Correct the follow's first step from forward to back, 40 cm, with 30 degrees of right-foot turnout. Her left foot then travels 23 cm to her right and 14 cm backward in her facing, on a shallow arc departing +100 degrees from her 180-degree body heading. It lands 3 cm across and 26 cm in front of the right, with 30 degrees of left-foot turnout. The turnout keeps the knees clear through the genuine cross; no pelvis offsets are needed. The deliberately crossed foot order is marked cross: true, but dense full-footprint and thigh/shin capsule tests cover the entire route without an interval exemption. Remove both partner-spacing and hold skipChecks. Default mannequins have over 1.4 cm full-leg clearance and 2.6 cm own-footprint clearance throughout linear/eased playback; hip lowering stays below 4 cm and lateral balance passes. The old follow exit was part of the direction bug and cannot be preserved: the corrected right foot ends at (0, 0.8), left at (-0.03, 0.54). Entry and lead landings remain unchanged. This intentionally ends crossed, not in a generic closed starting stance; existing Argentine tango sequence joins are already discontinuous and are outside this repair. Dimensions, turnout and route are modelling choices, not a syllabus transcription. No shared geometry, body or hold limits are changed.",
   "steps": [
     {
       "lead": "forward",
-      "follow": "forward",
+      "follow": {
+        "go": "back",
+        "by": 0.4,
+        "pointing": {
+          "right": "1/12"
+        }
+      },
       "by": 0.3,
       "length": "Q",
       "label": {
@@ -16,14 +22,23 @@
       }
     },
     {
-      "follow": "forward",
-      "by": 0.15,
+      "follow": {
+        "go": {
+          "right": 0.23,
+          "forward": -0.14
+        },
+        "cross": true,
+        "path": "around the front",
+        "pathSetOff": 100,
+        "pointing": {
+          "left": "1/12"
+        }
+      },
       "length": "Q",
-      "label": "cross left behind right"
+      "label": "cross left in front of right"
     }
   ],
   "expectBeats": 2,
-  "skipChecks": ["partner spacing", "hold"],
   "expectEnd": {
     "feet": {
       "lead": {
@@ -31,8 +46,8 @@
         "R": [0.1, 0]
       },
       "follow": {
-        "L": [0.2, 0.25],
-        "R": [0.0, 0.1]
+        "L": [-0.03, 0.54],
+        "R": [0, 0.8]
       }
     },
     "facing": {
