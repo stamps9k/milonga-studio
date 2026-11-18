@@ -91,8 +91,13 @@ const Studio = ({ initialDance, localId, onOpen }: StudioProps) => {
     }),
     [original, name, notes, tempo.bpm, entries],
   );
-  const { shareStatus, share, exportSequence, exportError } =
-    useSequenceExport(dance);
+  const {
+    shareStatus,
+    share,
+    exportSequence,
+    exportError,
+    clearFeedback: clearExportFeedback,
+  } = useSequenceExport(dance);
   const [view, setView] = useState<ViewMode>("2d");
   // Which dancers the 2D canvas draws (see PartnerToggle). Kept here
   // rather than in Canvas2D so it survives switching to 3D and back.
@@ -110,35 +115,32 @@ const Studio = ({ initialDance, localId, onOpen }: StudioProps) => {
           path="*"
           element={
             <div className="app">
-              <Toolbar
-                view={view}
-                onViewChange={setView}
-                onShare={share}
-                onExport={exportSequence}
-                shareStatus={shareStatus}
-                canExport={entries.length > 0 && !loading}
-              />
-              <DanceControls
-                dance={dance}
-                initialLocalId={localId}
-                building={loading}
-                onSaved={(saved) =>
-                  setOriginal((previous) => ({
-                    ...previous,
-                    id: saved.id,
-                    createdAt: saved.createdAt,
-                    updatedAt: saved.updatedAt,
-                  }))
-                }
-                onNameChange={setName}
-                onNotesChange={setNotes}
-                onOpen={onOpen}
-              />
-              {exportError && (
-                <p role="alert" className="text-danger px-4 pt-2">
-                  {exportError}
-                </p>
-              )}
+              <Toolbar view={view} onViewChange={setView}>
+                <DanceControls
+                  dance={dance}
+                  initialLocalId={localId}
+                  building={loading}
+                  onSaved={(saved) => {
+                    setName(saved.name);
+                    setNotes(saved.notes ?? "");
+                    setOriginal((previous) => ({
+                      ...previous,
+                      id: saved.id,
+                      createdAt: saved.createdAt,
+                      updatedAt: saved.updatedAt,
+                    }));
+                  }}
+                  onNameChange={setName}
+                  onNotesChange={setNotes}
+                  onOpen={onOpen}
+                  onShare={share}
+                  onExport={exportSequence}
+                  shareStatus={shareStatus}
+                  exportError={exportError}
+                  onDismissExportFeedback={clearExportFeedback}
+                  canExport={entries.length > 0 && !loading}
+                />
+              </Toolbar>
               <div className="container-fluid px-4 py-4">
                 <div className="row g-4">
                   <StepLibrary

@@ -1,6 +1,9 @@
-import { useRef } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import type { Dance } from "../libs/dance/dance.mts";
 import { useDanceLibrary } from "../hooks/useDanceLibrary.mts";
+import type { ShareStatus } from "./Toolbar";
+import AppDialog from "./AppDialog";
+import DanceDetailsDialog from "./DanceDetailsDialog";
 
 interface Props {
   dance: Dance;
@@ -10,7 +13,15 @@ interface Props {
   onNotesChange: (notes: string) => void;
   onSaved: (dance: Dance) => void;
   onOpen: (dance: Dance | null, localId?: string) => void;
+  onShare: () => void;
+  onExport: () => void;
+  shareStatus: ShareStatus;
+  exportError: string | null;
+  onDismissExportFeedback: () => void;
+  canExport: boolean;
 }
+
+type Dialog = "details" | "save" | "copy" | "manage" | null;
 
 const DanceControls = ({
   dance,
@@ -20,8 +31,16 @@ const DanceControls = ({
   onNotesChange,
   onSaved,
   onOpen,
+  onShare,
+  onExport,
+  shareStatus,
+  exportError,
+  onDismissExportFeedback,
+  canExport,
 }: Props) => {
   const fileRef = useRef<HTMLInputElement>(null);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const library = useDanceLibrary({ dance, initialLocalId, onSaved, onOpen });
   const {
     dirty,
     localId,
@@ -42,188 +61,473 @@ const DanceControls = ({
     newDance,
     refreshLocal,
     refreshPresets,
-  } = useDanceLibrary({ dance, initialLocalId, onSaved, onOpen });
+    confirmation,
+    answerConfirmation,
+    clearFeedback,
+  } = library;
+  const disabled = busy || building;
+  const openDialog = (next: Dialog) => {
+    clearFeedback();
+    onDismissExportFeedback();
+    setDialog(next);
+  };
+  const saveDance = () => {
+    if (localId) void save(false);
+    else openDialog("save");
+  };
+  const shortcut = useEffectEvent((event: KeyboardEvent) => {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      if (!dialog && !disabled) {
+        if (event.shiftKey) openDialog("copy");
+        else saveDance();
+      }
+    }
+  });
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => shortcut(event);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  const status = busy
+    ? "Working…"
+    : dirty
+      ? "Unsaved changes"
+      : localId
+        ? "Saved locally"
+        : "Working copy";
+  const feedback =
+    error ??
+    exportError ??
+    message ??
+    (shareStatus === "copied" ? "Share link copied to clipboard." : null);
 
   return (
-    <details className="border-bottom px-4 py-3" open>
-      <summary className="fw-bold">
-        Dances{" "}
-        <span className="small fw-normal text-body-secondary">
-          {dirty
-            ? "Unsaved changes"
-            : localId
-              ? "Saved locally"
-              : "Working copy"}
-        </span>
-      </summary>
-      <div className="row g-3 mt-1">
-        <div className="col-6">
-          <label htmlFor="dance-name" className="form-label small">
-            Dance name
-          </label>
-          <input
-            id="dance-name"
-            className="form-control"
-            maxLength={200}
-            value={dance.name}
-            onChange={(event) => onNameChange(event.target.value)}
-          />
-          <label htmlFor="dance-notes" className="form-label small mt-2">
-            Notes
-          </label>
-          <textarea
-            id="dance-notes"
-            className="form-control"
-            rows={2}
-            maxLength={10000}
-            value={dance.notes ?? ""}
-            onChange={(event) => onNotesChange(event.target.value)}
-          />
-          <div className="d-flex flex-wrap gap-2 mt-2">
-            <button
-              type="button"
-              className="btn btn-sm btn-accent"
-              disabled={busy || building || !dance.name.trim()}
-              onClick={() => void save(false)}>
-              Save locally
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-light"
-              disabled={busy || building || !dance.name.trim()}
-              onClick={() => void save(true)}>
-              Save a copy
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-light"
-              disabled={busy || building}
-              onClick={() => {
-                newDance();
-              }}>
-              New dance
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-light"
-              disabled={busy || building}
-              onClick={() => fileRef.current?.click()}>
-              Import JSON
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".json,application/json"
-              hidden
-              aria-label="Import dance JSON"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void importFile(file);
-              }}
-            />
-          </div>
-          <p className="small text-body-secondary mt-2 mb-0">
-            Local saves belong to this browser and device. Clearing site data
-            removes them; export JSON for a backup. Presets open as editable
-            copies.
-          </p>
-          <div role="status" className="small mt-2">
-            {busy ? "Working…" : message}
-          </div>
-          {error && (
-            <p role="alert" className="text-danger small">
-              {error}
-            </p>
-          )}
-        </div>
-        <div className="col-3">
-          <h2 className="h6">Your local dances</h2>
-          {localLoading && <p className="small">Loading local dances…</p>}
-          {localError && (
-            <p role="alert" className="text-danger small">
-              {localError}
-            </p>
-          )}
+    <>
+      <nav
+        aria-label="Application menus"
+        className="d-flex align-items-center gap-1 flex-shrink-0">
+        <div className="dropdown">
           <button
             type="button"
-            className="btn btn-sm btn-outline-light mb-2"
-            disabled={busy || localLoading}
-            onClick={() => {
-              void refreshLocal();
-            }}>
-            Refresh local dances
+            className="btn btn-sm btn-link text-body text-decoration-none dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            disabled={disabled}>
+            File
           </button>
-          {!localLoading && !localError && locals.length === 0 && (
-            <p className="small text-body-secondary">No local saves yet.</p>
-          )}
+          <ul className="dropdown-menu shadow" style={{ minWidth: "15rem" }}>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                onClick={() => void newDance()}>
+                New dance
+              </button>
+            </li>
+            <li>
+              <hr className="dropdown-divider" />
+            </li>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item d-flex justify-content-between gap-4"
+                onClick={saveDance}>
+                Save locally{" "}
+                <span className="small text-body-secondary" aria-hidden="true">
+                  ⌘ / Ctrl S
+                </span>
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                onClick={() => openDialog("copy")}>
+                Save a copy…
+              </button>
+            </li>
+            <li>
+              <hr className="dropdown-divider" />
+            </li>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                onClick={() => fileRef.current?.click()}>
+                Import JSON…
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                disabled={!canExport}
+                onClick={onExport}>
+                Export JSON
+              </button>
+            </li>
+            <li>
+              <hr className="dropdown-divider" />
+            </li>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                onClick={() => openDialog("manage")}>
+                Manage local dances…
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div className="dropdown">
+          <button
+            type="button"
+            className="btn btn-sm btn-link text-body text-decoration-none dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            disabled={disabled}>
+            Open
+          </button>
           <ul
-            className="list-unstyled mb-0"
-            style={{ maxHeight: "180px", overflowY: "auto" }}>
+            className="dropdown-menu shadow overflow-y-auto"
+            style={{ minWidth: "18rem", maxWidth: "28rem", maxHeight: "65vh" }}>
+            <li>
+              <h2 className="dropdown-header">Your local dances</h2>
+            </li>
+            {localLoading && (
+              <li>
+                <span className="dropdown-item-text small text-body-secondary">
+                  Loading local dances…
+                </span>
+              </li>
+            )}
+            {localError && (
+              <li>
+                <span
+                  className="dropdown-item-text small text-danger"
+                  role="alert">
+                  {localError}
+                </span>
+              </li>
+            )}
+            {!localLoading && !localError && locals.length === 0 && (
+              <li>
+                <span className="dropdown-item-text small text-body-secondary">
+                  No local saves yet
+                </span>
+              </li>
+            )}
             {locals.map((item) => (
-              <li key={item.id} className="d-flex gap-2 mb-1">
+              <li key={item.id}>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-light text-start flex-grow-1"
-                  disabled={busy || building}
-                  onClick={() => openLocal(item)}>
+                  className="dropdown-item text-wrap"
+                  aria-current={localId === item.id ? "true" : undefined}
+                  onClick={() => void openLocal(item)}>
                   {item.name}
                   <span className="d-block small text-body-secondary">
                     {new Date(item.updatedAt).toLocaleString()}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-danger"
-                  aria-label={`Delete ${item.name}`}
-                  disabled={busy}
-                  onClick={() => void remove(item)}>
-                  Delete
-                </button>
               </li>
             ))}
-          </ul>
-        </div>
-        <div className="col-3">
-          <h2 className="h6">Preset dances</h2>
-          {presetLoading && <p className="small">Loading presets…</p>}
-          {presetError && (
-            <p role="alert" className="text-danger small">
-              {presetError}
-            </p>
-          )}
-          {presetError && (
-            <button
-              type="button"
-              className="btn btn-sm btn-outline-light"
-              disabled={busy || presetLoading}
-              onClick={() => {
-                void refreshPresets();
-              }}>
-              Retry presets
-            </button>
-          )}
-          {!presetLoading && !presetError && presets.length === 0 && (
-            <p className="small text-body-secondary">No presets available.</p>
-          )}
-          <ul
-            className="list-unstyled mb-0"
-            style={{ maxHeight: "180px", overflowY: "auto" }}>
-            {presets.map((item) => (
-              <li key={item.id} className="mb-1">
+            <li>
+              <button
+                type="button"
+                className="dropdown-item small text-body-secondary"
+                disabled={localLoading}
+                onClick={refreshLocal}>
+                Refresh local dances
+              </button>
+            </li>
+            <li>
+              <hr className="dropdown-divider" />
+            </li>
+            <li>
+              <h2 className="dropdown-header">Preset dances</h2>
+            </li>
+            {presetLoading && (
+              <li>
+                <span className="dropdown-item-text small text-body-secondary">
+                  Loading presets…
+                </span>
+              </li>
+            )}
+            {presetError && (
+              <li>
+                <span
+                  className="dropdown-item-text small text-danger"
+                  role="alert">
+                  {presetError}
+                </span>
+              </li>
+            )}
+            {presetError && (
+              <li>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-light w-100 text-start"
-                  disabled={busy || building}
+                  className="dropdown-item"
+                  disabled={presetLoading}
+                  onClick={refreshPresets}>
+                  Retry presets
+                </button>
+              </li>
+            )}
+            {!presetLoading && !presetError && presets.length === 0 && (
+              <li>
+                <span className="dropdown-item-text small text-body-secondary">
+                  No presets available
+                </span>
+              </li>
+            )}
+            {presets.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  className="dropdown-item text-wrap"
                   onClick={() => void openPreset(item.id)}>
                   {item.name}
                 </button>
               </li>
             ))}
+            <li>
+              <hr className="dropdown-divider" />
+            </li>
+            <li>
+              <span className="dropdown-item-text small text-body-secondary text-wrap">
+                Presets open as editable copies.
+              </span>
+            </li>
           </ul>
         </div>
+        <div className="dropdown">
+          <button
+            type="button"
+            className="btn btn-sm btn-link text-body text-decoration-none dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            disabled={disabled}>
+            Dance
+          </button>
+          <ul className="dropdown-menu shadow">
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                onClick={() => openDialog("details")}>
+                Dance details…
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div className="dropdown">
+          <button
+            type="button"
+            className="btn btn-sm btn-link text-body text-decoration-none dropdown-toggle"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            disabled={disabled}>
+            Share
+          </button>
+          <ul className="dropdown-menu shadow">
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                disabled={!canExport}
+                onClick={onShare}>
+                {shareStatus === "copied"
+                  ? "Copied!"
+                  : shareStatus === "error"
+                    ? "Try copying share link again"
+                    : "Copy share link"}
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="dropdown-item"
+                disabled={!canExport}
+                onClick={onExport}>
+                Export JSON
+              </button>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div
+        className="d-flex align-items-center gap-2 border-start ps-3 ms-2 me-auto overflow-hidden"
+        style={{ minWidth: 0 }}>
+        <button
+          type="button"
+          className="btn btn-sm btn-link text-body fw-semibold text-truncate text-decoration-none p-0"
+          style={{ maxWidth: "24rem" }}
+          title="Edit dance name and notes"
+          disabled={disabled}
+          onClick={() => openDialog("details")}>
+          {dance.name}
+        </button>
+        <span
+          className={
+            "badge rounded-pill fw-normal " +
+            (dirty ? "text-bg-warning" : "text-bg-secondary")
+          }
+          role="status">
+          {status}
+        </span>
       </div>
-    </details>
+      <button
+        type="button"
+        className="btn btn-sm btn-accent flex-shrink-0"
+        disabled={disabled}
+        onClick={saveDance}
+        title="Save on this browser (Ctrl/Cmd+S)">
+        Save
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept=".json,application/json"
+        hidden
+        aria-label="Import dance JSON"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) void importFile(file);
+        }}
+      />
+
+      {dialog && dialog !== "manage" && (
+        <DanceDetailsDialog
+          mode={dialog}
+          name={dance.name}
+          notes={dance.notes ?? ""}
+          busy={busy}
+          error={error}
+          onClose={() => setDialog(null)}
+          onSubmit={async (details) => {
+            if (dialog === "details") {
+              onNameChange(details.name);
+              onNotesChange(details.notes);
+              return true;
+            }
+            return save(dialog === "copy", details);
+          }}
+        />
+      )}
+      {dialog === "manage" && (
+        <AppDialog title="Manage local dances" onClose={() => setDialog(null)}>
+          <div className="modal-body">
+            <p className="small text-body-secondary">
+              These saves belong to this browser. Clearing site data removes
+              them; export JSON for a backup.
+            </p>
+            {localError && (
+              <div role="alert" className="alert alert-danger">
+                {localError}
+              </div>
+            )}
+            {localLoading ? (
+              <p>Loading local dances…</p>
+            ) : locals.length === 0 ? (
+              <p className="text-body-secondary">No local saves yet.</p>
+            ) : (
+              <ul
+                className="list-group list-group-flush overflow-y-auto"
+                style={{ maxHeight: "45vh" }}>
+                {locals.map((item) => (
+                  <li
+                    key={item.id}
+                    className="list-group-item d-flex align-items-center gap-3 px-0">
+                    <div className="me-auto text-break">
+                      {item.name}
+                      <span className="d-block small text-body-secondary">
+                        {new Date(item.updatedAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-danger flex-shrink-0"
+                      aria-label={`Delete ${item.name}`}
+                      onClick={() => {
+                        setDialog(null);
+                        void remove(item).then(() => setDialog("manage"));
+                      }}>
+                      Delete
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="btn btn-outline-secondary me-auto"
+              disabled={localLoading}
+              onClick={refreshLocal}>
+              Refresh
+            </button>
+            <button
+              type="button"
+              className="btn btn-accent"
+              onClick={() => setDialog(null)}>
+              Done
+            </button>
+          </div>
+        </AppDialog>
+      )}
+      {confirmation && (
+        <AppDialog
+          title={confirmation.title}
+          onClose={() => answerConfirmation(false)}>
+          <div className="modal-body">
+            <p className="mb-0">{confirmation.message}</p>
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              data-dialog-focus
+              className="btn btn-outline-secondary"
+              onClick={() => answerConfirmation(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={
+                confirmation.danger ? "btn btn-danger" : "btn btn-accent"
+              }
+              onClick={() => answerConfirmation(true)}>
+              {confirmation.confirmLabel}
+            </button>
+          </div>
+        </AppDialog>
+      )}
+      {feedback && !dialog && !confirmation && (
+        <div className="toast-container position-fixed bottom-0 end-0 p-3">
+          <div
+            className="toast show"
+            role={error || exportError ? "alert" : "status"}
+            aria-live={error || exportError ? "assertive" : "polite"}>
+            <div className="toast-header">
+              <strong className="me-auto">Milonga Studio</strong>
+              <button
+                type="button"
+                className="btn-close"
+                aria-label="Dismiss notification"
+                onClick={() => {
+                  clearFeedback();
+                  onDismissExportFeedback();
+                }}
+              />
+            </div>
+            <div className="toast-body">{feedback}</div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 export default DanceControls;

@@ -1,3 +1,4 @@
+import { useConfirmation } from "./useConfirmation.mts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dance, DanceSummary } from "../libs/dance/dance.mts";
 import {
@@ -11,6 +12,21 @@ import {
   listLocalDances,
   saveLocalDance,
 } from "../libs/browser/danceStorage.mts";
+
+export interface DanceDetails {
+  name: string;
+  notes: string;
+}
+
+function fingerprintOf(dance: Dance): string {
+  return JSON.stringify({
+    name: dance.name,
+    notes: dance.notes ?? "",
+    music: dance.music,
+    tempo: dance.tempo,
+    entries: dance.sequence.entries,
+  });
+}
 
 interface DanceLibraryOptions {
   dance: Dance;
@@ -34,17 +50,8 @@ export function useDanceLibrary({
   const [localId, setLocalId] = useState(initialLocalId);
   // Only editable content determines dirtiness; save identity/timestamps may
   // change after a successful write without changing what the user edited.
-  const fingerprint = useMemo(
-    () =>
-      JSON.stringify({
-        name: dance.name,
-        notes: dance.notes ?? "",
-        music: dance.music,
-        tempo: dance.tempo,
-        entries: dance.sequence.entries,
-      }),
-    [dance],
-  );
+  const fingerprint = useMemo(() => fingerprintOf(dance), [dance]);
+  const confirmation = useConfirmation();
   const [baseline, setBaseline] = useState(fingerprint);
   const dirty = baseline !== fingerprint;
   const dirtyRef = useRef(dirty);
@@ -113,36 +120,44 @@ export function useDanceLibrary({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
-  const mayReplace = () =>
+  const mayReplace = async () =>
     !dirtyRef.current ||
-    window.confirm(
-      "Discard unsaved changes and open another dance? Save locally or export first to keep them.",
-    );
+    confirmation.ask({
+      title: "Discard unsaved changes?",
+      message:
+        "Save locally or export JSON first to keep your changes. Opening another dance will replace the current working copy.",
+      confirmLabel: "Discard changes",
+      danger: true,
+    });
   const run = async (operation: () => Promise<void>) => {
-    if (busyRef.current) return;
+    if (busyRef.current) return false;
     busyRef.current = true;
     setBusy(true);
     setError(null);
     setMessage(null);
     try {
       await operation();
+      return true;
     } catch (error) {
       setError(
         error instanceof Error
           ? error.message
           : "Couldn’t complete this action.",
       );
+      return false;
     } finally {
       busyRef.current = false;
       setBusy(false);
     }
   };
-  const save = (copy: boolean) =>
+  const save = (copy: boolean, details?: DanceDetails) =>
     run(async () => {
       const now = new Date().toISOString();
       const id = copy || !localId ? crypto.randomUUID() : localId;
       const snapshot = parseDance({
         ...dance,
+        ...details,
+        sequence: { ...dance.sequence, name: details?.name ?? dance.name },
         id,
         updatedAt: now,
         createdAt: copy || !localId ? now : dance.createdAt,
@@ -154,16 +169,17 @@ export function useDanceLibrary({
       ]);
       setLocalId(id);
       onSaved(snapshot);
-      setBaseline(fingerprint);
+      setBaseline(fingerprintOf(snapshot));
       setMessage("Saved on this browser.");
     });
-  const openLocal = (item: Dance) => {
-    if (mayReplace()) onOpen(item, item.id);
-  };
+  const openLocal = (item: Dance) =>
+    run(async () => {
+      if (await mayReplace()) onOpen(item, item.id);
+    });
   const openPreset = (id: string) => {
     return run(async () => {
       const preset = await fetchDance(id);
-      if (mayReplace()) onOpen(preset);
+      if (await mayReplace()) onOpen(preset);
     });
   };
   const importFile = (file: File) =>
@@ -172,11 +188,19 @@ export function useDanceLibrary({
         throw new Error("Dance files must be smaller than 2 MB.");
       // Validate before asking to replace: malformed files leave the editor intact.
       const imported = parseDanceJSON(await file.text());
-      if (mayReplace()) onOpen(imported);
+      if (await mayReplace()) onOpen(imported);
     });
-  const remove = (item: Dance) => {
-    if (!window.confirm(`Delete “${item.name}” from this browser?`)) return;
-    return run(async () => {
+  const remove = (item: Dance) =>
+    run(async () => {
+      if (
+        !(await confirmation.ask({
+          title: "Delete local dance?",
+          message: `Delete “${item.name}” from this browser? The open working copy will remain in the editor.`,
+          confirmLabel: "Delete local save",
+          danger: true,
+        }))
+      )
+        return;
       await deleteLocalDance(item.id);
       setLocals((previous) => previous.filter((dance) => dance.id !== item.id));
       if (localId === item.id) {
@@ -187,9 +211,14 @@ export function useDanceLibrary({
         "Deleted the local save. The open dance is still in the editor.",
       );
     });
-  };
 
   return {
+    confirmation: confirmation.confirmation,
+    answerConfirmation: confirmation.answer,
+    clearFeedback: () => {
+      setError(null);
+      setMessage(null);
+    },
     dirty,
     localId,
     locals,
@@ -206,9 +235,10 @@ export function useDanceLibrary({
     openPreset,
     importFile,
     remove,
-    newDance: () => {
-      if (mayReplace()) onOpen(null);
-    },
+    newDance: () =>
+      run(async () => {
+        if (await mayReplace()) onOpen(null);
+      }),
     refreshLocal: () => {
       setLocalLoading(true);
       void refreshLocal();

@@ -52,5 +52,14 @@ export function useSequenceExport(dance: Dance) {
     }
   }, [dance]);
 
-  return { shareStatus, share, exportSequence, exportError };
+  return {
+    shareStatus,
+    share,
+    exportSequence,
+    exportError,
+    clearFeedback: () => {
+      setShareStatus("idle");
+      setExportError(null);
+    },
+  };
 }

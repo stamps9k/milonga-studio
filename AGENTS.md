@@ -53,7 +53,12 @@ frontend and a small Express + SQLite API.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;
-  `DanceControls` renders those controls. Opening a dance remounts the editor
+  `DanceControls` renders File/Open/Dance/Share menus inside `Toolbar`.
+  `AppDialog` uses the Bootstrap bundle already loaded by `index.html` for
+  modals; avoid adding `.fade` without handling asynchronous teardown when
+  an editor unmounts. `DanceDetailsDialog` holds drafts until Apply/Save;
+  `useConfirmation` suspends operations for in-app discard/delete dialogs.
+  Opening a dance remounts the editor
   to reset playback and isolate outstanding figure requests.
 - `src/libs/dance/persistence.mts` validates complete Dance snapshots (and old
   bare Sequence exports), rebuilding derived poses from figure + transform.

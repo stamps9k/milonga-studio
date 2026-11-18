@@ -4,18 +4,31 @@ A web app for planning and reviewing ballroom dance steps in 2D and 3D.
 
 ## Dances and personal saves
 
-Open a **Preset dance** to practise or edit one of the pre-created dances on
-the server. Presets are read-only: editing one makes a working copy, and
-**Save locally** stores that copy in this browser's IndexedDB. No user dance
-is uploaded to the server.
+The application menu bar keeps the canvas clear:
 
-Give a dance a name and optional notes, then choose **Save locally**. Further
-saves update the same personal record; **Save a copy** creates a separate one,
-even if it has the same name. Open saved dances from **Your local dances**.
-**Delete** removes a local save, leaving the currently open editor intact.
-**New dance**, opening another dance and importing JSON warn before discarding
-unsaved edits. Closing/reloading a tab also warns after edits, where supported
-by the browser. Work is not automatically saved.
+- **File**: start a new dance, save locally, save a copy, import/export JSON,
+  or manage local saves. **Save** on the toolbar is the quick save action;
+  Ctrl/Cmd+S saves and Ctrl/Cmd+Shift+S opens Save a copy.
+- **Open**: choose a personal local save or a pre-created server preset from
+  the dropdown. Presets always open as editable working copies.
+- **Dance → Dance details…**: edit the name and notes in a dialog. Clicking
+  the current dance name opens the same dialog. **Apply changes** updates the
+  working copy; **Cancel**, Escape and closing the dialog leave it unchanged.
+- **Share**: copy a preload link or export JSON. The 2D/3D buttons switch views.
+
+The first **Save** opens a name/notes dialog, then stores a snapshot in this
+browser's IndexedDB. Further saves update that record. **Save a copy…** asks
+for a new name and creates a separate identity, even if names match. Text is
+applied only after a successful save; failures keep the dialog open for retry.
+No user dance is uploaded to the server.
+
+The menu bar shows the current dance name and save status. **File → Manage
+local dances…** lets you delete saves, with a confirmation dialog; deleting a
+save leaves the open editor intact. Starting a new dance, opening another
+one and importing JSON ask before discarding unsaved work. Closing/reloading
+a tab also warns after edits, where supported by the browser. Work is not
+automatically saved. Dialogs support keyboard focus, Escape and Cancel;
+short notifications report completed saves and sharing errors.
 
 Local saves belong to this site origin, browser profile and device. They are
 not synced between devices or shared with other visitors. Clearing site data,
