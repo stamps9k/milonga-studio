@@ -4,7 +4,7 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description: S Q Q S in three beats, from tango promenade after Two Walks and Progressive Link into closed hold for Back Corte. Provisional geometry for the owner's review (2026-11-18): first outer feet advance just 4 cm from the existing 60 cm stance and widen 6 cm each. Both stepping feet point along travel so the knees do not turn into the passing channel. The pelvis moves 13.5 cm inward relative to the weighted feet during the first slow, keeping the hips nearly touching as lead right / follow left pass through. The inner feet travel 1.14 m and land 12 cm inward; the pelvis offset finishes 5 cm outward, then moves 8 cm back along travel and 3 cm inward on the uncross to avoid reaching away from the trailing foot, returning to zero on the final close. This offset describes horizontal body placement, not a change in foot support. Both outer feet uncross round the back. Third-step offsets compensate exactly for the first step, preserving all original start/end foot positions, facing, weights, rise and timing. Extra decimal places preserve connectivity, not technique precision. No geometry/body check exemptions. Default mannequin leg capsules clear throughout eased playback; hip lowering stays below the shared 16 cm limit. All dimensions and paths are a modelling proposal for the owner to judge.",
+  "notes": "Owner's description: S Q Q S in three beats, from tango promenade after Two Walks and Progressive Link into closed hold for Back Corte. Provisional geometry for the owner's review (2026-11-18): first outer feet advance just 4 cm from the existing 60 cm stance and widen 6 cm each. Both stepping feet point along travel so the knees do not turn into the passing channel. The pelvis moves 13.5 cm inward relative to the weighted feet during the first slow, keeping the hips nearly touching as lead right / follow left pass through. The inner feet travel 1.14 m and land 12 cm inward; the pelvis offset finishes 5 cm outward, then moves 8 cm back along travel and 3 cm inward on the uncross to avoid reaching away from the trailing foot, returning to zero on the final close. This offset describes horizontal body placement, not a change in foot support. Both outer feet uncross on shallow arcs departing 50 degrees towards their own side from the body heading, almost along travel. This replaces the 135-degree preset that sent the outer legs in a wide backward swing; the feet pass close beneath the hips while clearing the standing legs. Third-step offsets compensate exactly for the first step, preserving all original start/end foot positions, facing, weights, rise and timing. Extra decimal places preserve connectivity, not technique precision. No geometry/body check exemptions. Default mannequin leg capsules clear throughout eased playback; hip lowering stays below the shared 16 cm limit. All dimensions and paths are a modelling proposal for the owner to judge.",
   "start": "tango promenade",
   "steps": [
     {
@@ -79,7 +79,8 @@
         "bodyOffset": {
           "forward": -0.0353553390593274,
           "right": 0.07778174593052022
-        }
+        },
+        "pathSetOff": -50
       },
       "follow": {
         "go": {
@@ -90,7 +91,8 @@
         "bodyOffset": {
           "forward": -0.03535533905932736,
           "right": -0.07778174593052024
-        }
+        },
+        "pathSetOff": 50
       },
       "length": "Q",
       "label": "side, uncrossing"

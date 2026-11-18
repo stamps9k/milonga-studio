@@ -151,8 +151,12 @@ the owner before building more on top of them.
   for a step's `path` (`curveAround`): `"around the front"` sets off the
   way the dancer faces, `"around the back"` diagonally back towards the
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
-  Turn's and the Closed Promenade's uncrossing steps use `"around the
-back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
+  Turn's uncrossing uses `"around the back"`. Closed Promenade overrides
+  that preset with authoring-only `pathSetOff` (degrees clockwise from each
+  dancer before the step): -50 lead / +50 follow, making shallow arcs
+  almost along travel instead of the wide 135-degree back swing. The
+  result uses existing `Movement.arc.setOff`; no new persisted field.
+  Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - A straight step's foot passes close beside the standing foot when its
   line runs past it (a walk, forward or back, or a diagonal that passes
   the standing foot), as feet brush past each other, rather than
@@ -325,7 +329,8 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   slow advances 4 cm and widens each outer foot 6 cm from the unchanged
   starting stance. Authored body offsets bring the hips nearly into contact
   as the inner legs pass, with feet pointing along travel; both partners
-  uncross round the back. Intermediate offsets return to zero on the close.
+  uncross on shallow arcs close beneath the hips. Intermediate offsets return
+  to zero on the close.
   Original connection poses and timing are preserved. Dense regression tests
   check full mannequin thigh/shin capsules as well as footprints and reach.
   These are provisional dimensions for the owner's subjective review.

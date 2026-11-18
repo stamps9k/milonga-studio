@@ -239,3 +239,36 @@ test("Closed Promenade: thighs and shins clear while hips nearly touch", () => {
   assert.ok(Math.abs(first.lead.left.position.y + 0.06) < 1e-8);
   assert.ok(Math.abs(first.follow.right.position.y - 0.46) < 1e-8);
 });
+
+test("Closed Promenade: the outer feet pass under the hips without a wide side swing", () => {
+  for (const options of [{}, { footEasing: footEase }]) {
+    const nearest = { lead: Infinity, follow: Infinity };
+    for (let beat = 1.5; beat <= 2; beat += 1 / 256) {
+      const pose = poseAtBeat(promenade, beat, options);
+      const skeleton = solveSkeleton(pose);
+      for (const partner of ["lead", "follow"] as const) {
+        const foot =
+          pose[partner][partner === "lead" ? "left" : "right"].position;
+        const hip = skeleton[partner].joints.hips;
+        // Floor y is across promenade travel. The old 135-degree departure
+        // swung the foot over 43 cm outward from the pelvis; a compact route
+        // stays inside 14 cm, including the 13 cm starting separation.
+        const outward = partner === "lead" ? hip.y - foot.y : foot.y - hip.y;
+        assert.ok(
+          outward <= 0.14,
+          `${partner} swings ${outward} m outward at ${beat}`,
+        );
+        if (beat > 1.6 && beat < 1.9)
+          nearest[partner] = Math.min(
+            nearest[partner],
+            Math.hypot(hip.x - foot.x, hip.y - foot.y),
+          );
+      }
+    }
+    for (const partner of ["lead", "follow"] as const)
+      assert.ok(
+        nearest[partner] < 0.12,
+        `${partner}'s outer foot never passes within 12 cm of the pelvis`,
+      );
+  }
+});

@@ -586,6 +586,10 @@ export interface MoveOptions {
    *    stays behind the other leg instead of passing through it (the
    *    Open Natural Turn's count 2, owner's choice 2026-11-17). */
   path?: CurvedPath;
+  /** Optional arc departure heading in degrees clockwise from this dancer
+   * before the step. Overrides the preset; use for a compact passing route.
+   * Authoring only: stored as the existing Movement.arc.setOff. */
+  pathSetOff?: number;
   /** true when this step crosses the feet on purpose (a whisk's cross
    *  behind). Without it, defineFigure refuses a step that puts the left
    *  foot to the right of the right foot (see checkFeet). */
@@ -823,6 +827,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     weight: row.weight,
     air: row.air,
     path: row.path,
+    pathSetOff: row.pathSetOff,
     cross: row.cross,
   };
   const labelFor = (partner: Partner) =>
@@ -1013,6 +1018,9 @@ function applyMove(
     distance = move.by;
   }
 
+  if (move.pathSetOff !== undefined && move.path === undefined) {
+    throw new FigureError(`${where}: "pathSetOff" needs a curved "path"`);
+  }
   let movement: Movement = { type: "straight", direction, distance };
   if (move.path !== undefined) {
     if (air || distance === 0) {
@@ -1020,7 +1028,14 @@ function applyMove(
         `${where}: "path" needs a step that travels along the floor`,
       );
     }
-    movement = curveAround(move.path, before, direction, distance, where);
+    movement = curveAround(
+      move.path,
+      before,
+      direction,
+      distance,
+      where,
+      move.pathSetOff,
+    );
   }
 
   if (!air && distance > 0) {
@@ -1393,6 +1408,7 @@ function curveAround(
   direction: number,
   chord: number,
   where: string,
+  departure?: number,
 ): Movement {
   // Where the landing spot is, in degrees clockwise from the facing,
   // in (-180, 180].
@@ -1406,6 +1422,9 @@ function curveAround(
     }
     setOff = Math.sign(fromFacing) * AROUND_THE_BACK_SET_OFF;
   }
+  // A specific departure angle keeps the same endpoint and circular-arc
+  // model while allowing a shallower route than the preset back swing.
+  if (departure !== undefined) setOff = normalizeDegrees(departure + 180) - 180;
   const theta = normalizeDegrees(fromFacing - setOff + 180) - 180;
   if (Math.abs(theta) < 1e-9) {
     // The landing spot is straight along the set-off heading: the curve
@@ -2155,6 +2174,7 @@ export function parseFigureDefinition(
     "weight",
     "air",
     "path",
+    "pathSetOff",
     "cross",
   ] as const;
   function checkMoveOptions(
@@ -2208,6 +2228,7 @@ export function parseFigureDefinition(
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
     checkOneOf(`${path}path`, object.path, CURVED_PATHS);
+    checkNumber(`${path}pathSetOff`, object.pathSetOff);
     checkBoolean(`${path}cross`, object.cross);
   }
 
