@@ -1,0 +1,34 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Side Step and Collect",
+  "style": "argentine tango",
+  "time": "4/4",
+  "notes": "Practice variant for continuous Argentine tango sequences (2026-11-18): keep the accepted 35 cm lead-right/follow-left side step, then collect lead left/follow right on a separate Q without changing weight. Finish closed on lead right/follow left, ready for Cruzada. The original one-Q open Side Step remains available unchanged. Two explicit Q counts replace a position jump; no figure skips, crossing flags, body offsets, solver changes or altered tolerances. Provisional collection timing for subjective review.",
+  "steps": [
+    {
+      "both": "side right",
+      "by": 0.35,
+      "length": "Q",
+      "label": {
+        "lead": "side right on right",
+        "follow": "side left on left"
+      },
+      "foot": "R"
+    },
+    {
+      "both": "close",
+      "foot": "L",
+      "weight": false,
+      "length": "Q",
+      "label": "collect without changing weight"
+    }
+  ],
+  "expectBeats": 2,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "right": 0.35
+    },
+    "leadStandingOn": "R"
+  }
+}

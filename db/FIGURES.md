@@ -426,3 +426,18 @@ skipped with a warning, and the rest of the seed carries on.
 Curved paths other than `"around the front"` and `"around the back"`, and
 stances other than closed hold and the promenades. These will be added when a
 figure needs them.
+
+## Continuous Argentine tango practice sequences
+
+The seeded Basic Combination uses Walking Step and Collect → Side Step and
+Collect → Cruzada (six Q counts). Ocho Combination uses Walking Step and Collect
+→ Weight Change → Ocho (seven Q counts). Each collection takes its own Q and
+keeps the weight on the supporting feet. Weight Change takes one Q with the
+feet stationary, so Ocho begins on the correct support. These are explicit
+catalogue figures and visible sequence entries, not automatic join adjustments.
+
+The collected walk travels 50 cm for full-leg clearance; the original 60 cm
+Walking Step and original one-count Side Step remain available with their open
+endings. They still require a compatible next figure. The existing Cruzada and
+Ocho movements are unchanged. New presets require reseeding; saved/exported
+dances retain their embedded figures and sequence entries.

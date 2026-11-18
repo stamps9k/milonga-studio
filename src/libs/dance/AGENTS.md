@@ -256,8 +256,15 @@ the owner before building more on top of them.
   `JOIN_FACING_TOLERANCE`, 10 degrees) are judgement calls, not technique.
 - Seed figures (`db/seed.mts`) are plausible test data, not syllabus
   transcriptions. Seeded sequences are chained with `fitTransform`, like
-  the app's sequence builder. The waltz and cha-cha sequences join
-  cleanly; the tango ones don't yet (see `test/db/seed.test.mts`).
+  the app's sequence builder. All seeded sequences now join cleanly, including
+  Argentine tango (see `test/db/seed.test.mts`). Its practice combinations use
+  Walking Step and Collect (50 cm walk plus a separate unweighted collection),
+  Side Step and Collect (the accepted 35 cm step plus an unweighted collection),
+  and Weight Change (one stationary Q before Ocho). Each action has an explicit
+  count; there is no boundary teleport or automatic transition. The standalone
+  open Walking Step/Side Step and accepted Cruzada/Ocho remain unchanged. Basic
+  Combination takes six Q counts; Ocho Combination takes seven. All figure and
+  full-leg clearance checks remain active; timing/dimensions are provisional.
 - The free-foot rule above, and the rule that one partner never has two
   steps in progress at once, are checked against the seed as provisional
   rules.
@@ -390,7 +397,7 @@ the owner before building more on top of them.
   support remain. Full footprints and all thigh/shin capsule pairs clear
   through the whole figure, including the intentional `cross: true` step.
   The corrected follow exit replaces the old direction-bug endpoint. It
-  finishes crossed; existing tango sequence joins remain separate data work.
+  finishes crossed; the practice sequence now approaches it through collected variants.
   Dimensions and route are provisional for subjective review.
   Ocho now has no authoring or body-test exclusions. Its compact back ochos
   alternate a 30-degree left pivot and 60-degree right pivot (follow facings
@@ -400,7 +407,7 @@ the owner before building more on top of them.
   routing clears both legs without body offsets or cross flags. Original
   entry, four Q counts, pivot/support order, final support, lead's final right
   landing and flat rise remain. The erroneous sideways follow exit changes;
-  it still ends mid-stride, so existing tango joins remain separate data work.
+  it still ends mid-stride; the practice sequence uses collection/weight change before it.
   Dense full-footprint/thigh/shin regressions cover both pivots and walks.
   Ocho also rejoins the reach/lowering catalogue tests, removing their last
   exclusion. Pivot angles and dimensions are provisional for subjective review.
@@ -410,8 +417,8 @@ the owner before building more on top of them.
   rise remain; the old crossed exit and opposite support assignments are fixed.
   No cross flags, arcs, pointing or shaping are needed. All footprints and
   thigh/shin pairs clear throughout, with under 6 cm hip lowering. Adjacent
-  Walking Step/Cruzada foot order now agrees, but existing tango foot-position
-  gaps remain separate data work. All catalogue authoring/body checks now run
+  Walking Step/Cruzada foot order agrees; the common practice sequence uses
+  collected variants to close the position gaps. All catalogue authoring/body checks now run
   without figure-level exclusions, using the unchanged shared limits.
 
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
