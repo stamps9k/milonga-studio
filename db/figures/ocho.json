@@ -3,28 +3,32 @@
   "name": "Ocho",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "A pair of back ochos: on each, the follow pivots on her standing foot and steps across, while the lead takes a small step to each side of line of dance. Exempt from the \"crossed feet\" check (added 2026-11-16) because the follow's feet cross on count 3, and the Ocho is one of the old seed's tango figures awaiting the owner's own tango; whether the cross is real ocho technique is the owner's call. Also exempt from the \"partner spacing\" check (2026-11-17): with the follow offset to the lead's right in closed hold, on count 3 her right foot passes 9.7 cm from his left, just inside the 10 cm limit. Remove skipChecks when the figure is rewritten from the owner's tango. Also exempt from the \"hold\" check (2026-11-17): the ocho turns the follow 45° away from the lead, which isn't a ballroom hold position; Argentine tango's embrace isn't modelled.",
+  "notes": "A pair of compact alternating back ochos. Provisional clearance repair for the owner's subjective review (2026-11-18): replace the seed's two same-direction pivots and sideways steps with a 30-degree left pivot on follow left, a backward right step, a 60-degree right pivot on follow right and a backward left step. Follow faces 150 then 210, maintaining an embrace within the unchanged hold model. The first back step travels 20 cm back and 10 cm to her left in her facing; the second travels 20 cm straight back. Existing passing-foot routing gathers each travelling foot beside its support instead of swinging through the other leg. Lead's first left step travels 5 cm right and 12 cm forward (13 cm total), allowing room for both the pivot and the following back step. Lead's second 20 cm step at -10 degrees is unchanged. The original closed entry, four Q counts, pivot/support order, final support (lead right, follow left), lead's final right-foot landing and flat rise remain. The erroneous sideways exit cannot be preserved; the corrected follow ends at left (0.3, 0.573205...) and right (-0.013397..., 0.623205...), facing 210 instead of 45. No body offsets, cross flags or skipChecks. Dense full-footprint and thigh/shin tests cover the entire figure, both pivots included, with linear/eased feet. Default mannequins clear leg capsules by about 1 cm, require less than 2 cm hip lowering and pass lateral balance. Remove Ocho's reach/lowering catalogue exclusion too. Existing tango sequence joins remain separate data work: entry is unchanged and this ends mid-stride rather than in a generic closed starting stance. Dimensions and compact pivot angles are modelling choices, not a syllabus transcription. Shared geometry, body and hold limits are unchanged.",
   "steps": [
     {
       "lead": {
-        "go": 10,
-        "by": 0.2,
-        "label": "small lead step"
+        "go": {
+          "right": 0.05,
+          "forward": 0.12
+        },
+        "label": "small lead step, allowing the pivot"
       },
       "follow": {
         "go": "pivot",
         "foot": "L",
         "turn": {
-          "left": "1/8"
+          "left": "1/12"
         },
-        "label": "pivot on left"
+        "label": "pivot left on left"
       },
       "length": "Q"
     },
     {
       "follow": {
-        "go": "side right",
-        "by": 0.3,
+        "go": {
+          "forward": -0.2,
+          "right": -0.1
+        },
         "label": "back ocho step"
       },
       "length": "Q"
@@ -38,37 +42,36 @@
       "follow": {
         "go": "pivot",
         "turn": {
-          "left": "1/4"
+          "right": "1/6"
         },
-        "label": "pivot on right"
+        "label": "pivot right on right"
       },
       "length": "Q"
     },
     {
       "follow": {
-        "go": "side right",
-        "by": 0.3,
+        "go": "back",
+        "by": 0.2,
         "label": "back ocho step"
       },
       "length": "Q"
     }
   ],
   "expectBeats": 4,
-  "skipChecks": ["crossed feet", "partner spacing", "hold"],
   "expectEnd": {
     "feet": {
       "lead": {
-        "L": [-0.065, 0.197],
+        "L": [-0.05, 0.12],
         "R": [0.065, 0.197]
       },
       "follow": {
-        "L": [0.412, 0.188],
-        "R": [-0.212, 0.188]
+        "L": [0.3, 0.573],
+        "R": [-0.013, 0.623]
       }
     },
     "facing": {
       "lead": 0,
-      "follow": 45
+      "follow": 210
     }
   }
 }

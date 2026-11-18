@@ -391,6 +391,18 @@ the owner before building more on top of them.
   The corrected follow exit replaces the old direction-bug endpoint. It
   finishes crossed; existing tango sequence joins remain separate data work.
   Dimensions and route are provisional for subjective review.
+  Ocho now has no authoring or body-test exclusions. Its compact back ochos
+  alternate a 30-degree left pivot and 60-degree right pivot (follow facings
+  150/210), with 20 cm back/10 cm left on the first travelling step and 20 cm
+  straight back on the second. Lead's first step is 5 cm right/12 cm forward;
+  the second 20 cm step at -10 degrees is unchanged. Existing passing-foot
+  routing clears both legs without body offsets or cross flags. Original
+  entry, four Q counts, pivot/support order, final support, lead's final right
+  landing and flat rise remain. The erroneous sideways follow exit changes;
+  it still ends mid-stride, so existing tango joins remain separate data work.
+  Dense full-footprint/thigh/shin regressions cover both pivots and walks.
+  Ocho also rejoins the reach/lowering catalogue tests, removing their last
+  exclusion. Pivot angles and dimensions are provisional for subjective review.
 
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
@@ -402,9 +414,9 @@ the owner before building more on top of them.
   provisional judgement calls. Explicit body shaping also allows a close
   promenade reference (27 cm centre separation) with the same tolerances,
   reflecting hip contact while supporting feet open a passing channel.
-  Unshaped figures keep the original checks. Figures opting out ("hold" in
-  `skipChecks`): Ocho (its Argentine tango embrace is not modelled).
-  Back Corté, Open Natural Turn and Cruzada now run the hold check too.
+  Unshaped figures keep the original checks. All current figures now run the
+  hold check, including the repaired Ocho; its compact alternating pivots
+  fit the existing reference without changing any tolerance.
 - The model changes agreed with the owner on 2026-11-17 (a hold check,
   foot direction separate from the body's facing, a couple turn that
   continues through a close) are all done; see above. The box turns use
