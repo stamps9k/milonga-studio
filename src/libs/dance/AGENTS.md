@@ -381,6 +381,16 @@ the owner before building more on top of them.
   rise remain; body offsets reset on the close. The preceding Chassé is unchanged.
   These are provisional modelling choices for subjective review; shared reach,
   lowering, balance and geometry limits remain unchanged.
+  Cruzada now has no figure-level exclusions. The owner confirmed the usual
+  left-in-front cross. The lead's 30 cm walk and closed entry are unchanged;
+  the follow walks back 40 cm, then crosses left 3 cm across/26 cm in front
+  of right, on a +100-degree departure with 30-degree turnout on each foot.
+  No body offsets are needed. Both Q counts, facings, rise and finishing
+  support remain. Full footprints and all thigh/shin capsule pairs clear
+  through the whole figure, including the intentional `cross: true` step.
+  The corrected follow exit replaces the old direction-bug endpoint. It
+  finishes crossed; existing tango sequence joins remain separate data work.
+  Dimensions and route are provisional for subjective review.
 
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
@@ -393,8 +403,8 @@ the owner before building more on top of them.
   promenade reference (27 cm centre separation) with the same tolerances,
   reflecting hip contact while supporting feet open a passing channel.
   Unshaped figures keep the original checks. Figures opting out ("hold" in
-  `skipChecks`): Cruzada and Ocho (Argentine tango, not a ballroom hold).
-  Back Corté and Open Natural Turn now run the hold check too.
+  `skipChecks`): Ocho (its Argentine tango embrace is not modelled).
+  Back Corté, Open Natural Turn and Cruzada now run the hold check too.
 - The model changes agreed with the owner on 2026-11-17 (a hold check,
   foot direction separate from the body's facing, a couple turn that
   continues through a close) are all done; see above. The box turns use
