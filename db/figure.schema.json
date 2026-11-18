@@ -143,6 +143,16 @@
       "description": "How much further round than the body the moving foot points when it lands, from the body's facing after the step's turn (a chart's \"body turns less\"). Default: the way the body faces.",
       "allOf": [{ "$ref": "#/definitions/turn" }]
     },
+    "bodyOffset": {
+      "description": "Pelvis displacement in metres, forward/right of this dancer after the turn. Omission returns to zero.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "forward": { "type": "number" },
+        "right": { "type": "number" }
+      }
+    },
     "riseTiming": {
       "enum": ["even", "late"],
       "description": "\"late\": the rise holds and changes at the end of the step (a chart's \"at end of\"). Default \"even\": steadily across the step."
@@ -189,6 +199,7 @@
             "pointing": { "$ref": "#/definitions/pointing" },
             "rise": { "$ref": "#/definitions/rise" },
             "riseTiming": { "$ref": "#/definitions/riseTiming" },
+            "bodyOffset": { "$ref": "#/definitions/bodyOffset" },
             "footwork": { "$ref": "#/definitions/footwork" },
             "weight": { "$ref": "#/definitions/weight" },
             "air": { "$ref": "#/definitions/air" },
@@ -254,6 +265,7 @@
         },
         "rise": { "$ref": "#/definitions/rise" },
         "riseTiming": { "$ref": "#/definitions/riseTiming" },
+        "bodyOffset": { "$ref": "#/definitions/bodyOffset" },
         "footwork": {
           "description": "The chart's footwork: one for each partner the row applies to, or one each ({ \"lead\": \"HT\", \"follow\": \"TH\" }).",
           "anyOf": [

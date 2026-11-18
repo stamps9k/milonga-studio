@@ -12,14 +12,14 @@ import type { Foot } from "./step.mts";
  * fold.mts interpolates FootState.weight across each step, this point
  * slides continuously from one foot to the other during a step, so a
  * renderer can show a weight transfer as the body moving rather than as
- * the feet changing shade. It is also where a 3D renderer would place
- * the hips over the base of support.
+ * the feet changing shade. It is the default horizontal body position;
+ * bodyPosition adds any explicitly authored pelvis displacement.
  *
  * Provisional modelling choice: this is the projection of the centre of
  * mass onto the floor *only* under the model's simplification that the
  * body sits directly over the weighted average of the feet. Real
  * dancers can hold their weight off-centre (a lunge, a contra body
- * position), which this can't express.
+ * position), which the separate bodyOffset can describe.
  *
  * Weights normally sum to 1 (fold.mts keeps them complementary). If
  * they don't, they're normalised; if both are 0 -- not a state the fold
@@ -48,4 +48,15 @@ export function centerOfWeight(partner: PartnerPose): Point2D {
  *  draw feet as standing or free instead of shading them by weight. */
 export function isStandingFoot(partner: PartnerPose, foot: Foot): boolean {
   return partner[foot].weight >= 0.5;
+}
+
+/** Horizontal body position. An authored offset can bring the hips into
+ * contact while keeping a supporting foot outside the partner's leg channel.
+ * Foot weights remain independent and still describe which foot supports us. */
+export function bodyPosition(partner: PartnerPose): Point2D {
+  const base = centerOfWeight(partner);
+  return {
+    x: base.x + (partner.bodyOffset?.x ?? 0),
+    y: base.y + (partner.bodyOffset?.y ?? 0),
+  };
 }

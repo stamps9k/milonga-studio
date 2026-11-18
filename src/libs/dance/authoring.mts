@@ -6,7 +6,7 @@ import {
   footprintGap,
   poseAtBeat,
 } from "./fold.mts";
-import { centerOfWeight } from "./weight.mts";
+import { bodyPosition } from "./weight.mts";
 import {
   DEG_TO_RAD,
   RAD_TO_DEG,
@@ -559,6 +559,10 @@ export interface MoveOptions {
    *  chart's "commence to rise at end of 1", "lower at end of 3");
    *  default "even", steadily across the step (see RiseTiming). */
   riseTiming?: RiseTiming;
+  /** Pelvis offset from the weighted feet at this step's end, in metres
+   * forward/right of this dancer's facing AFTER the turn. Default zero.
+   * Independent of the foot mirror; each dancer uses their own frame. */
+  bodyOffset?: { forward?: number; right?: number };
   /** The chart's footwork for the step: letters for the parts of the
    *  foot that meet the floor, in order (H heel, T toe, B ball, F flat):
    *  "HT", "T", "TH", "BF". The first letter decides how the foot lands
@@ -815,6 +819,7 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     turn: row.turn,
     rise: row.rise,
     riseTiming: row.riseTiming,
+    bodyOffset: row.bodyOffset,
     weight: row.weight,
     air: row.air,
     path: row.path,
@@ -1051,6 +1056,14 @@ function applyMove(
       ? { footDirection: normalizeDegrees(after + turnDegrees(move.pointing)) }
       : {}),
     rise: move.rise ?? 0,
+    ...(move.bodyOffset
+      ? {
+          bodyOffset: rotatePoint(
+            { x: move.bodyOffset.right ?? 0, y: move.bodyOffset.forward ?? 0 },
+            after,
+          ),
+        }
+      : {}),
     // "even" and no footwork are the defaults, left out.
     ...(move.riseTiming === "late" ? { riseTiming: "late" as const } : {}),
     ...(move.footwork !== undefined ? { footwork: move.footwork } : {}),
@@ -1094,7 +1107,7 @@ const HOLD_POSITIONS: readonly {
   },
 ];
 
-/** How far the follow's centre of weight may be from a hold position at
+/** How far the follow's horizontal body position may be from a hold position at
  *  the end of a row, in metres, and how far her facing may be from it,
  *  in degrees. Provisional judgement calls (2026-11-17): loose enough
  *  for the promenade stances' range and the Open Natural Turn's opening
@@ -1112,9 +1125,9 @@ export const HOLD_FACING_TOLERANCE = 30;
  * hold by construction, so in practice it checks `lead`/`follow` rows.
  * Before a turning mirrored close it checks against the hold the turn
  * finishes in (`carriedTurn`, one entry per row, in degrees).
- * Each partner's centre of weight is compared rather than their feet,
- * because mid-figure the feet are apart while the body is over the
- * standing foot. Added 2026-11-17 (owner's request).
+ * Compare bodyPosition, including any authored pelvis offset, rather than
+ * the feet: supporting feet can open a channel while the hips stay close.
+ * Added 2026-11-17 (owner's request); body shaping added 2026-11-18.
  */
 function checkHold(
   name: string,
@@ -1124,12 +1137,28 @@ function checkHold(
 ): void {
   for (const [row, beat] of [...rowEnds].sort((a, b) => a[0] - b[0])) {
     const pose = poseAtBeat(figure, beat);
-    const lead = centerOfWeight(pose.lead);
-    const follow = centerOfWeight(pose.follow);
+    const lead = bodyPosition(pose.lead);
+    const follow = bodyPosition(pose.follow);
     const facing = normalizeDegrees(
       pose.follow.orientation - pose.lead.orientation,
     );
-    const misses = HOLD_POSITIONS.map((hold) => {
+    // An explicitly shaped body may keep close promenade contact while the
+    // supporting feet open a passing channel. This provisional 27 cm centre
+    // separation accounts for hip widths; the usual hold/facing tolerances
+    // still apply. Unshaped figures retain their existing hold checks.
+    const holds =
+      pose.lead.bodyOffset || pose.follow.bodyOffset
+        ? [
+            ...HOLD_POSITIONS,
+            {
+              name: "contact promenade",
+              facing: 270,
+              frame: 45,
+              at: { x: HOLD_OFFSET, y: 0.27 },
+            },
+          ]
+        : HOLD_POSITIONS;
+    const misses = holds.map((hold) => {
       // Smallest angle between her facing and the hold's, 0-180.
       const turnedBy = Math.abs(
         normalizeDegrees(facing - hold.facing + 180) - 180,
@@ -2121,6 +2150,7 @@ export function parseFigureDefinition(
     "pointing",
     "rise",
     "riseTiming",
+    "bodyOffset",
     "footwork",
     "weight",
     "air",
@@ -2148,6 +2178,14 @@ export function parseFigureDefinition(
     }
     checkNumber(`${path}rise`, object.rise);
     checkOneOf(`${path}riseTiming`, object.riseTiming, ["even", "late"]);
+    if (object.bodyOffset !== undefined) {
+      if (!isObject(object.bodyOffset))
+        problem(
+          `${path}bodyOffset`,
+          'should be { "forward": …, "right": … } in metres',
+        );
+      else checkOffset(`${path}bodyOffset`, object.bodyOffset);
+    }
     const checkFootwork = (where: string, v: unknown) => {
       if (v === undefined) return;
       if (typeof v !== "string" || !/^[HTBF]+$/.test(v)) {

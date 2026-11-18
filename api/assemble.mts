@@ -39,6 +39,8 @@ interface PartnerPoseRow {
   partner: Partner;
   orientation: number;
   rise: number;
+  body_offset_x: number;
+  body_offset_y: number;
 }
 
 interface FootStateRow {
@@ -51,7 +53,7 @@ interface FootStateRow {
 }
 
 const partnerPoseStmt = db.prepare(
-  "SELECT partner, orientation, rise FROM partner_poses WHERE pose_id = ?",
+  "SELECT partner, orientation, rise, body_offset_x, body_offset_y FROM partner_poses WHERE pose_id = ?",
 );
 const footStateStmt = db.prepare(
   "SELECT partner, foot, x, y, weight, direction FROM foot_states WHERE pose_id = ?",
@@ -93,6 +95,14 @@ export function assemblePose(poseId: number): Pose {
       right: buildFootState("right"),
       orientation: partnerRow.orientation,
       rise: partnerRow.rise,
+      ...(partnerRow.body_offset_x !== 0 || partnerRow.body_offset_y !== 0
+        ? {
+            bodyOffset: {
+              x: partnerRow.body_offset_x,
+              y: partnerRow.body_offset_y,
+            },
+          }
+        : {}),
     };
   };
 
@@ -181,6 +191,8 @@ interface DanceStepRow {
   orientation: number;
   foot_direction: number | null;
   rise: number;
+  body_offset_x: number;
+  body_offset_y: number;
   rise_timing: RiseTiming;
   footwork: string | null;
   beat: number;
@@ -190,7 +202,7 @@ interface DanceStepRow {
 
 const figureStmt = db.prepare("SELECT * FROM figures WHERE id = ?");
 const figureStepsStmt = db.prepare(
-  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, rise_timing, footwork, beat, duration, label
+  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, rise_timing, footwork, beat, duration, label, body_offset_x, body_offset_y
 	 FROM dance_steps WHERE figure_id = ? ORDER BY step_index`,
 );
 
@@ -215,6 +227,9 @@ export function assembleFigure(figureId: number): Figure {
       ? { footDirection: step.foot_direction }
       : {}),
     rise: step.rise,
+    ...(step.body_offset_x !== 0 || step.body_offset_y !== 0
+      ? { bodyOffset: { x: step.body_offset_x, y: step.body_offset_y } }
+      : {}),
     // "even" is the default and is left out, like weightTiming.
     ...(step.rise_timing === "late" ? { riseTiming: "late" as const } : {}),
     ...(step.footwork !== null ? { footwork: step.footwork } : {}),

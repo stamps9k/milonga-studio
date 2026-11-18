@@ -400,3 +400,21 @@ test("assembleDance: a missing dance throws a descriptive error", () => {
     /No dance with id 424242/,
   );
 });
+
+test("assemble: body offsets survive pose and step assembly; default zero stays optional", () => {
+  const poseId = insertPose();
+  assert.equal(assemble.assemblePose(poseId).lead.bodyOffset, undefined);
+  db.prepare(
+    "UPDATE partner_poses SET body_offset_x=.03, body_offset_y=-.04 WHERE pose_id=? AND partner='lead'",
+  ).run(poseId);
+  assert.deepEqual(assemble.assemblePose(poseId).lead.bodyOffset, {
+    x: 0.03,
+    y: -0.04,
+  });
+  const figureId = insertFigure("Body offset round trip");
+  db.prepare(
+    "UPDATE dance_steps SET body_offset_x=.05, body_offset_y=.06 WHERE figure_id=?",
+  ).run(figureId);
+  for (const step of assemble.assembleFigure(figureId).steps)
+    assert.deepEqual(step.bodyOffset, { x: 0.05, y: 0.06 });
+});

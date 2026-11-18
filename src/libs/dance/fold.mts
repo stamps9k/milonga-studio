@@ -9,6 +9,7 @@ import {
   angleBetweenDegrees,
   headingToUnitVector,
   lerp,
+  lerpPoint,
   lerpAngleDegrees,
   normalizeDegrees,
   rotatePoint,
@@ -931,6 +932,10 @@ export function poseAtBeat(
     lead: figure.startPose.lead.rise,
     follow: figure.startPose.follow.rise,
   };
+  const bodyOffsets: Record<Partner, Point2D> = {
+    lead: figure.startPose.lead.bodyOffset ?? { x: 0, y: 0 },
+    follow: figure.startPose.follow.bodyOffset ?? { x: 0, y: 0 },
+  };
   // How far each foot is tipped (footPitchAt): only a foot partway
   // through a step with footwork is.
   const pitches: Record<Partner, Record<Foot, number>> = {
@@ -985,6 +990,7 @@ export function poseAtBeat(
         step.footDirection ?? step.orientation;
       orientations[step.partner] = step.orientation;
       rises[step.partner] = step.rise;
+      bodyOffsets[step.partner] = step.bodyOffset ?? { x: 0, y: 0 };
       continue;
     }
 
@@ -1050,6 +1056,11 @@ export function poseAtBeat(
       step.rise,
       risePhase(step, progress),
     );
+    bodyOffsets[step.partner] = lerpPoint(
+      bodyOffsets[step.partner],
+      step.bodyOffset ?? { x: 0, y: 0 },
+      progress,
+    );
     pitches[step.partner][step.foot] = footPitchAt(step, footProgress);
   }
 
@@ -1073,6 +1084,9 @@ export function poseAtBeat(
     right: footState(partner, "right"),
     orientation: orientations[partner],
     rise: rises[partner],
+    ...(Math.hypot(bodyOffsets[partner].x, bodyOffsets[partner].y) > 1e-12
+      ? { bodyOffset: bodyOffsets[partner] }
+      : {}),
   });
 
   return { lead: buildPartnerPose("lead"), follow: buildPartnerPose("follow") };

@@ -1,7 +1,7 @@
 import { footHeading } from "../dance/pose.mts";
 import type { PartnerPose, Pose } from "../dance/pose.mts";
 import type { Foot, Partner } from "../dance/step.mts";
-import { centerOfWeight } from "../dance/weight.mts";
+import { bodyPosition } from "../dance/weight.mts";
 import { DEFAULT_PROPORTIONS } from "./proportions.mts";
 import type { BodyProportions } from "./proportions.mts";
 import {
@@ -21,15 +21,15 @@ import type { Point3D } from "./vector3.mts";
  * the weight on each, a facing and a rise per dancer) into a full
  * skeleton for each dancer, for the 3D view to draw.
  *
- * The model says only where the feet are and where the weight is; the
+ * The model supplies feet, weight and an optional pelvis displacement; the
  * rest of the body is worked out here, the way a dancer's body follows
  * their feet:
  * - the feet are planted where the model puts them, toes the way the
- *   body faces (the model has no separate foot direction yet), heels
+ *   foot direction specifies (defaulting to body facing), heels
  *   raised by the rise;
- * - the hips sit over the weight (centerOfWeight, as the 2D view's body
- *   marker does), facing the way the body faces, at standing height plus
- *   the rise -- lowered just enough for both legs to reach their feet
+ * - the hips use bodyPosition (weighted feet plus any authored horizontal
+ *   offset, shared with the 2D marker), facing the body heading, at standing
+ *   height plus the rise -- lowered just enough for both legs to reach their feet
  *   when the feet are far apart (a long stride sinks the hips);
  * - the knees bend forwards to join hip and ankle (two-bone IK, keeping
  *   the thigh and shin lengths);
@@ -252,9 +252,9 @@ export function solvePartnerSkeleton(
   const along = (from: Point3D, f: number, r: number, u: number): Point3D =>
     add(from, add(scale(forward, f), add(scale(right, r), scale(UP, u))));
 
-  // Hips: over the weight (horizontally), at standing height plus the
-  // rise unless the legs can't reach their feet from there.
-  const weight = centerOfWeight(pose);
+  // Hips: at the authored horizontal body position, at standing height
+  // plus rise unless the legs can't reach their feet from there.
+  const weight = bodyPosition(pose);
   const pelvisFloor = vec(weight.x, weight.y, 0);
   const leg = body.thigh + body.shin - KNEE_SLACK;
   const hipJointFloor = (side: Foot) =>

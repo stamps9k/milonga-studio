@@ -314,3 +314,19 @@ test("seed: the waltz and cha-cha sequences join cleanly at every figure boundar
     }
   }
 });
+
+test("seed: intermediate body placement survives the figure/database/API round trip", () => {
+  const source = FIGURE_FILES.find((f) => f.name === "Closed Promenade")!;
+  const stored = figures.find((f) => f.name === source.name)!;
+  assert.ok(source.steps.some((s) => s.bodyOffset));
+  assert.deepEqual(
+    stored.steps.map((s) => s.bodyOffset),
+    source.steps.map((s) => s.bodyOffset),
+  );
+  for (const beat of [0.5, 1, 1.25, 1.5, 1.75, 2, 2.5, 3]) {
+    const a = poseAtBeat(source as Figure, beat),
+      b = poseAtBeat(stored, beat);
+    for (const partner of ["lead", "follow"] as const)
+      assert.deepEqual(b[partner].bodyOffset, a[partner].bodyOffset);
+  }
+});

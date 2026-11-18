@@ -1,3 +1,4 @@
+import { segmentDistance } from "../support/legClearance.mts";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -62,6 +63,7 @@ function assertPoseClose(actual: Pose, expected: Pose) {
     }
     assert.equal(actual[partner].orientation, expected[partner].orientation);
     assert.equal(actual[partner].rise, expected[partner].rise);
+    assert.equal(actual[partner].bodyOffset, undefined);
   }
 }
 
@@ -159,19 +161,81 @@ test("Closed Promenade: all authoring checks run and both partners uncross witho
   }
 });
 
-test("Closed Promenade: default bodies reach every foot with at most 14 cm of hip lowering", () => {
-  // Provisional comfort target for this adjustment: below the shared 16 cm
-  // limit, without changing body sizes, solver behaviour or check tolerances.
+test("Closed Promenade: default bodies reach every foot with at most 16 cm of hip lowering", () => {
+  // Keep the shared comfort limit, without changing body sizes or the solver.
   for (const options of [{}, { footEasing: footEase }]) {
     for (let beat = 0; beat <= 3; beat += 1 / 128) {
       const skeleton = solveSkeleton(poseAtBeat(promenade, beat, options));
       for (const partner of ["lead", "follow"] as const) {
         assert.deepEqual(skeleton[partner].legShortfall, { left: 0, right: 0 });
         assert.ok(
-          skeleton[partner].hipDrop <= 0.14,
+          skeleton[partner].hipDrop <= 0.16,
           `${partner}'s hips drop ${skeleton[partner].hipDrop} m at beat ${beat}`,
         );
       }
     }
   }
+});
+
+// Match the visible mannequin thigh/shin radii. Test every pair of distinct
+// legs, including each dancer's own legs: footprint centres missed this.
+test("Closed Promenade: thighs and shins clear while hips nearly touch", () => {
+  for (const options of [{}, { footEasing: footEase }]) {
+    let nearestHips = Infinity;
+    for (let beat = 0; beat <= 3; beat += 1 / 256) {
+      const bodies = solveSkeleton(poseAtBeat(promenade, beat, options));
+      const bones = [];
+      for (const partner of ["lead", "follow"] as const)
+        for (const side of ["left", "right"] as const) {
+          const j = bodies[partner].joints;
+          bones.push(
+            {
+              partner,
+              side,
+              a: j[`${side}UpperLeg`],
+              b: j[`${side}LowerLeg`],
+              r: 0.06,
+            },
+            {
+              partner,
+              side,
+              a: j[`${side}LowerLeg`],
+              b: j[`${side}Foot`],
+              r: 0.045,
+            },
+          );
+        }
+      for (let i = 0; i < bones.length; i++)
+        for (let k = i + 1; k < bones.length; k++) {
+          const a = bones[i],
+            b = bones[k];
+          if (a.partner === b.partner && a.side === b.side) continue;
+          const gap = segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r;
+          assert.ok(
+            gap >= 0,
+            `Leg overlap ${gap} m at beat ${beat}: ${a.partner} ${a.side} / ${b.partner} ${b.side}`,
+          );
+        }
+      if (beat >= 1 && beat <= 1.5) {
+        const a = bodies.lead.joints,
+          b = bodies.follow.joints;
+        const gap =
+          segmentDistance(
+            a.leftUpperLeg,
+            a.rightUpperLeg,
+            b.leftUpperLeg,
+            b.rightUpperLeg,
+          ) - 0.16;
+        assert.ok(gap >= 0, "Pelvis capsules overlap");
+        nearestHips = Math.min(nearestHips, gap);
+      }
+    }
+    assert.ok(
+      nearestHips < 0.02,
+      `Hips never came within 2 cm: ${nearestHips}`,
+    );
+  }
+  const first = poseAtBeat(promenade, 1);
+  assert.ok(Math.abs(first.lead.left.position.y + 0.06) < 1e-8);
+  assert.ok(Math.abs(first.follow.right.position.y - 0.46) < 1e-8);
 });

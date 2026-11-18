@@ -76,6 +76,7 @@ if (existingFigures > 0) {
 interface PartnerPoseSpec {
   orientation: number;
   rise: number;
+  bodyOffset?: { x: number; y: number };
   left: [number, number, number, number | null]; // [x, y, weight, direction]
   right: [number, number, number, number | null];
 }
@@ -87,7 +88,7 @@ interface PoseSpec {
 
 const insertPose = db.prepare("INSERT INTO poses DEFAULT VALUES");
 const insertPartnerPose = db.prepare(
-  "INSERT INTO partner_poses (pose_id, partner, orientation, rise) VALUES (?, ?, ?, ?)",
+  "INSERT INTO partner_poses (pose_id, partner, orientation, rise, body_offset_x, body_offset_y) VALUES (?, ?, ?, ?, ?, ?)",
 );
 const insertFootState = db.prepare(
   "INSERT INTO foot_states (pose_id, partner, foot, x, y, weight, direction) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -105,8 +106,8 @@ const insertFigure = db.prepare(
 );
 const insertStep = db.prepare(
   `INSERT INTO dance_steps
-	 (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, rise_timing, footwork, beat, duration, label)
-	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+	 (figure_id, step_index, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, rise, rise_timing, footwork, beat, duration, label, body_offset_x, body_offset_y)
+	 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 );
 const insertTransform = db.prepare(
   "INSERT INTO floor_transforms (x, y, rotation) VALUES (?, ?, ?)",
@@ -128,7 +129,14 @@ function seedPose(spec: PoseSpec): number {
   const poseId = insertPose.run().lastInsertRowid as number;
   for (const partner of ["lead", "follow"] as const) {
     const p = spec[partner];
-    insertPartnerPose.run(poseId, partner, p.orientation, p.rise);
+    insertPartnerPose.run(
+      poseId,
+      partner,
+      p.orientation,
+      p.rise,
+      p.bodyOffset?.x ?? 0,
+      p.bodyOffset?.y ?? 0,
+    );
     for (const foot of ["left", "right"] as const) {
       const [x, y, weight, direction] = p[foot];
       insertFootState.run(poseId, partner, foot, x, y, weight, direction);
@@ -157,6 +165,7 @@ function poseToSpec(pose: Pose): PoseSpec {
   const partner = (p: Pose["lead"]): PartnerPoseSpec => ({
     orientation: p.orientation,
     rise: p.rise,
+    ...(p.bodyOffset ? { bodyOffset: p.bodyOffset } : {}),
     left: [
       p.left.position.x,
       p.left.position.y,
@@ -224,6 +233,8 @@ function seedFigure(figure: AuthoredFigure): SeededFigure {
       step.beat,
       step.duration,
       step.label ?? null,
+      step.bodyOffset?.x ?? 0,
+      step.bodyOffset?.y ?? 0,
     );
   });
 
