@@ -365,17 +365,18 @@ the owner before building more on top of them.
   figure. The leg-capsule proxy still overlaps by up to ~2.5 cm during the
   initial crossed-stance release; the close and final step clear capsules.
   That residual proxy limitation is documented, not full mesh clearance.
-  Open Natural Turn also has no authoring exemptions after its provisional
-  2026-11-18 repair: the lead opens with 80 cm travel instead of 90 cm, the
-  follow's first landing widens 1 cm, and adjusted arcs clear the uncross and
-  close. A 4 cm floor +y pelvis displacement for the follow on count 2 brings
-  the hold inside the unchanged 20 cm tolerance, then returns to zero. All
-  landings from count 2 onward, entry/exit poses, frame turns, timing, weights
-  and flat rise are preserved. The intentional first cross stays marked
-  `cross: true`; full-footprint regressions cover the follow throughout and
-  both dancers after that crossing. Leg proxies still overlap during the
-  cross/uncross (~12 cm); the final close clears them. Reach and lateral
-  balance checks cover the whole figure without exclusions.
+  Open Natural Turn has no authoring or body-test exemptions. Its opening
+  now gathers the hips (lead floor +4 cm x/+4 cm y, follow -8 cm x/-4 cm y),
+  routes the lead's inner foot 65 cm along travel and 14 cm inward on a shallow
+  -20-degree arc, and points it along travel. The lead begins with 5 degrees
+  of body turn, then turns 100 degrees on count 2 and 30 on the close. This
+  lets the leg pass before the pelvis rotates across it. Full footprints and
+  all thigh/shin capsule pairs clear throughout linear/eased playback, without
+  a cross flag. Original entry/exit, count-2 outer-foot landings, follow turns,
+  weights, timing and flat rise remain; body offsets reset on the close.
+  The preceding Chassé is unchanged. These are provisional modelling choices
+  for subjective review; reach, lowering and lateral balance remain checked.
+
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from

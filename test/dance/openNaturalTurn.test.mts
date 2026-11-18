@@ -113,7 +113,7 @@ test("Open Natural Turn: original entry/exit poses and count-2 landings are pres
   }
 });
 
-test("Open Natural Turn: original body turns, foot order, counts and flat rise remain", () => {
+test("Open Natural Turn: total turn, foot order, counts and flat rise remain", () => {
   assert.equal(figureDurationBeats(natural), 3);
   for (const partner of ["lead", "follow"] as const) {
     const steps = natural.steps.filter((s) => s.partner === partner);
@@ -133,7 +133,7 @@ test("Open Natural Turn: original body turns, foot order, counts and flat rise r
     );
     assert.deepEqual(
       steps.map((s) => s.orientation),
-      partner === "lead" ? [0, 60, 90] : [255, 240, 270],
+      partner === "lead" ? [320, 60, 90] : [255, 240, 270],
     );
     assert.deepEqual(
       steps.map((s) => s.rise),
@@ -144,8 +144,8 @@ test("Open Natural Turn: original body turns, foot order, counts and flat rise r
   const first = definition("open-natural-turn").steps[0].lead;
   assert.equal(
     typeof first === "object" && "go" in first ? first.cross : false,
-    true,
-    "The first cross is intentional technique, not a figure exemption",
+    undefined,
+    "The passing channel must clear without an intentional-cross exemption",
   );
   const lead = natural.steps[2].movement;
   assert.equal(lead.type, "arc");
@@ -186,15 +186,11 @@ test("Open Natural Turn: all authoring checks run and the closed hold has margin
   assert.equal(poseAtBeat(natural, 3).follow.bodyOffset, undefined);
 });
 
-test("Open Natural Turn: follow footprints clear throughout and both clear after the intentional cross", () => {
+test("Open Natural Turn: both partners’ footprints clear throughout", () => {
   for (const options of [{}, { footEasing: footEase }])
     for (let beat = 0; beat <= 3; beat += 1 / 256) {
       const p = poseAtBeat(natural, beat, options);
       for (const partner of ["lead", "follow"] as const) {
-        // The existing first-step cross intentionally passes one foot over the
-        // other. Authoring validates its crossing order; do not call that flat
-        // projected overlap a new blanket exemption for the rest of the figure.
-        if (partner === "lead" && beat < 1) continue;
         const a = p[partner];
         assert.ok(
           footprintGap(
@@ -225,12 +221,11 @@ test("Open Natural Turn: reach, hip lowering and lateral balance pass throughout
     }
 });
 
-test("Open Natural Turn: the final close clears full thigh/shin capsules", () => {
-  // The deliberate cross/uncross still overlaps the mannequin leg proxies
-  // (~12 cm), as before. This extra check covers the final close; full-figure
-  // reach/balance and non-crossing footprints are checked independently above.
+test("Open Natural Turn: the whole figure clears full thigh/shin capsules", () => {
+  // Check all pairs, including each dancer’s two thighs, throughout the
+  // opening passage and the subsequent turn. Use the renderer’s capsule sizes.
   for (const options of [{}, { footEasing: footEase }])
-    for (let beat = 2; beat <= 3; beat += 1 / 256) {
+    for (let beat = 0; beat <= 3; beat += 1 / 256) {
       const s = solveSkeleton(poseAtBeat(natural, beat, options)),
         bones = [];
       for (const partner of ["lead", "follow"] as const)
@@ -264,4 +259,28 @@ test("Open Natural Turn: the final close clears full thigh/shin capsules", () =>
           );
         }
     }
+});
+
+// The original straight passage turned the pelvis across the inner leg. Pin
+// the new mechanism as well as the resulting clearance: gather the hips, keep
+// the passing foot along travel, and complete the body turn on the next count.
+test("Open Natural Turn: inner leg passes beneath close hips before the main body turn", () => {
+  const p = poseAtBeat(natural, 1),
+    s = solveSkeleton(p);
+  close(footHeading(p.lead, "right"), 270);
+  close(p.lead.orientation, 320);
+  close(p.lead.bodyOffset!.x, 0.04);
+  close(p.lead.bodyOffset!.y, 0.04);
+  close(p.follow.bodyOffset!.x, -0.08);
+  close(p.follow.bodyOffset!.y, -0.04);
+  const l = s.lead.joints,
+    f = s.follow.joints;
+  const gap =
+    segmentDistance(
+      l.leftUpperLeg,
+      l.rightUpperLeg,
+      f.leftUpperLeg,
+      f.rightUpperLeg,
+    ) - 0.16;
+  assert.ok(gap >= 0 && gap < 0.04, `Hip contact gap ${gap} m`);
 });
