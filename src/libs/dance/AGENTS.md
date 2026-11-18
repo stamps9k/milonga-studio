@@ -151,10 +151,11 @@ the owner before building more on top of them.
   for a step's `path` (`curveAround`): `"around the front"` sets off the
   way the dancer faces, `"around the back"` diagonally back towards the
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
-  Turn's uncrossing uses `"around the back"`. Closed Promenade overrides
+  Turn's uncrossing uses `"around the back"` with a -100-degree departure
+  after its clearance repair. Closed Promenade overrides
   that preset with authoring-only `pathSetOff` (degrees clockwise from each
   dancer before the step): -50 lead / +50 follow, making shallow arcs
-  almost along travel instead of the wide 135-degree back swing. The
+  almost along travel instead of the wide 135-degree back swing.
   Row `path` and `pathSetOff` can also name lead/follow separately; an
   omitted partner keeps the ordinary route. This lets Back Corté curve only
   the lead's third step without changing the follow's mirrored placement. The
@@ -335,8 +336,8 @@ the owner before building more on top of them.
   only the feet's middles, so before this a foot could land on the other
   or swing its toes into it unnoticed (the forward box halves did).
   Figures known to be wrong opt out with `skipChecks` and a note; at the
-  time of writing that's the old Argentine tango figures, and for "own
-  feet" Open Natural Turn, waiting for the figure clean-up. The box turns pass every check. Closed Promenade also
+  time of writing that's only the old Argentine tango figures. The box
+  turns pass every check. Closed Promenade also
   passes every check after its provisional 2026-11-18 adjustment: the first
   slow advances 4 cm and widens each outer foot 6 cm from the unchanged
   starting stance. Authored body offsets bring the hips nearly into contact
@@ -364,6 +365,23 @@ the owner before building more on top of them.
   figure. The leg-capsule proxy still overlaps by up to ~2.5 cm during the
   initial crossed-stance release; the close and final step clear capsules.
   That residual proxy limitation is documented, not full mesh clearance.
+  Open Natural Turn has no figure-level authoring or body-test exclusions.
+  Its deeper opening travels 15 cm farther along the line for each inner foot:
+  lead 80 cm along -x/22 cm inward, follow about 54.74 cm along -x/4.97 cm inward.
+  Shallow departures are -20 lead/+30 follow, with both feet pointing along
+  travel. Pelvis offsets are lead floor +4 cm x/+4 cm y and follow -4 cm x/+4 cm y;
+  the pelvis rods approach within 2.4 cm. The lead keeps 5/100/30 degrees of
+  body turn; the follow keeps the original turns. Earlier closed hold is not
+  needed. Count-2 departures -100 lead/+50 follow and a -70 follow closing
+  departure accommodate the deeper placements. The lead stride deliberately
+  crosses in the body frame (`cross: true`), but dense full-footprint and
+  thigh/shin checks cover the whole figure without skipping that interval.
+  Default mannequin capsules clear by over 1 cm; hip lowering stays below 5 cm.
+  Original entry/exit, count-2 outer-foot landings, weights, timing and flat
+  rise remain; body offsets reset on the close. The preceding Chassé is unchanged.
+  These are provisional modelling choices for subjective review; shared reach,
+  lowering, balance and geometry limits remain unchanged.
+
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
@@ -375,10 +393,8 @@ the owner before building more on top of them.
   promenade reference (27 cm centre separation) with the same tolerances,
   reflecting hip contact while supporting feet open a passing channel.
   Unshaped figures keep the original checks. Figures opting out ("hold" in
-  `skipChecks`): Open Natural Turn (out of hold until its turning close,
-  waiting for the clean-up), and the Cruzada and Ocho (Argentine tango,
-  not a ballroom hold). Back Corté's earlier hold exemption was already
-  removed when its turn was shared through the close.
+  `skipChecks`): Cruzada and Ocho (Argentine tango, not a ballroom hold).
+  Back Corté and Open Natural Turn now run the hold check too.
 - The model changes agreed with the owner on 2026-11-17 (a hold check,
   foot direction separate from the body's facing, a couple turn that
   continues through a close) are all done; see above. The box turns use
