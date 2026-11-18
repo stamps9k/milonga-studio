@@ -65,7 +65,7 @@ const ActiveStep = ({ entries, currentBeat }: ActiveStepProps) => {
   }, [entries, currentBeat]);
 
   return (
-    <div className="d-flex align-items-center px-4 py-3 border-top font-monospace">
+    <div className="active-step d-flex align-items-center px-4 py-3 border-top font-monospace">
       <span
         className="text-body-secondary text-truncate d-inline-block flex-shrink-0 border-end pe-3"
         style={{ width: "17%" }}>

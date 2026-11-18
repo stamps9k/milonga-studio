@@ -67,10 +67,7 @@ const Canvas2D = ({
   const empty = entries.length === 0;
 
   return (
-    <div
-      id="view2d"
-      className="canvas-grid position-relative"
-      style={{ height: "50vh" }}>
+    <div id="view2d" className="dance-view canvas-grid position-relative">
       {empty && (
         <div className="d-flex align-items-center justify-content-center h-100 text-body-secondary small">
           Select figures from the library to see them here.
@@ -78,7 +75,10 @@ const Canvas2D = ({
       )}
       {/* Kept mounted while the sequence is empty, so the renderer
           survives a sequence being emptied and refilled. */}
-      <div ref={hostRef} className={empty ? "d-none" : "h-100"} />
+      <div
+        ref={hostRef}
+        className={empty ? "d-none" : "canvas-renderer h-100"}
+      />
       {!empty && <CanvasLegend />}
       {!empty && <PartnerToggle shown={shown} onToggle={onToggleShown} />}
     </div>

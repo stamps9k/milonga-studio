@@ -1,0 +1,385 @@
+/* Let the floor use the space remaining after the application controls.
+   On narrow screens the page scrolls normally; only the catalogue/sequence
+   have their own bounded scrolling areas. */
+.app {
+  min-width: 0;
+}
+.studio-content {
+  padding: 0.75rem 1rem;
+}
+.studio-layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 23%) minmax(0, 1fr);
+  gap: 0.875rem;
+}
+.studio-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-width: 0;
+  min-height: 0;
+}
+.figure-library {
+  contain: size;
+  min-height: 0;
+  min-width: 0;
+}
+.figure-library > .card {
+  height: 100%;
+  padding: 0.75rem !important;
+}
+.figure-library-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.library-toggle {
+  display: none;
+}
+.dance-view-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.dance-view {
+  min-height: 0;
+  height: clamp(15rem, 44vh, 34rem);
+}
+.canvas-renderer {
+  min-height: 0;
+}
+.active-step {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem !important;
+  font-size: 0.8125rem;
+}
+.active-step > span {
+  padding-left: 0.625rem !important;
+  padding-right: 0.625rem !important;
+}
+.active-step > span:first-child {
+  padding-left: 0 !important;
+}
+.sequence-panel {
+  flex-shrink: 0;
+  padding: 0.625rem 0.75rem !important;
+}
+.sequence-heading {
+  margin-bottom: 0.25rem !important;
+}
+.sequence-strip {
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.25rem !important;
+  scrollbar-width: thin;
+}
+.sequence-panel .seq-chip {
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.625rem;
+}
+.studio-timeline {
+  flex-shrink: 0;
+  gap: 0.5rem !important;
+}
+.timeline-time {
+  font-size: 0.8125rem;
+}
+.tempo-controls {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+}
+.canvas-legend {
+  max-height: calc(100% - 1rem);
+  overflow: auto;
+}
+.dance-document {
+  flex: 1;
+}
+
+/* Details dialogs wrap their body/footer in a form. Let that wrapper shrink
+   too, so Bootstrap can scroll the body while keeping actions reachable. */
+.modal-dialog-scrollable .modal-content > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 992px) {
+  /* Include the site header/footer instead of guessing a fixed toolbar offset.
+     Very short windows can still scroll rather than clipping the controls. */
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 640px;
+  }
+  body > nav,
+  body > footer {
+    flex-shrink: 0;
+  }
+  body > footer.py-4 {
+    padding-block: 0.5rem !important;
+  }
+  body > main {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+  #root {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+  .app {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .studio-toolbar {
+    flex-shrink: 0;
+  }
+  .studio-content {
+    flex: 1;
+    min-height: 0;
+  }
+  .studio-layout {
+    height: 100%;
+  }
+  .dance-view-card {
+    flex: 1;
+    min-height: 12rem;
+  }
+  .dance-view {
+    flex: 1;
+    height: auto;
+  }
+}
+
+@media (max-width: 991px) {
+  .studio-content {
+    padding: 0.625rem 0.75rem;
+  }
+  .studio-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.625rem;
+  }
+  .figure-library {
+    contain: none;
+  }
+  .figure-library > .card {
+    height: auto;
+    padding: 0.5rem 0.75rem !important;
+  }
+  .library-heading {
+    display: none;
+  }
+  .library-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 44px;
+    width: 100%;
+  }
+  .figure-library-content {
+    display: none;
+    max-height: min(45svh, 24rem);
+  }
+  .library-open .figure-library-content {
+    display: flex;
+    padding-top: 0.75rem;
+  }
+  .figure-library input[type="text"],
+  .modal input,
+  .modal textarea,
+  .modal select {
+    font-size: 1rem;
+    min-height: 44px;
+  }
+  .app-toolbar .dropdown-item,
+  .modal .btn,
+  .modal .btn-close {
+    min-height: 44px;
+  }
+  .modal .btn-close {
+    min-width: 44px;
+  }
+  .figure-library .style-toggle {
+    min-height: 44px;
+  }
+  .figure-library .step-item {
+    min-height: 44px;
+  }
+  .dance-view {
+    height: clamp(18rem, 45svh, 26rem);
+  }
+  .active-step {
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 0.375rem;
+  }
+  .active-step > span {
+    width: auto !important;
+    min-width: 0;
+    padding: 0 !important;
+    border: 0 !important;
+    white-space: normal;
+    overflow: visible;
+  }
+  .app-toolbar {
+    padding-inline: 0.75rem !important;
+    gap: 0.375rem !important;
+  }
+  .app-toolbar .btn,
+  .studio-timeline > button,
+  .tempo-controls .btn,
+  .tempo-controls input[type="number"],
+  .tempo-controls select {
+    min-height: 44px;
+  }
+  .sequence-panel .seq-remove {
+    position: static;
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 18px;
+    margin-left: 0.25rem;
+  }
+  .sequence-panel .seq-item {
+    display: inline-flex;
+    align-items: center;
+  }
+  .sequence-panel .seq-chip {
+    padding-block: 0.5rem;
+  }
+  .sequence-panel .sequence-heading button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .canvas-legend summary {
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+  }
+  .partner-toggle button {
+    min-height: 36px;
+    min-width: 64px;
+  }
+  /* Camera choices belong above the floor on touch screens, not on top of
+     the dancers. The renderer observes the remaining host size as it changes. */
+  #view3d {
+    min-height: clamp(18rem, 45svh, 26rem);
+    display: flex;
+    flex-direction: column;
+    height: auto;
+  }
+  #view3d .canvas-renderer {
+    height: auto !important;
+    min-height: clamp(16rem, 40svh, 24rem);
+  }
+  #view3d .camera-controls {
+    position: static !important;
+    order: -1;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0.5rem;
+  }
+  #view3d .camera-controls .btn-group {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  #view3d .camera-controls .btn {
+    min-height: 44px;
+  }
+  #view3d .partner-toggle {
+    top: auto;
+    bottom: 2rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .app-brand {
+    order: 1;
+    flex: 1;
+    padding-right: 0 !important;
+    border: 0 !important;
+  }
+  .app-brand h1 {
+    font-size: 0.875rem !important;
+  }
+  .dance-save {
+    order: 2;
+  }
+  .app-view-toggle {
+    order: 3;
+    margin-left: 0 !important;
+  }
+  .app-toolbar > nav {
+    order: 4;
+    flex-basis: 100%;
+    justify-content: space-between;
+  }
+  .dance-document {
+    order: 5;
+    flex-basis: 100%;
+    border: 0 !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+  }
+  .studio-timeline {
+    flex-wrap: wrap;
+  }
+  .timeline-track {
+    order: 5;
+    flex-basis: 100%;
+    margin: 0 !important;
+  }
+  .timeline-time {
+    margin-left: auto;
+  }
+  .studio-timeline .form-range {
+    min-height: 36px;
+  }
+  .studio-timeline .timeline-segments {
+    height: 2rem;
+  }
+  .studio-timeline .timeline-segment {
+    line-height: 2rem;
+  }
+  .tempo-controls {
+    gap: 0.375rem !important;
+  }
+  .tempo-controls .tempo-label {
+    flex-basis: 100%;
+  }
+  .tempo-controls .metronome-toggle {
+    margin-left: 0 !important;
+    flex-basis: 48%;
+    min-height: 44px;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding-left: 2.5em;
+  }
+  .metronome-toggle .form-check-label {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .tempo-controls .form-select {
+    flex: 1;
+    min-width: 0;
+  }
+  .tempo-controls .tempo-default {
+    flex: 1 1 auto;
+  }
+  .tempo-controls .tempo-input {
+    font-size: 1rem;
+  }
+}

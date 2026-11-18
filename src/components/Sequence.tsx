@@ -1,4 +1,5 @@
-import { Fragment, useMemo } from "react";
+import { Fragment, useMemo, useState } from "react";
+import AppDialog from "./AppDialog";
 
 import { assessSequenceJoins } from "../libs/dance/join.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
@@ -20,12 +21,13 @@ const Sequence = ({
   error,
   onRemove,
 }: SequenceProps) => {
+  const [expanded, setExpanded] = useState(false);
   // A warning sits before any figure that doesn't follow on cleanly from
   // the one before it, with the reasons in its tooltip.
   const joins = useMemo(() => assessSequenceJoins(entries), [entries]);
 
   return (
-    <div className="card p-3">
+    <div className="sequence-panel card p-3">
       <style>{`
         .seq-item {
           position: relative;
@@ -60,13 +62,13 @@ const Sequence = ({
           pointer-events: auto;
         }
       `}</style>
-      <div className="d-flex align-items-center justify-content-between mb-2">
+      <div className="sequence-heading d-flex align-items-center justify-content-between mb-2">
         <div className="eyebrow">Sequence</div>
         <button
           className="btn btn-outline-light btn-sm p-1"
           type="button"
-          data-bs-toggle="modal"
-          data-bs-target="#sequenceModal">
+          aria-label="View full sequence"
+          onClick={() => setExpanded(true)}>
           <svg
             width="13"
             height="13"
@@ -95,7 +97,7 @@ const Sequence = ({
           this scroll container. */}
       {/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- This labeled scroll region needs focus for native keyboard scrolling. */}
       <div
-        className="d-flex align-items-center flex-nowrap overflow-auto pt-2 pe-2 pb-2"
+        className="sequence-strip d-flex align-items-center flex-nowrap overflow-auto pt-2 pe-2 pb-2"
         style={{ minWidth: 0, maxWidth: "100%" }}
         role="region"
         aria-label="Dance sequence"
@@ -156,7 +158,7 @@ const Sequence = ({
           className="btn btn-outline-light p-2 flex-shrink-0"
           type="button"
           disabled
-          title="Add figures from the Step Library on the left">
+          title="Add figures from the figure library">
           <svg
             width="14"
             height="14"
@@ -171,6 +173,51 @@ const Sequence = ({
         </button>
       </div>
       {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
+      {expanded && (
+        <AppDialog title="Dance sequence" onClose={() => setExpanded(false)}>
+          <div className="modal-body">
+            {entries.length === 0 ? (
+              <p className="mb-0 text-body-secondary">
+                No figures in the sequence yet.
+              </p>
+            ) : (
+              <ol className="list-group list-group-numbered">
+                {entries.map((entry, index) => (
+                  <li
+                    key={`${entry.figure.id}-${index}`}
+                    className="list-group-item d-flex align-items-center gap-2">
+                    <div className="flex-grow-1 text-break">
+                      {entry.figure.name}
+                      {joins[index] && !joins[index]!.fits && (
+                        <div className="small text-warning">
+                          {describeJoin(joins[index]!).join("; ")}
+                        </div>
+                      )}
+                    </div>
+                    {onRemove && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-danger flex-shrink-0"
+                        aria-label={`Remove ${entry.figure.name} from the sequence`}
+                        onClick={() => onRemove(index)}>
+                        Remove
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              className="btn btn-outline-secondary"
+              onClick={() => setExpanded(false)}>
+              Close
+            </button>
+          </div>
+        </AppDialog>
+      )}
     </div>
   );
 };

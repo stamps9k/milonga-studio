@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import "./workspace.css";
 
 import DanceControls from "../components/DanceControls";
 import type { Dance } from "../libs/dance/dance.mts";
@@ -141,8 +144,8 @@ const Studio = ({ initialDance, localId, onOpen }: StudioProps) => {
                   canExport={entries.length > 0 && !loading}
                 />
               </Toolbar>
-              <div className="container-fluid px-4 py-4">
-                <div className="row g-4">
+              <div className="studio-content">
+                <div className="studio-layout">
                   <StepLibrary
                     onSelectFigure={addFigure}
                     sequenceEnd={
@@ -151,10 +154,8 @@ const Studio = ({ initialDance, localId, onOpen }: StudioProps) => {
                         : null
                     }
                   />
-                  <div
-                    className="col-9 d-flex flex-column gap-4"
-                    style={{ minWidth: 0 }}>
-                    <div className="card overflow-hidden">
+                  <div className="studio-workspace" style={{ minWidth: 0 }}>
+                    <div className="card overflow-hidden dance-view-card">
                       {view === "2d" ? (
                         <Canvas2D
                           entries={entries}
