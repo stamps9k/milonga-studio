@@ -70,7 +70,7 @@ const TempoControls = ({
           font-size: 0.8rem;
         }
       `}</style>
-      <span className="eyebrow me-1">Tempo</span>
+      <span className="tempo-label eyebrow me-1">Tempo</span>
       <button
         type="button"
         className="btn btn-outline-light btn-sm"
@@ -132,7 +132,7 @@ const TempoControls = ({
           {bpm * perBeat} clicks a minute
         </span>
       )}
-      <div className="form-check form-switch ms-auto mb-0">
+      <div className="metronome-toggle form-check form-switch ms-auto mb-0">
         <input
           className="form-check-input"
           type="checkbox"

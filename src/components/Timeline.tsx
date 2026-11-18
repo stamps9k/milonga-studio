@@ -36,7 +36,7 @@ const Timeline = ({
   const disabled = totalBeats <= 0;
 
   return (
-    <div className="d-flex align-items-center gap-3">
+    <div className="studio-timeline d-flex align-items-center gap-3">
       <style>{`
         /* The segment bar is inset by half the range thumb's width
            (Bootstrap's 1rem thumb) on each side, because the thumb's
@@ -122,7 +122,7 @@ const Timeline = ({
       {/* Flex items otherwise keep their min-content width: a long segment
           bar would widen the page even though the sequence strip scrolls. */}
       <div
-        className="flex-fill mx-2 d-flex flex-column"
+        className="timeline-track flex-fill mx-2 d-flex flex-column"
         style={{ minWidth: 0 }}>
         <input
           type="range"
@@ -162,7 +162,7 @@ const Timeline = ({
           </div>
         )}
       </div>
-      <span className="font-monospace text-body-secondary flex-shrink-0">
+      <span className="timeline-time font-monospace text-body-secondary flex-shrink-0">
         {formatBeats(beat)} / {formatBeats(totalBeats)} beats
       </span>
     </div>

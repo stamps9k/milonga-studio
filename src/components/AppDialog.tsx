@@ -107,7 +107,7 @@ const AppDialog = ({ title, children, onClose, busy = false }: Props) => {
 
   return createPortal(
     <div ref={host} className="modal" tabIndex={-1} aria-labelledby={id}>
-      <div className="modal-dialog modal-dialog-centered">
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div className="modal-content shadow-lg">
           <div className="modal-header">
             <h2 className="modal-title fs-5" id={id}>

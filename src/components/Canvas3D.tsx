@@ -140,7 +140,7 @@ const Canvas3D = ({
   const empty = entries.length === 0;
 
   return (
-    <div id="view3d" className="position-relative" style={{ height: "50vh" }}>
+    <div id="view3d" className="dance-view position-relative">
       {empty && (
         <div className="d-flex align-items-center justify-content-center h-100 text-body-secondary small">
           Select figures from the library to see them here.
@@ -153,12 +153,15 @@ const Canvas3D = ({
       )}
       {/* Kept mounted while the sequence is empty, so the renderer
           survives a sequence being emptied and refilled. */}
-      <div ref={hostRef} className={empty ? "d-none" : "h-100"} />
+      <div
+        ref={hostRef}
+        className={empty ? "d-none" : "canvas-renderer h-100"}
+      />
       {!empty && ready && (
         <>
           <PartnerToggle shown={shown} onToggle={onToggleShown} />
           <div
-            className="position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-2 align-items-center"
+            className="camera-controls position-absolute top-0 start-0 m-2 d-flex flex-wrap gap-2 align-items-center"
             style={{ maxWidth: "70%" }}>
             <div
               className="btn-group btn-group-sm"

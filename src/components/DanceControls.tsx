@@ -358,7 +358,7 @@ const DanceControls = ({
         </div>
       </nav>
       <div
-        className="d-flex align-items-center gap-2 border-start ps-3 ms-2 me-auto overflow-hidden"
+        className="dance-document d-flex align-items-center gap-2 border-start ps-3 ms-2 me-auto overflow-hidden"
         style={{ minWidth: 0 }}>
         <button
           type="button"
@@ -380,7 +380,7 @@ const DanceControls = ({
       </div>
       <button
         type="button"
-        className="btn btn-sm btn-accent flex-shrink-0"
+        className="dance-save btn btn-sm btn-accent flex-shrink-0"
         disabled={disabled}
         onClick={saveDance}
         title="Save on this browser (Ctrl/Cmd+S)">
