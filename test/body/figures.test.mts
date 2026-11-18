@@ -31,7 +31,6 @@ const MAX_HIP_DROP = 0.16;
  * have wide steps in their data.
  */
 const KNOWN_DEEP: Record<string, string> = {
-  "Promenade Chassé": "count 2 lands 0.73-0.80 m from the standing foot",
   Ocho: "old Argentine tango figure, not yet described by the owner",
 };
 
