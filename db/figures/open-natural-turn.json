@@ -3,14 +3,14 @@
   "name": "Open Natural Turn",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's figure: three flat counts from promenade after Promenade Chassé, lead right / left / right and follow left / right / left, closing into the original offset closed hold. Provisional rework for the owner's subjective review (2026-11-18): the lead's opening foot travels 65 cm along the line and 14 cm inward, on a shallow arc departing 20 degrees left of the initial body facing. It points along travel (270 degrees), keeping the knee out of the passing channel. His pelvis moves 4 cm along floor +x and 4 cm inward; the follow's moves 8 cm along -x and 4 cm inward. Their pelvis rods come within about 1.3 cm during the passage. The lead starts the body turn with 5 degrees on count 1 (facing 320), completes another 100 degrees on count 2 (facing 60) and 30 on the close (facing 90). Delaying most rotation until after the inner leg passes prevents the thighs crossing. The follow retains her original turns (255, 240, 270), widened first landing and subsequent landings. The lead's count-2 offset and arc departure compensate for his changed facing, preserving that landing exactly. Count 2 retains the follow's 4 cm floor +y body displacement; all body offsets return to zero on the close. The original entry and closed exit, count-2 outer-foot landings, foot order, weights, three-count timing and flat rise remain. No change to the preceding chassé, figure format, shared solver or diagnostic limits. No cross flag or check exemptions: dense linear/eased regression tests cover full footprints and all mannequin thigh/shin capsule pairs for the whole figure, including the opening. The default mannequin capsules have over 1 cm clearance, hip lowering stays under 13 cm, and lateral balance passes. These dimensions and redistributed turn timing are a modelling proposal, not a syllabus transcription.",
+  "notes": "Owner's figure: three flat counts from promenade after Promenade Chassé, lead right / left / right and follow left / right / left, closing into the original offset closed hold. Provisional deeper step-through for the owner's subjective review (2026-11-18): both inner feet travel 15 cm farther along the line than the accepted clearance repair. The lead travels 80 cm along floor -x and 22 cm inward, with the same shallow -20-degree departure; the follow travels about 54.74 cm along -x and 4.97 cm inward, on a shallow +30-degree departure. Both stepping feet point along travel (270 degrees), keeping the knees out of the passing channel. The lead's pelvis offsets 4 cm in floor +x/+y; the follow's offsets 4 cm in -x/+y. Their pelvis rods approach within about 2.4 cm during passage. The longer lead stride deliberately crosses in the body frame (cross: true), but dense footprint and full thigh/shin tests cover it without any interval exemption. The lead retains 5, 100 and 30 degrees of body turn across the three counts (facings 320, 60, 90); the follow retains facings 255, 240, 270. An earlier return to closed hold is unnecessary. Count-2 arc departures are -100 for lead and +50 for follow; the follow collects on a -70-degree closing arc. These compact routes accommodate the deeper inner-foot landings while preserving all original outer-foot landings on count 2 and the exact final closed pose. Count 2 retains the follow's 4 cm floor +y pelvis displacement; all body offsets reset on the close. The entry, preceding chassé, total turn, foot order, weights, three-count timing and flat rise remain. No skipChecks, schema changes, solver changes or diagnostic-limit changes. Dense linear/eased checks find over 1 cm full leg-capsule clearance, over 5 mm footprint clearance, zero reach shortfall, under 5 cm hip lowering and passing lateral balance. Dimensions and routes are modelling proposals, not a syllabus transcription.",
   "start": "promenade apart",
   "steps": [
     {
       "lead": {
         "go": {
-          "right": -0.3606244584051391,
-          "forward": 0.5586143571373726
+          "right": -0.41012193308819744,
+          "forward": 0.7212489168102786
         },
         "turn": {
           "right": "1/72"
@@ -24,20 +24,26 @@
         "bodyOffset": {
           "right": 0.056353282112220696,
           "forward": 0.004930273337297529
-        }
+        },
+        "cross": true
       },
       "follow": {
         "go": {
-          "forward": 0.287842712474619,
-          "right": 0.2741824584367747
+          "right": 0.35196420436729525,
+          "forward": 0.42219300090006273
         },
         "turn": {
           "right": "1/12"
         },
         "label": "forward, starting to turn",
         "bodyOffset": {
-          "right": -0.017931509443361082,
-          "forward": 0.0876268279072263
+          "right": 0.04898979485566356,
+          "forward": 0.02828427124746191
+        },
+        "path": "around the front",
+        "pathSetOff": 30,
+        "pointing": {
+          "right": "1/24"
         }
       },
       "beat": 1
@@ -53,7 +59,7 @@
         },
         "path": "around the back",
         "label": "side, facing partner",
-        "pathSetOff": -110
+        "pathSetOff": -100
       },
       "follow": {
         "go": {
@@ -65,7 +71,7 @@
         },
         "label": "side, facing partner",
         "path": "around the back",
-        "pathSetOff": 15,
+        "pathSetOff": 50,
         "bodyOffset": {
           "forward": -0.02,
           "right": 0.03464101615137755
@@ -86,7 +92,7 @@
           "right": "1/12"
         },
         "path": "around the front",
-        "pathSetOff": -40
+        "pathSetOff": -70
       },
       "beat": 3
     }

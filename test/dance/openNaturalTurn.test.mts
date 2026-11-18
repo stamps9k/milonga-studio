@@ -144,8 +144,8 @@ test("Open Natural Turn: total turn, foot order, counts and flat rise remain", (
   const first = definition("open-natural-turn").steps[0].lead;
   assert.equal(
     typeof first === "object" && "go" in first ? first.cross : false,
-    undefined,
-    "The passing channel must clear without an intentional-cross exemption",
+    true,
+    "The deeper stride crosses in the body frame; dense clearance tests still cover its entire route",
   );
   const lead = natural.steps[2].movement;
   assert.equal(lead.type, "arc");
@@ -265,22 +265,42 @@ test("Open Natural Turn: the whole figure clears full thigh/shin capsules", () =
 // the new mechanism as well as the resulting clearance: gather the hips, keep
 // the passing foot along travel, and complete the body turn on the next count.
 test("Open Natural Turn: inner leg passes beneath close hips before the main body turn", () => {
-  const p = poseAtBeat(natural, 1),
-    s = solveSkeleton(p);
+  const p = poseAtBeat(natural, 1);
   close(footHeading(p.lead, "right"), 270);
   close(p.lead.orientation, 320);
   close(p.lead.bodyOffset!.x, 0.04);
   close(p.lead.bodyOffset!.y, 0.04);
-  close(p.follow.bodyOffset!.x, -0.08);
-  close(p.follow.bodyOffset!.y, -0.04);
-  const l = s.lead.joints,
-    f = s.follow.joints;
-  const gap =
-    segmentDistance(
-      l.leftUpperLeg,
-      l.rightUpperLeg,
-      f.leftUpperLeg,
-      f.rightUpperLeg,
-    ) - 0.16;
-  assert.ok(gap >= 0 && gap < 0.04, `Hip contact gap ${gap} m`);
+  close(p.follow.bodyOffset!.x, -0.04);
+  close(p.follow.bodyOffset!.y, 0.04);
+  close(footHeading(p.follow, "left"), 270);
+  // Contact is closest during the passage, before either foot finishes landing.
+  // Check both the near-contact channel and that the pelvis rods never overlap.
+  let nearest = Infinity;
+  for (const options of [{}, { footEasing: footEase }])
+    for (let beat = 0; beat <= 1; beat += 1 / 256) {
+      const s = solveSkeleton(poseAtBeat(natural, beat, options));
+      const l = s.lead.joints,
+        f = s.follow.joints;
+      const gap =
+        segmentDistance(
+          l.leftUpperLeg,
+          l.rightUpperLeg,
+          f.leftUpperLeg,
+          f.rightUpperLeg,
+        ) - 0.16;
+      assert.ok(gap >= 0, `Pelvis overlap at ${beat}`);
+      nearest = Math.min(nearest, gap);
+    }
+  assert.ok(nearest < 0.03, `Closest hip gap ${nearest} m`);
+});
+
+test("Open Natural Turn: both inner feet step 15 cm deeper than the accepted clearance repair", () => {
+  const p = poseAtBeat(natural, 1);
+  // Along this promenade's line of travel, deeper means further in floor -x.
+  // Accepted first landings were lead -0.179289... and follow +0.173298... .
+  close(-0.1792893218813452 - p.lead.right.position.x, 0.15);
+  close(0.1732988685696799 - p.follow.left.position.x, 0.15);
+  // The lead passes 33 cm beyond his outer foot; the follow now passes hers too.
+  assert.ok(p.lead.left.position.x - p.lead.right.position.x > 0.32);
+  assert.ok(p.follow.right.position.x - p.follow.left.position.x > 0.07);
 });

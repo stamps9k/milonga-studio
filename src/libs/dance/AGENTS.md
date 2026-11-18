@@ -151,7 +151,7 @@ the owner before building more on top of them.
   for a step's `path` (`curveAround`): `"around the front"` sets off the
   way the dancer faces, `"around the back"` diagonally back towards the
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). The Open Natural
-  Turn's uncrossing uses `"around the back"` with a -150-degree departure
+  Turn's uncrossing uses `"around the back"` with a -100-degree departure
   after its clearance repair. Closed Promenade overrides
   that preset with authoring-only `pathSetOff` (degrees clockwise from each
   dancer before the step): -50 lead / +50 follow, making shallow arcs
@@ -365,17 +365,22 @@ the owner before building more on top of them.
   figure. The leg-capsule proxy still overlaps by up to ~2.5 cm during the
   initial crossed-stance release; the close and final step clear capsules.
   That residual proxy limitation is documented, not full mesh clearance.
-  Open Natural Turn has no authoring or body-test exemptions. Its opening
-  now gathers the hips (lead floor +4 cm x/+4 cm y, follow -8 cm x/-4 cm y),
-  routes the lead's inner foot 65 cm along travel and 14 cm inward on a shallow
-  -20-degree arc, and points it along travel. The lead begins with 5 degrees
-  of body turn, then turns 100 degrees on count 2 and 30 on the close. This
-  lets the leg pass before the pelvis rotates across it. Full footprints and
-  all thigh/shin capsule pairs clear throughout linear/eased playback, without
-  a cross flag. Original entry/exit, count-2 outer-foot landings, follow turns,
-  weights, timing and flat rise remain; body offsets reset on the close.
-  The preceding Chassé is unchanged. These are provisional modelling choices
-  for subjective review; reach, lowering and lateral balance remain checked.
+  Open Natural Turn has no figure-level authoring or body-test exclusions.
+  Its deeper opening travels 15 cm farther along the line for each inner foot:
+  lead 80 cm along -x/22 cm inward, follow about 54.74 cm along -x/4.97 cm inward.
+  Shallow departures are -20 lead/+30 follow, with both feet pointing along
+  travel. Pelvis offsets are lead floor +4 cm x/+4 cm y and follow -4 cm x/+4 cm y;
+  the pelvis rods approach within 2.4 cm. The lead keeps 5/100/30 degrees of
+  body turn; the follow keeps the original turns. Earlier closed hold is not
+  needed. Count-2 departures -100 lead/+50 follow and a -70 follow closing
+  departure accommodate the deeper placements. The lead stride deliberately
+  crosses in the body frame (`cross: true`), but dense full-footprint and
+  thigh/shin checks cover the whole figure without skipping that interval.
+  Default mannequin capsules clear by over 1 cm; hip lowering stays below 5 cm.
+  Original entry/exit, count-2 outer-foot landings, weights, timing and flat
+  rise remain; body offsets reset on the close. The preceding Chassé is unchanged.
+  These are provisional modelling choices for subjective review; shared reach,
+  lowering, balance and geometry limits remain unchanged.
 
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
