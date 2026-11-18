@@ -336,8 +336,7 @@ the owner before building more on top of them.
   or swing its toes into it unnoticed (the forward box halves did).
   Figures known to be wrong opt out with `skipChecks` and a note; at the
   time of writing that's the old Argentine tango figures, and for "own
-  feet" Open Natural Turn and Promenade Chassé, waiting for the
-  figure clean-up. The box turns pass every check. Closed Promenade also
+  feet" Open Natural Turn, waiting for the figure clean-up. The box turns pass every check. Closed Promenade also
   passes every check after its provisional 2026-11-18 adjustment: the first
   slow advances 4 cm and widens each outer foot 6 cm from the unchanged
   starting stance. Authored body offsets bring the hips nearly into contact
@@ -355,6 +354,16 @@ the owner before building more on top of them.
   the whole figure and full mannequin leg capsules during the repaired turn
   and close. The unchanged first walking phase has a pre-existing ~1 cm
   inter-partner capsule-proxy overlap, outside this targeted foot repair.
+  Promenade Chassé also has no authoring or body-test exclusions after its
+  provisional 2026-11-18 repair: first travel is 25 cm instead of 50 cm,
+  count 2 uses shallow outward arcs (departures -65 lead / +65 follow) and
+  a 6 cm pelvis displacement back along travel. All landings from count 2
+  onward, entry/exit poses, 1 2 & 3 timing, rise profile and the original
+  10 cm late-weight close remain. Default-body hip lowering stays below
+  11 cm and the lateral balance checks pass. Full-footprint tests cover the
+  figure. The leg-capsule proxy still overlaps by up to ~2.5 cm during the
+  initial crossed-stance release; the close and final step clear capsules.
+  That residual proxy limitation is documented, not full mesh clearance.
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
