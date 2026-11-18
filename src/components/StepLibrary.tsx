@@ -33,17 +33,16 @@ const StepLibrary = ({
   const details = useFigureDetails(figures);
   const [query, setQuery] = useState("");
   const [hideMisfits, setHideMisfits] = useState(true);
-  // Styles the user has collapsed. Every style starts expanded, so nothing
-  // is hidden until the user asks; while searching, every group is shown
-  // expanded regardless, so a match is never hidden inside a collapsed
-  // group. Kept in component state only, so it resets on reload.
-  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(
+  // Groups start collapsed; track only styles the user has opened. Search
+  // reveals matching groups, then restores these choices when cleared.
+  // Component-local state resets every group to collapsed on reload.
+  const [expandedStyles, setExpandedStyles] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
   const searching = query.trim() !== "";
 
   const toggleStyle = (style: string) =>
-    setCollapsed((previous) => {
+    setExpandedStyles((previous) => {
       const next = new Set(previous);
       if (next.has(style)) {
         next.delete(style);
@@ -208,7 +207,7 @@ const StepLibrary = ({
           {!loading &&
             !error &&
             groups.map(([style, figuresInGroup]) => {
-              const expanded = searching || !collapsed.has(style);
+              const expanded = searching || expandedStyles.has(style);
               const listId = `figure-style-${style.replace(/\W+/g, "-")}`;
               return (
                 <div key={style}>
