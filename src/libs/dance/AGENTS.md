@@ -213,6 +213,16 @@ the owner before building more on top of them.
   each dancer's facing after the turn, independently of foot mirroring.
   This additive optional field stays in snapshot schemaVersion 1; old
   snapshots have zero displacement. SQLite needs a reset for the new columns.
+- `body/balance.mts` provides lateral balance diagnostics, enforced by
+  dense catalogue tests for all figures (no deep-figure exemptions). In each
+  dancer's frame, the pelvis may lean at most 10 degrees sideways from the
+  weighted-foot support point, measured over the solved hip-to-weighted-ankle
+  height. Loaded hip-to-ankle leg angles use a normalised weight RMS, limited
+  to 20 degrees; a free leg contributes zero, opposite leans cannot cancel,
+  and transfers stay continuous. These are provisional ordinary-dance
+  plausibility limits, not human fall thresholds. They ignore forward travel,
+  momentum, torso centre-of-mass changes and partner support. Playback and
+  imported snapshots are not clamped or rejected by these diagnostics.
 - An airborne step's excursion goes out along its movement for the first
   half of the step and retraces it for the second half
   (`airborneExcursionAt` in `fold.mts`).

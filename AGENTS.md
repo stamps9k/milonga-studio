@@ -50,6 +50,8 @@ frontend and a small Express + SQLite API.
   (`vector3.mts`). It reads the dance model and nothing reads it but
   renderers; `test/body/figures.test.mts` dances every figure file with
   it and fails if a leg can't reach its foot or the hips sink too far.
+  `balance.mts` adds pure lateral support/loaded-leg diagnostics, with
+  provisional limits enforced by dense catalogue tests (no playback clamping).
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;

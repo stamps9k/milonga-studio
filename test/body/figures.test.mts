@@ -2,8 +2,13 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import { loadFigures } from "../../db/figures/index.mts";
-import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
+import {
+  figureDurationBeats,
+  poseAtBeat,
+  footEase,
+} from "../../src/libs/dance/fold.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
+import { assessLateralBalance } from "../../src/libs/body/balance.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
 
 // Every figure file, danced by the mannequins' bodies (lead 1.75 m,
@@ -73,6 +78,33 @@ test("figures: the hips never sink further than an ordinary step needs", async (
         drop <= MAX_HIP_DROP,
         `the ${partner}'s hips sink ${drop.toFixed(2)} m at beat ${beat.toFixed(2)} to reach the feet (at most ${MAX_HIP_DROP})`,
       );
+    });
+  }
+});
+
+// Unlike the older reach/lowering checks, every catalogue figure participates:
+// existing KNOWN_DEEP entries do not exempt a figure from sideways balance.
+test("figures: pelvis and loaded legs remain within lateral balance limits", async (t) => {
+  for (const figure of figures) {
+    await t.test(figure.name, () => {
+      for (const options of [{}, { footEasing: footEase }]) {
+        const duration = figureDurationBeats(figure);
+        for (let sample = 0; sample <= Math.ceil(duration * 128); sample++) {
+          const beat = Math.min(sample / 128, duration);
+          const pose = poseAtBeat(figure, beat, options);
+          const skeleton = solveSkeleton(pose);
+          for (const partner of ["lead", "follow"] as const) {
+            const balance = assessLateralBalance(
+              pose[partner],
+              skeleton[partner],
+            );
+            assert.ok(
+              balance.plausible,
+              `${partner} at beat ${beat}: support lean ${balance.supportLeanDegrees.toFixed(3)}°, loaded leg lean ${balance.loadedLegLeanDegrees.toFixed(3)}°`,
+            );
+          }
+        }
+      }
     });
   }
 });
