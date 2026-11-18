@@ -106,16 +106,19 @@ interface UseTempoResult {
  * style) and follows it until the user changes it with setBpm or tap;
  * from then on it stays where they put it until reset. The tempo is
  * always in the beats the figures are written in; `division` only says
- * what the user is tapping along to (see tap). Nothing is saved:
- * the tempo is a setting for this session only (owner's decision,
- * 2026-11-17), so a reload starts again from the default.
+ * what the user is tapping along to (see tap). A loaded dance supplies
+ * initialBpm; explicit local saves and exports include the current tempo.
+ * New dances follow the style default until the user adjusts it.
  */
 export function useTempo(
   entries: readonly SequenceEntry[],
   division: ClickDivision = "beat",
+  initialBpm?: number,
 ): UseTempoResult {
   const defaultBpm = defaultTempo(entries);
-  const [chosen, setChosen] = useState<number | null>(null);
+  const [chosen, setChosen] = useState<number | null>(
+    initialBpm === undefined ? null : clampTempo(initialBpm),
+  );
   const tapsRef = useRef<number[]>([]);
 
   const setBpm = useCallback((value: number) => {

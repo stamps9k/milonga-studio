@@ -28,6 +28,12 @@ implementation's choice, not a confirmed dance rule.
   (`sequenceFootprints`), numbered with its count, and which placements
   are taken or coming up at an instant (`footprintsAtBeat`).
 - `serialize.mts`: converts builder state into a `Sequence` record.
+- `persistence.mts`: validates saved/shared Dance snapshots and legacy bare
+  Sequence JSON. Input limits bound rendering/metronome work, not technique.
+  Rebuilds cached resolved poses while preserving saved floor transforms and
+  authored figure poses. Do not run provisional figure-authoring checks on
+  imported snapshots; some existing catalogue figures intentionally bypass
+  them. Version 1 is the existing Dance shape, unchanged by local saving.
 - `tempo.mts`: the playback tempo range and the metronome's clicks for a
   sequence (`metronomeClicks`: one as each count lands, at the end of its
   beat, count 1 of each bar accented, bars running on across figures).

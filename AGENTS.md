@@ -50,8 +50,23 @@ frontend and a small Express + SQLite API.
   (`vector3.mts`). It reads the dance model and nothing reads it but
   renderers; `test/body/figures.test.mts` dances every figure file with
   it and fails if a leg can't reach its foot or the hips sink too far.
-- `src/libs/api/` is the frontend's API client; `src/libs/browser/` holds
-  browser-only helpers.
+- `src/libs/api/` is the frontend's read-only API client; server dances are
+  presets. Personal saves never write to the server. `useDanceLibrary` owns
+  named IndexedDB saves, preset/file loading and unsaved-work protection;
+  `DanceControls` renders File/Open/Dance/Share menus inside `Toolbar`.
+  `AppDialog` uses the Bootstrap bundle already loaded by `index.html` for
+  modals; avoid adding `.fade` without handling asynchronous teardown when
+  an editor unmounts. `DanceDetailsDialog` holds drafts until Apply/Save;
+  `useConfirmation` suspends operations for in-app discard/delete dialogs.
+  Opening a dance remounts the editor
+  to reset playback and isolate outstanding figure requests.
+- `src/libs/dance/persistence.mts` validates complete Dance snapshots (and old
+  bare Sequence exports), rebuilding derived poses from figure + transform.
+  Keep it pure and update its validation when persisted fields change.
+  `src/libs/browser/danceStorage.mts` stores snapshots in IndexedDB;
+  `danceLink.mts` encodes/decodes compressed self-contained query-string links.
+  JSON exports are backups; browser storage is per origin and can be cleared.
+  `src/libs/browser/` also holds the other browser-only helpers.
 - `api/` is the Express server. `api/assemble.mts` is the single place that
   turns normalized database rows back into the nested domain types; the
   frontend never sees table structure.

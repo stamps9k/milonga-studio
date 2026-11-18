@@ -6,13 +6,10 @@ const ORIGIN_TRANSFORM: FloorTransform = {
 };
 
 /**
- * Wraps the in-memory entries useSequenceBuilder assembles into a proper
- * Sequence record, matching what a real save/share backend would
- * eventually persist (see api/dances.mts and useSequenceBuilder's own
- * comment -- there's no write API yet). `id`/`name` are placeholders
- * until saving is real; `startTransform` is the first entry's own
- * transform, which is exactly what useSequenceBuilder anchors it to
- * when there's no previous entry to derive it from.
+ * Wraps builder entries in a Sequence, using the first occurrence's saved
+ * floor transform as its start. These default id/name values keep callers
+ * that only need a bare sequence simple; the dance editor replaces them with
+ * its document metadata before saving or exporting a complete Dance.
  */
 export function entriesToSequence(entries: SequenceEntry[]): Sequence {
   return {

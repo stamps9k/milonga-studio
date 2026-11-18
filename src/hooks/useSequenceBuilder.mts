@@ -27,12 +27,14 @@ interface UseSequenceBuilderResult {
  * entry has nothing before it, so it anchors at the floor origin. The
  * placement rules live in libs/dance/chain.mts.
  *
- * Nothing here is persisted -- there's no write API yet (see
- * api/dances.mts) -- this is purely in-memory sequence-building state
- * for the current session.
+ * The builder owns the editable entries; DanceControls saves snapshots in
+ * browser storage. Loading a dance mounts a fresh editor with its entries,
+ * so outstanding figure requests cannot append to the newly opened dance.
  */
-export function useSequenceBuilder(): UseSequenceBuilderResult {
-  const [entries, setEntries] = useState<SequenceEntry[]>([]);
+export function useSequenceBuilder(
+  initialEntries: SequenceEntry[] = [],
+): UseSequenceBuilderResult {
+  const [entries, setEntries] = useState<SequenceEntry[]>(initialEntries);
   const [activeFigureId, setActiveFigureId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
