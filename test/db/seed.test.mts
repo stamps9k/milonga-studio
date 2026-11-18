@@ -292,25 +292,30 @@ test("seed: consecutive sequence entries are placed so the couple continues from
   }
 });
 
-test("seed: the waltz and cha-cha sequences join cleanly at every figure boundary", () => {
-  // These figures are authored to connect: each ends in the stance (and
-  // with the weight) the next one starts from. The tango sequences don't
-  // yet -- Walking Step ends mid-stride and the Ocho ends with the follow
-  // turned away -- which is a data decision still to be made, so they're
-  // deliberately not asserted here.
-  for (const name of ["Waltz Basics", "Cha-Cha Basics"]) {
-    const sequence = sequences.find((candidate) => candidate.name === name);
-    assert.ok(sequence, `no seeded sequence named ${name}`);
+test("seed: every sample sequence joins cleanly at every figure boundary", () => {
+  // Include both Argentine tango combinations. Explicit collections and a
+  // counted weight change must survive SQLite/API assembly with no pose jump.
+  for (const sequence of sequences) {
     for (let i = 1; i < sequence.entries.length; i++) {
-      const join = assessJoin(
-        sequence.entries[i - 1].resolvedEndPose,
-        sequence.entries[i].figure,
-      );
+      const previous = sequence.entries[i - 1],
+        current = sequence.entries[i];
+      const join = assessJoin(previous.resolvedEndPose, current.figure);
       assert.deepEqual(
         join.issues,
         [],
-        `${name}: ${sequence.entries[i - 1].figure.name} -> ${sequence.entries[i].figure.name}`,
+        `${sequence.name}: ${previous.figure.name} -> ${current.figure.name}`,
       );
+      assert.ok(
+        join.maxFootGap < POSITION_EPSILON,
+        `${sequence.name}: tolerated foot gap is still a jump`,
+      );
+      for (const partner of ["lead", "follow"] as const)
+        for (const foot of ["left", "right"] as const)
+          assert.equal(
+            previous.resolvedEndPose[partner][foot].weight,
+            current.resolvedStartPose[partner][foot].weight,
+            `${sequence.name}: boundary weight switch`,
+          );
     }
   }
 });

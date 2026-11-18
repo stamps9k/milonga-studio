@@ -1,0 +1,33 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Walking Step and Collect",
+  "style": "argentine tango",
+  "time": "4/4",
+  "notes": "Practice variant for continuous Argentine tango sequences (2026-11-18): a 50 cm lead-left/follow-right walk, then collect the free feet on a separate Q without changing weight. The shorter walk keeps the default full-leg capsules clear; the original 60 cm open Walking Step remains available unchanged. Both Q counts are explicit: finish closed on lead left/follow right, ready for Side Step and Collect or a Weight Change. No figure skips, crossing flags, body offsets, solver changes or altered tolerances. Provisional collection timing and dimensions for subjective review.",
+  "steps": [
+    {
+      "both": "forward",
+      "by": 0.5,
+      "length": "Q",
+      "label": {
+        "lead": "walk forward",
+        "follow": "walk back"
+      }
+    },
+    {
+      "both": "close",
+      "foot": "R",
+      "weight": false,
+      "length": "Q",
+      "label": "collect without changing weight"
+    }
+  ],
+  "expectBeats": 2,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "forward": 0.5
+    },
+    "leadStandingOn": "L"
+  }
+}

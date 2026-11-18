@@ -20,8 +20,8 @@
  *
  * Sample sequences (SAMPLE_DANCES below; skipped if a figure is missing):
  *   - Practice: single walk   -- Walking Step
- *   - Basic Combination       -- Walking Step, Side Step, Cruzada
- *   - Ocho Combination        -- Walking Step, Ocho
+ *   - Basic Combination       -- Walking Step and Collect, Side Step and Collect, Cruzada
+ *   - Ocho Combination        -- Walking Step and Collect, Weight Change, Ocho
  *   - Waltz Basics            -- LF Closed Change, Balance Step
  *   - Cha-Cha Basics          -- Cha-Cha Basic, Side Basic
  *
@@ -310,17 +310,19 @@ const SAMPLE_DANCES: {
   },
   {
     sequence: "Basic Combination",
-    figures: ["Walking Step", "Side Step", "Cruzada"],
+    figures: ["Walking Step and Collect", "Side Step and Collect", "Cruzada"],
     dance: "Basic tango combo",
     tempo: 68,
-    notes: "Salida into side step and cross",
+    notes:
+      "Walk and collect, side and collect, then left-in-front cross; six explicit Q counts",
   },
   {
     sequence: "Ocho Combination",
-    figures: ["Walking Step", "Ocho"],
+    figures: ["Walking Step and Collect", "Weight Change", "Ocho"],
     dance: "Ocho practice",
     tempo: 66,
-    notes: "Working on back ochos",
+    notes:
+      "Walk and collect, change weight, then back ochos; seven explicit Q counts",
   },
   {
     sequence: "Waltz Basics",
