@@ -32,8 +32,8 @@ implementation's choice, not a confirmed dance rule.
   Sequence JSON. Input limits bound rendering/metronome work, not technique.
   Rebuilds cached resolved poses while preserving saved floor transforms and
   authored figure poses. Do not run provisional figure-authoring checks on
-  imported snapshots; some existing catalogue figures intentionally bypass
-  them. Version 1 is the existing Dance shape, unchanged by local saving.
+  imported snapshots; legacy snapshots may contain figures from before the
+  catalogue repairs. Version 1 is the existing Dance shape, unchanged by local saving.
 - `tempo.mts`: the playback tempo range and the metronome's clicks for a
   sequence (`metronomeClicks`: one as each count lands, at the end of its
   beat, count 1 of each bar accented, bars running on across figures).
@@ -335,8 +335,9 @@ the owner before building more on top of them.
   crossed on purpose by a `cross` step. The crossed-feet check compares
   only the feet's middles, so before this a foot could land on the other
   or swing its toes into it unnoticed (the forward box halves did).
-  Figures known to be wrong opt out with `skipChecks` and a note; at the
-  time of writing that's only the old Argentine tango figures. The box
+  No current catalogue figure opts out with `skipChecks`; a catalogue
+  regression guards against silently reintroducing exclusions. Intentional
+  crosses remain marked explicitly and have dedicated clearance tests. The box
   turns pass every check. Closed Promenade also
   passes every check after its provisional 2026-11-18 adjustment: the first
   slow advances 4 cm and widens each outer foot 6 cm from the unchanged
@@ -403,6 +404,15 @@ the owner before building more on top of them.
   Dense full-footprint/thigh/shin regressions cover both pivots and walks.
   Ocho also rejoins the reach/lowering catalogue tests, removing their last
   exclusion. Pivot angles and dimensions are provisional for subjective review.
+  Side Step removes the catalogue's final authoring exclusions. Lead right /
+  follow left travel 35 cm sideways in one Q, starting on lead left/follow right
+  and finishing on lead right/follow left. Closed foot positions, facings and
+  rise remain; the old crossed exit and opposite support assignments are fixed.
+  No cross flags, arcs, pointing or shaping are needed. All footprints and
+  thigh/shin pairs clear throughout, with under 6 cm hip lowering. Adjacent
+  Walking Step/Cruzada foot order now agrees, but existing tango foot-position
+  gaps remain separate data work. All catalogue authoring/body checks now run
+  without figure-level exclusions, using the unchanged shared limits.
 
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's body position must be within

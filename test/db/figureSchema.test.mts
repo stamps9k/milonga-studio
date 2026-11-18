@@ -242,3 +242,23 @@ test("the schema and the validator agree on every systematically broken variant"
     `${disagreements.length} disagreements`,
   );
 });
+
+// The figure repair pass removed the last catalogue opt-out. Shape support for
+// skipChecks stays for old files and format tests; current figures must run all
+// geometry/hold checks when loadFigures calls defineFigure.
+test("catalogue figures never bypass authoring checks", () => {
+  const folder = join(root, "db/figures");
+  for (const file of readdirSync(folder).filter((name) =>
+    name.endsWith(".json"),
+  )) {
+    const definition = parseFigureDefinition(
+      JSON.parse(readFileSync(join(folder, file), "utf8")),
+      file,
+    );
+    assert.deepEqual(
+      definition.skipChecks ?? [],
+      [],
+      `${file} bypasses figure checks`,
+    );
+  }
+});

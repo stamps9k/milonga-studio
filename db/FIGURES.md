@@ -410,10 +410,12 @@ The reset stops, listing every problem with its file and location, if:
   way that position faces. Mirrored (`both`) steps keep the hold on their own,
   so this mostly checks steps written for `lead` and `follow` separately.
 
-The last four are checked through the whole figure, not just at its end. A
-figure known to be wrong can skip them until it's rewritten, with
-`"skipChecks"` listing any of `"crossed feet"`, `"own feet"`,
-`"partner spacing"` and `"hold"`. Say why in `notes`, and remove it once the figure is fixed.
+The format retains `"skipChecks"` for historical figure files, listing any of
+`"crossed feet"`, `"own feet"`, `"partner spacing"` and `"hold"`. The current
+catalogue uses no exclusions: every figure runs all authoring checks, and a
+regression test prevents silently reintroducing bypasses. Intentional crosses
+use `cross: true` for foot order; dedicated footprint and leg-clearance tests
+cover the repaired crossing figures without skipping their crossing intervals.
 
 The sample dances in `db/seed.mts` refer to figures by name. If one of their
 figures is missing (because a file was renamed or removed), that sample is
