@@ -4,17 +4,17 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description (2026-11-17): a simple promenade, slow, quick, quick, slow, starting in promenade (where the Progressive Link ends) and finishing facing each other in closed position; the change from promenade to facing happens on the last step. Named after the standard figure it matches, the Closed Promenade. Lead: slow, left foot along the line of travel in promenade; quick, right foot forward and across in front of the left (a deliberate cross, owner confirmed); quick, left foot along the line again, a little towards his partner, uncrossing; slow, right foot closes to the left, turning an eighth to the right to face his partner. The follow mirrors: right, left across in front of the right, right, left closes, turning an eighth to the left. The feet close on the last slow (owner confirmed). Sizes (owner: as earlier): the link has already put the outside foot 0.6 out, so the first slow moves it only 0.2 more (a 0.8 stride; a further 0.5 would make it 1.1); the cross lands 0.5 past the other foot; the third step lands 0.4 past the crossed foot and 0.15 across the line, the lead slightly forward and the follow slightly back as in the book, which keeps them 0.4 apart and lets his left foot clear his right as it passes. These sizes are provisional. Timing: 2/4, a slow is one beat and a quick half. The lead's third step goes round the back of his right foot (`path: \"around the back\"`): his right foot crossed in front, so a straight path took his left foot through the right leg (found by the legs check added 2026-11-17). Provisional, applying the owner's rule from the Open Natural Turn (feet uncross the way they crossed); the follow's third step already passes behind her crossed foot. Exempt from the \"own feet\" check (added 2026-11-17): on count 3 the follow's feet overlap by 7 cm, the same foot collision noted for the lead's count 2 (a foot travelling through where the other stands). Left for the figure clean-up.",
+  "notes": "Owner's description (2026-11-17): slow, quick, quick, slow, beginning in tango promenade after Two Walks and Progressive Link and ending in closed hold for Back Corté. The lead uses left, right, left, right; the follow mirrors with right, left, right, left. The second step crosses in front deliberately; the third uncrosses; the final slow closes the feet and turns each partner an eighth to face the other. No rise. Provisional geometry adjustment for the owner's vibes review (2026-11-18): the start stance already has the outside foot 0.6 m along the line of travel. Settle onto it with only 0.04 m more travel on the first slow, rather than extending to a 0.8 m stride with another 0.2 m. This caps the first stance at 0.64 m and reduces the worst default-body hip lowering from about 0.34 m to 0.136 m. The crossing foot travels 1.14 m from its original spot, landing the same 0.5 m past the standing foot as before. Both partners then uncross around the back of the standing foot: the follow previously took a straight route through her other footprint. The third-step offsets compensate for the shorter first slow, preserving all four original final foot positions (including the old rounded offsets), final facing, weights and rise; the extra decimal places preserve that endpoint, not a claim of dance-technique precision. The start pose, S Q Q S timing (three beats in 2/4), deliberate cross and closing turn are unchanged. Every authoring geometry check and the default-body leg-reach/16 cm hip-lowering tests now run without an exemption. Sizes and paths remain a modelling proposal for the owner to judge.",
   "start": "tango promenade",
   "steps": [
     {
       "lead": {
         "go": "diagonal forward left",
-        "by": 0.2
+        "by": 0.04
       },
       "follow": {
         "go": "diagonal forward right",
-        "by": 0.2
+        "by": 0.04
       },
       "length": "S",
       "label": "side, in promenade"
@@ -22,12 +22,12 @@
     {
       "lead": {
         "go": "diagonal forward left",
-        "by": 1.3,
+        "by": 1.14,
         "cross": true
       },
       "follow": {
         "go": "diagonal forward right",
-        "by": 1.3,
+        "by": 1.14,
         "cross": true
       },
       "length": "Q",
@@ -36,16 +36,17 @@
     {
       "lead": {
         "go": {
-          "forward": 0.742,
-          "right": -0.53
+          "forward": 0.855137085,
+          "right": -0.643137085
         },
         "path": "around the back"
       },
       "follow": {
         "go": {
-          "forward": 0.53,
-          "right": 0.742
-        }
+          "forward": 0.643137085,
+          "right": 0.855137085
+        },
+        "path": "around the back"
       },
       "length": "Q",
       "label": "side, uncrossing"
@@ -75,6 +76,5 @@
       "right": -1.6
     },
     "leadStandingOn": "R"
-  },
-  "skipChecks": ["own feet"]
+  }
 }

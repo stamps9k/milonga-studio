@@ -27,7 +27,6 @@ const MAX_HIP_DROP = 0.16;
  */
 const KNOWN_DEEP: Record<string, string> = {
   "Promenade Chassé": "count 2 lands 0.73-0.80 m from the standing foot",
-  "Closed Promenade": "first slow ends with the feet 0.8 m apart",
   Ocho: "old Argentine tango figure, not yet described by the owner",
 };
 

@@ -312,8 +312,13 @@ back"`. Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
   or swing its toes into it unnoticed (the forward box halves did).
   Figures known to be wrong opt out with `skipChecks` and a note; at the
   time of writing that's the old Argentine tango figures, and for "own
-  feet" the Back Corté, Closed Promenade, Open Natural Turn and Promenade
-  Chassé, waiting for the figure clean-up. The box turns pass every check.
+  feet" the Back Corté, Open Natural Turn and Promenade Chassé, waiting for the
+  figure clean-up. The box turns pass every check. Closed Promenade also
+  passes every check after its provisional 2026-11-18 adjustment: a 4 cm
+  first-slow settle from the unchanged 60 cm promenade stance, the same
+  50 cm crossing stride, and both partners uncrossing round the back. Its
+  original start/end poses and timing are preserved; its body checks no
+  longer opt out. The owner is reviewing the feel of this adjustment.
 - `defineFigure` also checks the hold (`checkHold`, added 2026-11-17): at
   the end of every row, the follow's centre of weight must be within
   `HOLD_TOLERANCE` (20 cm) of where closed hold or promenade puts it from
