@@ -93,7 +93,13 @@ const Sequence = ({
       {/* Top padding leaves room for the remove buttons, which sit
           half outside their chips and would otherwise be clipped by
           this scroll container. */}
-      <div className="d-flex align-items-center flex-nowrap overflow-auto pt-2 pe-2">
+      {/* eslint-disable jsx-a11y/no-noninteractive-tabindex -- This labeled scroll region needs focus for native keyboard scrolling. */}
+      <div
+        className="d-flex align-items-center flex-nowrap overflow-auto pt-2 pe-2 pb-2"
+        style={{ minWidth: 0, maxWidth: "100%" }}
+        role="region"
+        aria-label="Dance sequence"
+        tabIndex={0}>
         {entries.length === 0 && !loading && (
           <span className="text-body-secondary small">
             Select figures from the library to build a sequence.
@@ -164,6 +170,7 @@ const Sequence = ({
           </svg>
         </button>
       </div>
+      {/* eslint-enable jsx-a11y/no-noninteractive-tabindex */}
     </div>
   );
 };

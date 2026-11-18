@@ -45,13 +45,20 @@ const Timeline = ({
            the beat it represents. */
         .timeline-segments {
           display: flex;
-          gap: 2px;
+          gap: 0;
           margin: 0 0.5rem;
           height: 1.25rem;
+          /* Dense sequences must not paint past the scrubber. Labels can
+             truncate while the range input remains usable at every beat. */
+          overflow: hidden;
         }
         .timeline-segment {
           min-width: 0;
-          padding: 0 0.25rem;
+          /* Padding and flex gaps impose a minimum width per figure. Use
+             painted spacing instead, so even a dense bar fits its scrubber. */
+          padding: 0;
+          text-indent: 0.25rem;
+          box-shadow: inset -2px 0 var(--bs-body-bg, #14161c);
           border: none;
           border-radius: 3px;
           background-color: rgba(255, 255, 255, 0.06);
@@ -112,7 +119,11 @@ const Timeline = ({
           <polygon points="4,3 4,17 16,10" />
         </svg>
       </button>
-      <div className="flex-fill mx-2 d-flex flex-column">
+      {/* Flex items otherwise keep their min-content width: a long segment
+          bar would widen the page even though the sequence strip scrolls. */}
+      <div
+        className="flex-fill mx-2 d-flex flex-column"
+        style={{ minWidth: 0 }}>
         <input
           type="range"
           className="form-range"
