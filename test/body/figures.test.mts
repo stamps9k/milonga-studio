@@ -26,14 +26,6 @@ const SAMPLE = 1 / 16;
  */
 const MAX_HIP_DROP = 0.16;
 
-/**
- * Figures known to need more, waiting for the figure clean-up: they
- * have wide steps in their data.
- */
-const KNOWN_DEEP: Record<string, string> = {
-  Ocho: "old Argentine tango figure, not yet described by the owner",
-};
-
 const figures: Figure[] = loadFigures().map((figure) => ({
   ...figure,
   id: figure.name,
@@ -59,9 +51,6 @@ function worstAlong(figure: Figure) {
 
 test("figures: every leg reaches its foot", async (t) => {
   for (const figure of figures) {
-    // A known deep figure can sink its hips to the floor, short of
-    // reach (the Back Corté's follow, by under a millimetre).
-    if (figure.name in KNOWN_DEEP) continue;
     await t.test(figure.name, () => {
       assert.equal(worstAlong(figure).shortfall, 0);
     });
@@ -70,7 +59,6 @@ test("figures: every leg reaches its foot", async (t) => {
 
 test("figures: the hips never sink further than an ordinary step needs", async (t) => {
   for (const figure of figures) {
-    if (figure.name in KNOWN_DEEP) continue;
     await t.test(figure.name, () => {
       const { drop, beat, partner } = worstAlong(figure).worstDrop;
       assert.ok(
@@ -81,8 +69,7 @@ test("figures: the hips never sink further than an ordinary step needs", async (
   }
 });
 
-// Unlike the older reach/lowering checks, every catalogue figure participates:
-// existing KNOWN_DEEP entries do not exempt a figure from sideways balance.
+// Every catalogue figure participates in reach, lowering and lateral balance.
 test("figures: pelvis and loaded legs remain within lateral balance limits", async (t) => {
   for (const figure of figures) {
     await t.test(figure.name, () => {
