@@ -151,7 +151,9 @@ const Studio = ({ initialDance, localId, onOpen }: StudioProps) => {
                         : null
                     }
                   />
-                  <div className="col-9 d-flex flex-column gap-4">
+                  <div
+                    className="col-9 d-flex flex-column gap-4"
+                    style={{ minWidth: 0 }}>
                     <div className="card overflow-hidden">
                       {view === "2d" ? (
                         <Canvas2D
