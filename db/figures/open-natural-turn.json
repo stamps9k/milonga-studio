@@ -3,13 +3,13 @@
   "name": "Open Natural Turn",
   "style": "waltz",
   "time": "3/4",
-  "notes": "Owner's description (2026-11-16): the box-turn-like figure after the Promenade Chassé. Steps as the box turn's forward half: forward on the right, side on the left, close the right (not the American-style open ending, which passes back on 3). The couple turns a quarter to the right from the line joining the partners, gradually across all three steps, and the partners turn to face each other on count 2; no rise. Three counts, ending in closed hold with another figure to follow. Named as the figure that takes a natural turn out of promenade; the closing on 3 is the owner's, as in the International Natural Turn. Count 1 (owner, 2026-11-16): a full stride across the body, continuing the chassé's direction of travel, with the lead turning about an eighth. Written as the chassé writes its steps, diagonal forward left from his promenade facing, 0.9 (the trailing right foot passes his left and lands 0.43 beyond it), so it crosses his feet on purpose (`cross`); turning an eighth he faces up the original line of dance with the right foot across in front of the left. The 0.9 is provisional: a full stride from 0.4 behind the left foot, about as far past it as the chassé's 0.5 first step. Count 2: his left foot unwinds round behind the right (`path: \"around the back\"`, setting off diagonally back), uncrossing the way the feet crossed, and lands 0.4 to the side of the right once turned. Owner's choice (2026-11-17): a straight path took it through the right leg, since the right foot had crossed in front. Turns: the lead turns 1/8, 1/6 and 1/12 to the right (3/8 in all, from facing 315 to 90); the follow keeps the couple's quarter spread evenly, 1/12 right, 1/24 left (closing the V) and 1/12 right (an eighth in all, from 225 to 270); they face each other from the end of count 2. The follow goes 0.4 forward along the line of travel on her left, then her right lands to stay in hold, then she closes. Her count 2 (0.375 forward, 0.132 left) moves her into the offset closed hold, to the lead's right (2026-11-17). Partners' feet keep 10 cm apart (checked; at least 32 cm here). History: earlier versions stepped the right foot up the floor instead of across; the owner wants it across, along the line of travel. Offsets to the millimetre where the closed-hold check needs them. Exempt from the \"hold\" check (added 2026-11-17): after count 2 the partners face each other but the follow is 0.21 from closed hold, 1 cm past the tolerance, until the turning close brings her into it. Same cause as the Back Corté; left for the figure clean-up. Also exempt from the \"own feet\" check (added 2026-11-17): on count 2 the follow's feet overlap by 1 cm as she turns. Left for the figure clean-up.",
+  "notes": "Owner's description (2026-11-16): the box-turn-like figure after the Promenade Chassé. Steps as the box turn's forward half: forward on the right, side on the left, close the right (not the American-style open ending, which passes back on 3). The couple turns a quarter to the right from the line joining the partners, gradually across all three steps, and the partners turn to face each other on count 2; no rise. Three counts, ending in closed hold with another figure to follow. Named as the figure that takes a natural turn out of promenade; the closing on 3 is the owner's, as in the International Natural Turn. Count 1 (owner, 2026-11-16): a full stride across the body, continuing the chassé's direction of travel, with the lead turning about an eighth. Written as the chassé writes its steps, diagonal forward left from his promenade facing, originally 0.9 (repaired to 0.8; the trailing right foot passes his left and now lands 0.33 beyond it), so it crosses his feet on purpose (`cross`); turning an eighth he faces up the original line of dance with the right foot across in front of the left. The original 0.9 was provisional: a full stride from 0.4 behind the left foot, about as far past it as the chassé's 0.5 first step. Count 2: his left foot unwinds round behind the right (`path: \"around the back\"`, setting off diagonally back), uncrossing the way the feet crossed, and lands 0.4 to the side of the right once turned. Owner's choice (2026-11-17): a straight path took it through the right leg, since the right foot had crossed in front. Turns: the lead turns 1/8, 1/6 and 1/12 to the right (3/8 in all, from facing 315 to 90); the follow keeps the couple's quarter spread evenly, 1/12 right, 1/24 left (closing the V) and 1/12 right (an eighth in all, from 225 to 270); they face each other from the end of count 2. The follow goes 0.4 forward along the line of travel on her left, then her right lands to stay in hold, then she closes. Her count 2 (0.375 forward, 0.132 left) moves her into the offset closed hold, to the lead's right (2026-11-17). Partners' feet keep 10 cm apart (checked; at least 32 cm here). History: earlier versions stepped the right foot up the floor instead of across; the owner wants it across, along the line of travel. Offsets to the millimetre where the closed-hold check needs them. Provisional cleanup (2026-11-18), for the owner's subjective review: the lead's opening travel is 0.8 m rather than 0.9 m; it still crosses deliberately in front. The follow's first landing is widened 1 cm to her left, keeping the foot outlines clear. On count 2 the lead uncrosses with a -150-degree departure rather than the -135-degree preset; the follow uses a compact +15-degree departure, then a -40-degree departure on the closing step so her foot collects without clipping. The follow's pelvis is displaced 4 cm in floor +y at the end of count 2, returning to zero on the close. This modest body adjustment reduces the closed-hold position error from about 21.4 cm to 17.4 cm within the unchanged 20 cm tolerance. Every landing from count 2 onward, the original promenade-apart entry and closed exit, body turns, foot order, timing and flat rise remain unchanged. Remove both hold and own-feet exemptions. Dense linear/eased checks cover the follow's foot clearance throughout, both dancers after the intentional first cross, reach, lowering and lateral balance. The mannequin leg-capsule proxy still overlaps through the deliberate cross/uncross, by up to about 12 cm; the final close clears the leg proxies. That residual limitation is documented separately rather than claiming full mesh clearance.",
   "start": "promenade apart",
   "steps": [
     {
       "lead": {
         "go": "diagonal forward left",
-        "by": 0.9,
+        "by": 0.8,
         "turn": {
           "right": "1/8"
         },
@@ -17,8 +17,10 @@
         "label": "forward and across, starting to turn"
       },
       "follow": {
-        "go": "diagonal forward right",
-        "by": 0.4,
+        "go": {
+          "forward": 0.287842712474619,
+          "right": 0.2741824584367747
+        },
         "turn": {
           "right": "1/12"
         },
@@ -36,7 +38,8 @@
           "right": "1/6"
         },
         "path": "around the back",
-        "label": "side, facing partner"
+        "label": "side, facing partner",
+        "pathSetOff": -150
       },
       "follow": {
         "go": {
@@ -46,7 +49,13 @@
         "turn": {
           "left": "1/24"
         },
-        "label": "side, facing partner"
+        "label": "side, facing partner",
+        "path": "around the back",
+        "pathSetOff": 15,
+        "bodyOffset": {
+          "forward": -0.02,
+          "right": 0.03464101615137755
+        }
       },
       "beat": 2
     },
@@ -61,7 +70,9 @@
         "go": "close",
         "turn": {
           "right": "1/12"
-        }
+        },
+        "path": "around the front",
+        "pathSetOff": -40
       },
       "beat": 3
     }
@@ -77,6 +88,5 @@
       "right": "1/4"
     },
     "leadStandingOn": "R"
-  },
-  "skipChecks": ["hold", "own feet"]
+  }
 }
