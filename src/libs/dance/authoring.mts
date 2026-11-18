@@ -614,7 +614,7 @@ export interface PartnerMove extends MoveOptions {
  */
 export interface StepRow extends Omit<
   MoveOptions,
-  "label" | "pointing" | "footwork"
+  "label" | "pointing" | "footwork" | "pathSetOff" | "path"
 > {
   /** See MoveOptions.footwork. On a row, either one for each partner it
    *  applies to, or one each: a mirrored forward step is usually a heel
@@ -626,6 +626,12 @@ export interface StepRow extends Omit<
    *  (on a turning `both` step the partners usually point differently:
    *  the one on the inside of the turn points further round). */
   pointing?: Turn | { lead?: Turn; follow?: Turn };
+  /** Arc departure for each dancer, or one shared value (see MoveOptions).
+   * Separate values keep mirrored turning steps compact on both sides. */
+  pathSetOff?: number | { lead?: number; follow?: number };
+  /** A curved route for both dancers, or only the named partners. An
+   * omitted partner retains the ordinary straight/passing route. */
+  path?: CurvedPath | { lead?: CurvedPath; follow?: CurvedPath };
   both?: Action;
   /** On a turning `both` step, what the couple turns around (see
    *  TurnCentre). Default: whoever the step sends backward. Only
@@ -826,10 +832,14 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     bodyOffset: row.bodyOffset,
     weight: row.weight,
     air: row.air,
-    path: row.path,
-    pathSetOff: row.pathSetOff,
     cross: row.cross,
   };
+  const pathFor = (partner: Partner): CurvedPath | undefined =>
+    typeof row.path === "object" ? row.path[partner] : row.path;
+  const departureFor = (partner: Partner): number | undefined =>
+    typeof row.pathSetOff === "object"
+      ? row.pathSetOff[partner]
+      : row.pathSetOff;
   const labelFor = (partner: Partner) =>
     typeof row.label === "string" ? row.label : row.label?.[partner];
   const footworkFor = (partner: Partner): string | undefined =>
@@ -852,6 +862,8 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
         ...shared,
         footwork: footworkFor("lead"),
         pointing: pointingFor("lead"),
+        pathSetOff: departureFor("lead"),
+        path: pathFor("lead"),
         go: row.both,
       },
       where,
@@ -882,6 +894,8 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
       foot: undefined,
       footwork: footworkFor("follow"),
       pointing: pointingFor("follow"),
+      pathSetOff: departureFor("follow"),
+      path: pathFor("follow"),
     };
     return [
       { partner: "lead", move: lead, label: leadLabel },
@@ -902,6 +916,8 @@ function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
             ...shared,
             footwork: footworkFor(partner),
             pointing: pointingFor(partner),
+            pathSetOff: departureFor(partner),
+            path: pathFor(partner),
             go: value,
           };
     let label = written.label ?? labelFor(partner) ?? "";
@@ -2227,8 +2243,20 @@ export function parseFigureDefinition(
     }
     checkBoolean(`${path}weight`, object.weight);
     checkBoolean(`${path}air`, object.air);
-    checkOneOf(`${path}path`, object.path, CURVED_PATHS);
-    checkNumber(`${path}pathSetOff`, object.pathSetOff);
+    if (rowLevel && isObject(object.path)) {
+      checkKeys(`${path}path`, object.path, ["lead", "follow"]);
+      if (Object.keys(object.path).length === 0)
+        problem(`${path}path`, 'should name "lead" or "follow"');
+      checkOneOf(`${path}path.lead`, object.path.lead, CURVED_PATHS);
+      checkOneOf(`${path}path.follow`, object.path.follow, CURVED_PATHS);
+    } else checkOneOf(`${path}path`, object.path, CURVED_PATHS);
+    if (rowLevel && isObject(object.pathSetOff)) {
+      checkKeys(`${path}pathSetOff`, object.pathSetOff, ["lead", "follow"]);
+      if (Object.keys(object.pathSetOff).length === 0)
+        problem(`${path}pathSetOff`, 'should name "lead" or "follow"');
+      checkNumber(`${path}pathSetOff.lead`, object.pathSetOff.lead);
+      checkNumber(`${path}pathSetOff.follow`, object.pathSetOff.follow);
+    } else checkNumber(`${path}pathSetOff`, object.pathSetOff);
     checkBoolean(`${path}cross`, object.cross);
   }
 

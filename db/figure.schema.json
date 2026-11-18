@@ -288,8 +288,36 @@
         },
         "weight": { "$ref": "#/definitions/weight" },
         "air": { "$ref": "#/definitions/air" },
-        "path": { "$ref": "#/definitions/path" },
-        "pathSetOff": { "$ref": "#/definitions/pathSetOff" },
+        "path": {
+          "description": "A curved route for both dancers, or only the named partners; omitted partners keep their ordinary route.",
+          "anyOf": [
+            { "$ref": "#/definitions/path" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "lead": { "$ref": "#/definitions/path" },
+                "follow": { "$ref": "#/definitions/path" }
+              }
+            }
+          ]
+        },
+        "pathSetOff": {
+          "description": "Arc departure: one value for both dancers, or separate lead/follow values in their own frames.",
+          "anyOf": [
+            { "$ref": "#/definitions/pathSetOff" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "minProperties": 1,
+              "properties": {
+                "lead": { "$ref": "#/definitions/pathSetOff" },
+                "follow": { "$ref": "#/definitions/pathSetOff" }
+              }
+            }
+          ]
+        },
         "cross": { "$ref": "#/definitions/cross" }
       }
     },

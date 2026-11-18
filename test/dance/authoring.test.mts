@@ -1526,3 +1526,44 @@ test("pathSetOff: a custom departure changes the arc while preserving its landin
     /pathSetOff.*needs a curved/,
   );
 });
+
+test("per-partner paths: curve only the named dancer on a mirrored step", () => {
+  const plain = figure([{ both: { forward: 0.3, right: 0.3 }, length: "Q" }]);
+  const curved = figure([
+    {
+      both: { forward: 0.3, right: 0.3 },
+      path: { lead: "around the front" },
+      pathSetOff: { lead: 90 },
+      length: "Q",
+    },
+  ]);
+  assert.equal(curved.steps[0].movement.type, "arc");
+  if (curved.steps[0].movement.type === "arc")
+    assert.equal(curved.steps[0].movement.setOff, 90);
+  assert.deepEqual(curved.steps[1], plain.steps[1]);
+  pointClose(curved.endPose.lead.left.position, [0.2, 0.3]);
+  pointClose(curved.endPose.follow.right.position, [0.3, 0.7]);
+});
+
+test("per-partner paths: row options apply to plain actions, with independent departure angles", () => {
+  const authored = figure([
+    {
+      lead: "forward",
+      follow: "back",
+      by: 0.3,
+      path: { lead: "around the front", follow: "around the front" },
+      pathSetOff: { lead: 10, follow: 170 },
+      length: "Q",
+    },
+  ]);
+  for (const [index, angle] of [
+    [0, 10],
+    [1, 170],
+  ]) {
+    const move = authored.steps[index].movement;
+    assert.equal(move.type, "arc");
+    if (move.type === "arc") assert.equal(move.setOff, angle);
+  }
+  pointClose(authored.endPose.lead.left.position, [-0.1, 0.3]);
+  pointClose(authored.endPose.follow.right.position, [0, 0.7]);
+});
