@@ -501,21 +501,22 @@ alternating support on every count. It uses the owner's feet-apart
 `promenade apart` stance, without a Whisk or required preceding figure.
 Promenade Chassé and Contra Check Recovery (Promenade) both connect to its entry.
 
-After the follow's opening turn, the lead stays on the left side of the pair,
-facing west and walking backward on 3–5 while the follow faces east and walks
-forward. The partners are shoulder-to-shoulder rather than facing each other
-in closed hold: torso centres are 34–38 cm apart laterally at count landings,
-with the lead 15 cm ahead **along shared travel**, even though moving backward.
-Rows 2–5 explicitly select the checked `opposed promenade` formation. The label
-is descriptive; the dimensions and compact paths are provisional for review.
+The first two counts are preserved. On 3 both partners continue the follow's
+left pivot together through a quarter turn (lead 270° to 180°, follow 90° to 0°).
+Their relative sides swap, and the couple's centre travels northwest instead
+of reversing east. This is within the owner's requested eighth-to-quarter
+bias back towards the opening line. The outer lead route and compact follow
+passing route keep the shared pivot together; a common 12 cm southward pelvis
+displacement lets the hips follow it within ordinary reach and balance limits.
 
-The first count is unchanged. Revised follow landings and compact passing arcs
-create the side-by-side lanes. The last travelling count uses modest checked
-pelvis displacement while its feet prepare the canonical promenade exit; normal
-support and loaded-leg balance limits still apply. The follow cuts across the
-front as count 6 opens to promenade. The exit moves 55 cm farther along the floor
-than the preceding proposal, but retains the exact `promenade apart` stance and
-support, so every previously compatible incoming/outgoing figure still fits.
+Counts 4–5 follow the new northward heading: lead backward and follow forward,
+shoulder-to-shoulder with opposite facings. Lateral torso spacing remains
+34–38 cm at count landings, with the lead 15 cm ahead along shared travel.
+Rows 2–5 retain the checked `opposed promenade` formation. Count 4's follow arc
+fits the new third landing; the remaining local movement/shaping retains the
+accepted pattern, reoriented with the turn. Count 6 still opens to an exact
+`promenade apart` stance, now rotated 180°, preserving all compatible joins.
+The turn, dimensions and routes are provisional for subjective review.
 
 `promenade-walk-and-close.json` is a separate three-count finish: inner feet
 step through, outer feet step side/uncross, then the inner feet collect in
@@ -528,8 +529,8 @@ or Contra Check.
 
 **Waltz weave practice** includes both figures, nine counts altogether. They
 remain separately selectable so either can be used with another compatible
-figure. Regression tests check the lead's side/facing and genuine backward
-progress, exact incoming/outgoing connections, and all footprint/thigh/shin
+figure. Regression tests check the synchronized third-count pivot, side exchange,
+opening-direction progress, opposed spacing and genuine subsequent travel, exact incoming/outgoing connections, and all footprint/thigh/shin
 pairs across all nine counts and their join with linear/eased playback.
 Normal reach, lowering and balance limits apply; there are no `skipChecks`.
 The authoring parser and JSON editor schema both support the row-level hold

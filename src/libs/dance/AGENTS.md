@@ -351,26 +351,27 @@ the owner before building more on top of them.
   This is a provisional three-count development using the owner's existing
   symmetric 45° opening model, not a claim of standard syllabus timing. Both
   alternatives have dense full-footprint and thigh/shin clearance regressions.
-- Weave from Promenade Position is a six-count waltz from the owner's
-  feet-apart promenade. After the opening follow turn, lead facing 270 keeps
-  the left side and walks backward on 3–5 while follow facing 90 walks forward.
-  Rows 2–5 explicitly use authoring-only `hold: "opposed promenade"`: opposite
-  facings with nominal follow position 35 cm right / 10 cm forward of the lead.
-  This uses the ordinary hold distance/facing tolerances, is restricted to the
-  annotated row, and leaves every unmarked row's existing checks unchanged.
-  The actual weave has 34–38 cm lateral torso spacing and the backward-moving
-  lead 15 cm ahead along shared travel at count landings. Passing paths and
-  checked pelvis displacement on 5 keep legs clear before the exact promenade
-  exit on 6. The final position translates 55 cm farther along travel while
-  preserving the canonical stance, support and all connections. Count 1 is
-  unchanged. Promenade Walk and Close remains a separate three-count finish,
-  ending feet collected in closed hold, lead RF / follow LF weighted. The
-  practice preset contains both, nine counts altogether. Dimensions, shaping,
-  preparation turns and routes are provisional for review; see db/FIGURES.md.
-  Dense regressions cover shoulder spacing/stagger, genuine backward/forward
-  progress, all footprints/thigh/shin pairs, reach/lowering/balance and joins.
-  All authoring checks remain enabled. Parser/editor schema changes are
-  authoring-only; persisted steps/poses and database/snapshot schemas are unchanged.
+- Weave from Promenade Position is a six-count waltz from feet-apart
+  promenade. Its first two counts are preserved. On 3 both partners continue
+  the follow's left pivot together by 90° (lead 270→180, follow 90→0), swapping
+  relative sides while the centre progresses northwest instead of reversing
+  east. This fits the owner's eighth-to-quarter directional bias. A common
+  12 cm southward pelvis displacement helps the hips follow the shared turn
+  within normal reach, lowering and balance limits. Counts 4–5 travel north:
+  lead backward, follow forward, with opposite facings and 34–38 cm lateral
+  spacing / 15 cm lead-ahead stagger at landings. Rows 2–5 explicitly use
+  authoring-only `hold: "opposed promenade"`, nominally follow 35 cm right and
+  10 cm forward of lead, using unchanged hold tolerances on that row only.
+  Count 4's follow arc accommodates the new landing; subsequent local movement
+  and shaping retain the accepted pattern reoriented with the turn. Count 6
+  ends in exact promenade-apart stance rotated 180°, preserving connections.
+  Promenade Walk and Close remains a separate three-count finish to ordinary
+  collected closed stance (lead RF / follow LF weighted); the preset has nine
+  counts total. Dimensions/routes/turn shaping are provisional for review.
+  Dense regressions cover synchronized turn, side swap, opening-direction
+  progress, opposed spacing, all footprints/thigh/shin pairs, body limits and
+  exact joins, in both authored and placed playback. All checks remain active;
+  no further authoring/persisted schema changes are needed for this turn.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

@@ -17,6 +17,10 @@ import {
 import { footHeading, type Pose } from "../../src/libs/dance/pose.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import { applyTransform } from "../../src/libs/dance/floor.mts";
+import {
+  rotatePoint,
+  normalizeDegrees,
+} from "../../src/libs/dance/heading.mts";
 import { bodyPosition } from "../../src/libs/dance/weight.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
@@ -108,7 +112,7 @@ test("Weave: existing promenade entries connect without a Whisk or contra check 
   poseClose(
     weave.endPose,
     applyTransform(
-      { position: weave.endPose.lead.left.position, rotation: 270 },
+      { position: weave.endPose.lead.left.position, rotation: 180 },
       stancePose("promenade apart", { lead: "left", follow: "right" }),
     ),
   );
@@ -121,28 +125,70 @@ test("Weave: existing promenade entries connect without a Whisk or contra check 
   }
 });
 
-test("Weave: the lead stays left and travels backward while the follow advances", () => {
-  // These behavioural bounds reject the old 90-degree lead swing and circular
-  // shuffling even if a future path happens to pass collision checks.
-  for (const options of [{}, { footEasing: footEase }]) {
+test("Weave: count three continues the pivot together, swaps sides and keeps opening-direction progress", () => {
+  const before = poseAtBeat(weave, 2),
+    after = poseAtBeat(weave, 3);
+  // Preserve the accepted opening and the follow's arrival from its pivot.
+  close(before.lead.left.position.x, -0.5);
+  close(before.lead.left.position.y, -0.08);
+  close(before.follow.right.position.x, -0.65);
+  close(before.follow.right.position.y, 0.26);
+  for (const options of [{}, { footEasing: footEase }])
+    for (let sample = 0; sample <= 256; sample++) {
+      const progress = sample / 256,
+        p = poseAtBeat(weave, 2 + progress, options);
+      close(p.lead.orientation, 270 - 90 * progress);
+      close(p.follow.orientation, 90 - 90 * progress);
+      close(normalizeDegrees(p.follow.orientation - p.lead.orientation), 180);
+    }
+  const a = bodyPosition(before.lead),
+    b = bodyPosition(before.follow),
+    c = bodyPosition(after.lead),
+    d = bodyPosition(after.follow);
+  assert.ok(
+    a.y < b.y && c.y > d.y,
+    "Partners exchange sides during the shared turn",
+  );
+  assert.ok(
+    c.x < a.x && d.x < b.x,
+    "Both continue westward rather than reversing east",
+  );
+  const delta = {
+    x: (c.x + d.x - a.x - b.x) / 2,
+    y: (c.y + d.y - a.y - b.y) / 2,
+  };
+  // The centre travels northwest: between an eighth and a quarter turn
+  // clockwise from the opening's westward line, without a reverse step.
+  assert.ok(delta.x < -0.15 && delta.y >= -delta.x);
+});
+
+test("Weave: opposed shoulder spacing is maintained through the shared turn and new travelling heading", () => {
+  for (const options of [{}, { footEasing: footEase }])
     for (let sample = 2 * 256; sample <= 5 * 256; sample++) {
       const p = poseAtBeat(weave, sample / 256, options),
-        lead = bodyPosition(p.lead),
-        follow = bodyPosition(p.follow);
-      close(p.lead.orientation, 270);
-      close(p.follow.orientation, 90);
-      // With the lead facing west, north is their right: the follow stays
-      // on that side, rather than the lead circling in front of the follow.
+        l = bodyPosition(p.lead),
+        f = bodyPosition(p.follow);
+      // During the shared turn the shoulders draw closer and the forward
+      // stagger approaches level; it remains positive and returns to 15 cm
+      // at each landing. Keep the geometry/body limits independently strict.
+      const relative = rotatePoint(
+        { x: f.x - l.x, y: f.y - l.y },
+        -p.lead.orientation,
+      );
+      close(normalizeDegrees(p.follow.orientation - p.lead.orientation), 180);
       assert.ok(
-        follow.y - lead.y >= 0.28 && follow.y - lead.y <= 0.52,
+        relative.x >= 0.27 && relative.x <= 0.52,
         `Shoulder spacing at ${sample / 256}`,
       );
       assert.ok(
-        lead.x - follow.x >= 0.04 && lead.x - follow.x <= 0.26,
-        `Lead ahead along travel at ${sample / 256}`,
+        relative.y >= 0.01 && relative.y <= 0.26,
+        `Lead ahead along shared travel at ${sample / 256}`,
       );
+      if (sample >= 3 * 256) {
+        close(p.lead.orientation, 180);
+        close(p.follow.orientation, 0);
+      }
     }
-  }
   assert.deepEqual(
     definition.steps.map((row) => row.hold),
     [
@@ -157,20 +203,25 @@ test("Weave: the lead stays left and travels backward while the follow advances"
   for (const beat of [2, 3, 4, 5]) {
     const p = poseAtBeat(weave, beat),
       l = bodyPosition(p.lead),
-      f = bodyPosition(p.follow);
-    assert.ok(f.y - l.y >= 0.33 && f.y - l.y <= 0.39);
-    close(l.x - f.x, 0.15);
+      f = bodyPosition(p.follow),
+      relative = rotatePoint(
+        { x: f.x - l.x, y: f.y - l.y },
+        -p.lead.orientation,
+      );
+    assert.ok(relative.x >= 0.33 && relative.x <= 0.39);
+    close(relative.y, 0.15);
   }
-  for (const beat of [3, 4, 5]) {
+  // After the twirl the lead backs north and the follow walks north.
+  for (const beat of [4, 5]) {
     const a = poseAtBeat(weave, beat - 1),
       b = poseAtBeat(weave, beat);
-    assert.ok(bodyPosition(b.lead).x - bodyPosition(a.lead).x >= 0.2);
-    assert.ok(bodyPosition(b.follow).x - bodyPosition(a.follow).x >= 0.17);
+    assert.ok(bodyPosition(b.lead).y - bodyPosition(a.lead).y >= 0.2);
+    assert.ok(bodyPosition(b.follow).y - bodyPosition(a.follow).y >= 0.17);
   }
   close(poseAtBeat(weave, 1).lead.orientation, 300);
   close(poseAtBeat(weave, 1).follow.orientation, 240);
-  close(weave.endPose.lead.orientation, 225);
-  close(weave.endPose.follow.orientation, 135);
+  close(weave.endPose.lead.orientation, 135);
+  close(weave.endPose.follow.orientation, 45);
 });
 
 test("Promenade Walk and Close: separate three counts and an exact collected closed exit", () => {
