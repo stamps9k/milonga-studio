@@ -66,18 +66,18 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 
 ## The figure
 
-| Field         | Meaning                                                                                                                                        |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | Shown in the library. Must be unique across the figure files.                                                                                  |
-| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                                                                    |
-| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                                                            |
-| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"`, `"tango promenade"` or `"contra check"`. See "Stances". |
-| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.                                                  |
-| `steps`       | The steps, in time order.                                                                                                                      |
-| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                                                          |
-| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                                                         |
-| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".                                          |
-| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.                                         |
+| Field         | Meaning                                                                                                                                                                                                                     |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Shown in the library. Must be unique across the figure files.                                                                                                                                                               |
+| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                                                                                                                                                 |
+| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                                                                                                                                         |
+| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"`, `"tango promenade"` or `"contra check"`. See "Stances".                                                                              |
+| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.                                                                                                                               |
+| `steps`       | The steps, in time order.                                                                                                                                                                                                   |
+| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                                                                                                                                       |
+| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                                                                                                                                      |
+| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".                                                                                                                       |
+| `notes`       | Optional, a few sentences for whoever edits the file next: source, what the owner confirmed, provisional choices, open questions. Not shown in the app. Change history goes in the PR, not here (see the root `AGENTS.md`). |
 
 Closed stance: the lead stands at the origin facing line of dance, feet 20 cm
 apart; the follow faces him 40 cm away.

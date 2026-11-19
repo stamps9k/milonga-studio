@@ -504,6 +504,10 @@ Use the existing domain terms in names, comments and the UI:
 
 - Keep the detailed explanatory comments in these modules accurate. When
   behaviour changes, update the comment in the same commit.
+- Comments and this file describe the model as it is now. The story of a
+  change (what was wrong, measurements, test results) goes in the PR and
+  commit message, and a figure's details go in its own `notes`; see "Where
+  explanations go" in the root `AGENTS.md`.
 - Persisted type changes need matching schema, assembly and seed updates and
   may need a `Dance.schemaVersion` bump (see the root `AGENTS.md`).
 - Test geometry with tolerances, not exact equality. The existing suites use
