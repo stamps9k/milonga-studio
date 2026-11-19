@@ -173,8 +173,17 @@ or renderer-specific fields to the domain types.
   application, API and tests), the production build, and `npm run audit:ci`
   on Node 22. Each validation runs after a successful install even if another
   check fails; any failed validation fails the job. The job id stays `test`
-  to preserve the existing status-check name. Run applicable checks locally
-  too and report the results.
+  to preserve the existing status-check name. CI also installs Chromium and
+  runs `npm run test:e2e`; browser failures upload reports/traces/screenshots.
+  Run applicable checks locally too and report the results.
+- Playwright workflows live in `e2e/*.spec.mts`, separate from `npm test`.
+  `npm run test:e2e` builds the app and starts `e2e/server.mts` on port 58745
+  against a freshly seeded temporary database; never point these tests at the
+  development database or reuse a developer's server. Contexts isolate browser
+  storage per test. Tests use real API/local persistence, with controlled routes
+  for network failures/order. Keep the existing CDN assets (owner preference),
+  use condition-based waits instead of sleeps, and retain failure diagnostics.
+  See README for installation, reports and the optional local Chromium path.
 
 ## Pull requests and handoff
 
