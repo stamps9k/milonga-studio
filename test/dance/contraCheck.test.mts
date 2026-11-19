@@ -48,6 +48,9 @@ const { definition: checkDefinition, figure: check } = load("contra-check");
 const { definition: recoveryDefinition, figure: recovery } = load(
   "contra-check-recovery",
 );
+const { definition: promenadeDefinition, figure: promenade } = load(
+  "contra-check-recovery-promenade",
+);
 const close = (a: number, b: number) =>
   assert.ok(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
 function poseClose(a: Pose, b: Pose) {
@@ -65,7 +68,11 @@ function poseClose(a: Pose, b: Pose) {
 }
 
 test("Contra Check pair: all authoring checks run, with separate three-count figures", () => {
-  for (const definition of [checkDefinition, recoveryDefinition]) {
+  for (const definition of [
+    checkDefinition,
+    recoveryDefinition,
+    promenadeDefinition,
+  ]) {
     assert.deepEqual(definition.skipChecks ?? [], []);
     assert.equal(definition.style, "waltz");
     assert.equal(definition.time, "3/4");
@@ -168,74 +175,156 @@ test("Contra Check pair: exact connections, including ordinary incoming/outgoing
   assert.equal(assessJoin(recovered.resolvedEndPose, check).fits, true);
 });
 
-test("Contra Check pair: every footprint and thigh/shin pair clears, with ordinary reach and balance", () => {
-  const first = placeEntry(check, undefined),
-    entries = [first, placeEntry(recovery, first)];
-  // No interval is omitted for cross:true. Include all six beats, both easing
-  // modes and the join itself. These are mannequin capsule proxies, not meshes.
-  for (const options of [{}, { footEasing: footEase }])
-    for (let sample = 0; sample <= 6 * 256; sample++) {
-      const beat = sample / 256,
-        p = sequencePoseAtBeat(entries, beat, options);
-      assert.ok(p, `Pair has a pose at beat ${beat}`);
-      const skeleton = solveSkeleton(p),
-        feet = [],
-        bones = [];
-      const l = bodyPosition(p.lead),
-        f = bodyPosition(p.follow);
-      close(f.x - l.x, 0.1);
-      close(f.y - l.y, 0.4);
-      for (const partner of ["lead", "follow"] as const) {
-        const s = skeleton[partner];
-        assert.deepEqual(s.legShortfall, { left: 0, right: 0 });
-        assert.ok(s.hipDrop <= 0.06, `Hip lowering ${partner} at ${beat}`);
-        assert.equal(
-          assessLateralBalance(p[partner], s).plausible,
-          true,
-          `Balance ${partner} at ${beat}`,
-        );
-        for (const side of ["left", "right"] as const) {
-          feet.push({
-            p: p[partner][side].position,
-            h: footHeading(p[partner], side),
-          });
-          const j = s.joints;
-          bones.push(
-            {
-              partner,
-              side,
-              a: j[`${side}UpperLeg`],
-              b: j[`${side}LowerLeg`],
-              r: 0.06,
-            },
-            {
-              partner,
-              side,
-              a: j[`${side}LowerLeg`],
-              b: j[`${side}Foot`],
-              r: 0.045,
-            },
+for (const [label, target] of [
+  ["closed", recovery],
+  ["promenade", promenade],
+] as const) {
+  test(`Contra Check ${label} pair: every footprint and thigh/shin pair clears, with ordinary reach and balance`, () => {
+    const first = placeEntry(check, undefined),
+      entries = [first, placeEntry(target, first)];
+    // No interval is omitted for cross:true. Include all six beats, both easing
+    // modes and the join itself. These are mannequin capsule proxies, not meshes.
+    for (const options of [{}, { footEasing: footEase }])
+      for (let sample = 0; sample <= 6 * 256; sample++) {
+        const beat = sample / 256,
+          p = sequencePoseAtBeat(entries, beat, options);
+        assert.ok(p, `Pair has a pose at beat ${beat}`);
+        const skeleton = solveSkeleton(p),
+          feet = [],
+          bones = [];
+        const l = bodyPosition(p.lead),
+          f = bodyPosition(p.follow);
+        if (label === "closed") {
+          close(f.x - l.x, 0.1);
+          close(f.y - l.y, 0.4);
+        } else {
+          // Opening and the curved passing routes change the offset's x/y
+          // components. Keep ordinary hold distance throughout, bounded by
+          // the existing promenade-apart separation (about 55 cm).
+          const separation = Math.hypot(f.x - l.x, f.y - l.y);
+          assert.ok(
+            separation >= 0.4 && separation <= 0.56,
+            `Hold separation at ${beat}`,
           );
         }
+        for (const partner of ["lead", "follow"] as const) {
+          const s = skeleton[partner];
+          assert.deepEqual(s.legShortfall, { left: 0, right: 0 });
+          assert.ok(s.hipDrop <= 0.06, `Hip lowering ${partner} at ${beat}`);
+          assert.equal(
+            assessLateralBalance(p[partner], s).plausible,
+            true,
+            `Balance ${partner} at ${beat}`,
+          );
+          for (const side of ["left", "right"] as const) {
+            feet.push({
+              p: p[partner][side].position,
+              h: footHeading(p[partner], side),
+            });
+            const j = s.joints;
+            bones.push(
+              {
+                partner,
+                side,
+                a: j[`${side}UpperLeg`],
+                b: j[`${side}LowerLeg`],
+                r: 0.06,
+              },
+              {
+                partner,
+                side,
+                a: j[`${side}LowerLeg`],
+                b: j[`${side}Foot`],
+                r: 0.045,
+              },
+            );
+          }
+        }
+        for (let i = 0; i < feet.length; i++)
+          for (let k = i + 1; k < feet.length; k++) {
+            const a = feet[i],
+              b = feet[k];
+            assert.ok(
+              footprintGap(a.p, a.h, b.p, b.h) >= 0.005,
+              `Footprints ${i}/${k} at ${beat}`,
+            );
+          }
+        for (let i = 0; i < bones.length; i++)
+          for (let k = i + 1; k < bones.length; k++) {
+            const a = bones[i],
+              b = bones[k];
+            if (a.partner === b.partner && a.side === b.side) continue;
+            assert.ok(
+              segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
+              `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat}`,
+            );
+          }
       }
-      for (let i = 0; i < feet.length; i++)
-        for (let k = i + 1; k < feet.length; k++) {
-          const a = feet[i],
-            b = feet[k];
-          assert.ok(
-            footprintGap(a.p, a.h, b.p, b.h) >= 0.005,
-            `Footprints ${i}/${k} at ${beat}`,
-          );
-        }
-      for (let i = 0; i < bones.length; i++)
-        for (let k = i + 1; k < bones.length; k++) {
-          const a = bones[i],
-            b = bones[k];
-          if (a.partner === b.partner && a.side === b.side) continue;
-          assert.ok(
-            segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
-            `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat}`,
-          );
-        }
+  });
+}
+
+test("Promenade Recovery: shares the checked entry and stationary recovery without changing the closed option", () => {
+  poseClose(promenade.startPose, check.endPose);
+  poseClose(promenade.startPose, recovery.startPose);
+  assert.equal(figureDurationBeats(promenade), 3);
+  assert.deepEqual(promenadeDefinition.steps[0], recoveryDefinition.steps[0]);
+  poseClose(poseAtBeat(promenade, 1), poseAtBeat(recovery, 1));
+  assert.deepEqual(
+    promenade.steps.map((s) => [
+      s.partner,
+      s.foot,
+      s.beat,
+      s.duration,
+      s.weight,
+    ]),
+    [
+      ["lead", "right", 1, 1, 1],
+      ["follow", "left", 1, 1, 1],
+      ["lead", "left", 2, 1, 1],
+      ["follow", "right", 2, 1, 1],
+      ["lead", "right", 3, 1, 0],
+      ["follow", "left", 3, 1, 0],
+    ],
+  );
+});
+
+test("Promenade Recovery: opens with feet apart and holds promenade rather than closing", () => {
+  const end = promenade.endPose;
+  const expected = applyTransform(
+    {
+      position: { x: -0.37071067811865477, y: -0.07071067811865477 },
+      rotation: 0,
+    },
+    stancePose("promenade apart", { lead: "left", follow: "right" }),
+  );
+  poseClose(end, expected);
+  close(end.lead.orientation, 315);
+  close(end.follow.orientation, 225);
+  close(end.lead.left.position.x, -0.37071067811865477);
+  close(end.lead.left.position.y, -0.07071067811865477);
+  close(end.lead.right.position.x, 0.1);
+  close(end.lead.right.position.y, 0);
+  close(end.follow.left.position.x, 0.2);
+  close(end.follow.left.position.y, 0.4);
+  for (const partner of ["lead", "follow"] as const) {
+    for (const foot of ["left", "right"] as const) {
+      assert.deepEqual(
+        poseAtBeat(promenade, 2)[partner][foot].position,
+        end[partner][foot].position,
+      );
     }
+    close(footHeading(end[partner], "left"), end[partner].orientation);
+    close(footHeading(end[partner], "right"), end[partner].orientation);
+  }
+});
+
+test("Promenade Recovery: exact check entry and an exact onward Open Natural Turn connection", () => {
+  const first = placeEntry(check, undefined),
+    second = placeEntry(promenade, first);
+  poseClose(first.resolvedEndPose, second.resolvedStartPose);
+  assert.equal(assessJoin(first.resolvedEndPose, promenade).fits, true);
+  const next = load("open-natural-turn").figure,
+    third = placeEntry(next, second);
+  assert.equal(assessJoin(second.resolvedEndPose, next).fits, true);
+  poseClose(second.resolvedEndPose, third.resolvedStartPose);
 });

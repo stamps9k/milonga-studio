@@ -468,3 +468,23 @@ recovery and boundary under linear and eased playback.
 
 After reseeding, **Open → Waltz contra check practice** loads the six-count
 pair at 84 BPM for review. Existing browser saves keep their embedded figures.
+
+### Alternative promenade recovery
+
+`Contra Check Recovery (Promenade)` is a separate selectable three-count
+alternative. Its checked entry and count-1 stationary recovery are identical
+to the closed recovery. On 2, lead LF / follow RF steps out into promenade,
+opening the bodies to 315°/225°. On 3, hold/develop that feet-apart position
+and lower without closing or changing support. Timing and dimensions are a
+provisional visual proposal; the existing closed back-side-close is unchanged.
+
+It ends in the existing `"promenade apart"` stance, translated by
+(-0.3707106781, -0.0707106781) in the original closed frame. Both initially
+supporting feet remain in place. Lead LF / follow RF are weighted at the
+finish, ready for Open Natural Turn with matching positions, directions,
+weights, rise and facing. No new stance, persisted field or check exception
+is needed. Both recovery variants receive the full dense clearance tests.
+
+After reseeding, **Open → Waltz contra check promenade practice** loads the
+check plus this alternative; the original **Waltz contra check practice**
+continues to load the closed option.

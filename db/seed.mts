@@ -346,6 +346,14 @@ const SAMPLE_DANCES: {
     notes:
       "Three-count contra check, then back-side-close in closed hold over three counts. Beginner recovery confirmed by the owner; compact depth and shaping are provisional for review.",
   },
+  {
+    sequence: "Contra Check and Promenade Recovery",
+    figures: ["Contra Check", "Contra Check Recovery (Promenade)"],
+    dance: "Waltz contra check promenade practice",
+    tempo: 84,
+    notes:
+      "Three-count held contra check, then recover into promenade over three counts. Separate alternative to the closed back-side-close; finish ready for Open Natural Turn. Timing and dimensions are provisional for review.",
+  },
 ];
 
 let seededSequences = 0;

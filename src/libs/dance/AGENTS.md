@@ -344,6 +344,13 @@ the owner before building more on top of them.
   shaping and recovery rise are provisional for review, not syllabus claims.
   Recovery ends in ordinary closed stance, lead RF / follow LF weighted. The
   new name is authoring-only; existing pose/step fields persist it unchanged.
+  A separate Contra Check Recovery (Promenade) shares the same entry and first
+  recovery count, steps out/open on 2, and holds/lowers without closing on 3.
+  It ends in the existing promenade-apart stance, lead LF / follow RF weighted,
+  exactly matching Open Natural Turn. Original closed recovery is unchanged.
+  This is a provisional three-count development using the owner's existing
+  symmetric 45° opening model, not a claim of standard syllabus timing. Both
+  alternatives have dense full-footprint and thigh/shin clearance regressions.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a
