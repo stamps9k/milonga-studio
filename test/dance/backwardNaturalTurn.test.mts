@@ -16,8 +16,10 @@ import {
 } from "../../src/libs/dance/fold.mts";
 import { footHeading, type Pose } from "../../src/libs/dance/pose.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
-import { applyTransform } from "../../src/libs/dance/floor.mts";
-import { normalizeDegrees } from "../../src/libs/dance/heading.mts";
+import {
+  normalizeDegrees,
+  rotatePoint,
+} from "../../src/libs/dance/heading.mts";
 import { bodyPosition } from "../../src/libs/dance/weight.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
@@ -160,30 +162,51 @@ test("Backward Natural Turn: three right-turning counts from the free left foot"
     );
   }
 
-  const end = turn.endPose,
-    l = end.lead.left.position,
-    r = end.lead.right.position;
-  poseClose(
-    end,
-    applyTransform(
-      { position: { x: (l.x + r.x) / 2, y: (l.y + r.y) / 2 }, rotation: 225 },
-      stancePose("closed", { lead: "left", follow: "right" }),
-    ),
+  // The last LF travel goes back from the count-2 facing, before the pivot.
+  const beforeThird = poseAtBeat(turn, 2).lead,
+    landed = poseAtBeat(turn, 2.5).lead;
+  const back = rotatePoint(
+    {
+      x: landed.left.position.x - beforeThird.left.position.x,
+      y: landed.left.position.y - beforeThird.left.position.y,
+    },
+    -beforeThird.orientation,
   );
+  assert.ok(back.y < -0.1, "Third LF travel is backward from the new facing");
+  for (const partner of ["lead", "follow"] as const) {
+    const p = turn.endPose[partner];
+    const stance = rotatePoint(
+      {
+        x: p.right.position.x - p.left.position.x,
+        y: p.right.position.y - p.left.position.y,
+      },
+      -p.orientation,
+    );
+    close(stance.x, 0.2);
+    close(stance.y, 0.2);
+    assert.equal(p[partner === "lead" ? "left" : "right"].weight, 1);
+  }
+  const l = bodyPosition(turn.endPose.lead),
+    f = bodyPosition(turn.endPose.follow),
+    hold = rotatePoint({ x: f.x - l.x, y: f.y - l.y }, -225);
+  close(hold.x, 0.1);
+  close(hold.y, 0.4);
   for (const options of [{}, { footEasing: footEase }])
     for (let i = 0; i <= 3 * 256; i++) {
       const p = poseAtBeat(turn, i / 256, options);
       close(normalizeDegrees(p.follow.orientation - p.lead.orientation), 180);
     }
 });
-test("Backward Natural Turn: exact support and position connections after promenade close and before RF closed change", () => {
+test("Backward Natural Turn: exact incoming connection and an open exit", () => {
   const first = placeEntry(promenadeClose, undefined),
     second = placeEntry(turn, first);
   assert.equal(assessJoin(first.resolvedEndPose, turn).fits, true);
   poseClose(first.resolvedEndPose, second.resolvedStartPose);
-  const next = load("rf-closed-change").figure;
-  assert.equal(assessJoin(second.resolvedEndPose, next).fits, true);
-  poseClose(second.resolvedEndPose, placeEntry(next, second).resolvedStartPose);
+  // Feet remain apart; a collected figure cannot silently erase that stride.
+  assert.equal(
+    assessJoin(second.resolvedEndPose, load("rf-closed-change").figure).fits,
+    false,
+  );
 });
 test("Backward Natural Turn and incoming close: all six counts clear every footprint and thigh/shin pair, with normal reach and balance", () => {
   const first = placeEntry(promenadeClose, undefined),

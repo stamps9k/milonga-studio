@@ -82,12 +82,12 @@
       "beat": 2,
       "lead": {
         "go": {
-          "forward": 0.09999999999999998,
-          "right": -0.05000000000000004
+          "forward": 0.25,
+          "right": -0.12000000000000004
         },
         "foot": "R",
         "turn": {
-          "right": 0.05555555555555555
+          "right": 0.013888888888888888
         },
         "weight": true,
         "rise": 0,
@@ -97,97 +97,89 @@
       },
       "follow": {
         "go": {
-          "forward": -0.18995574305974625,
-          "right": -0.41435020788176846
+          "forward": -0.3633974596215561,
+          "right": -0.2764101615137755
         },
         "foot": "L",
         "turn": {
-          "right": 0.05555555555555555
+          "right": 0.013888888888888888
         },
         "weight": true,
         "rise": 0,
         "label": "back from the new facing",
         "path": "around the front",
-        "pathSetOff": -225
+        "pathSetOff": -225,
+        "bodyOffset": {
+          "right": 0.031321614078648585,
+          "forward": 0.05117574124043736
+        }
       }
     },
     {
       "beat": 2.5,
       "lead": {
         "go": {
-          "forward": 0.229795935925581,
-          "right": -0.07450967862201062
+          "forward": 0.3845786558800569,
+          "right": -0.09530224846337057
         },
         "foot": "L",
         "turn": {
-          "right": 0.06944444444444445
+          "right": 0.1111111111111111
         },
         "weight": false,
         "rise": 0,
         "label": "free leg follows the slight right turn",
         "path": "around the front",
-        "pathSetOff": -65,
+        "pathSetOff": -95,
         "bodyOffset": {
-          "right": -0.03712730551672789,
-          "forward": -0.0022472307973948093
+          "right": -0.12485281374238572,
+          "forward": -0.0185786437626905
         }
       },
       "follow": {
         "go": {
-          "forward": -0.4731438085291645,
-          "right": -0.3310701090506282
+          "forward": -0.5320940259915761,
+          "right": -0.28971621288733096
         },
         "foot": "R",
         "turn": {
-          "right": 0.06944444444444445
+          "right": 0.1111111111111111
         },
         "weight": false,
         "rise": 0,
-        "label": "free leg follows the slight right turn",
-        "path": "around the front",
-        "pathSetOff": -155,
-        "bodyOffset": {
-          "right": -0.03712730551672789,
-          "forward": -0.0022472307973948023
-        }
+        "label": "free leg follows the slight right turn"
       }
     },
     {
       "beat": 3,
       "lead": {
         "go": {
-          "forward": 0.008578643762690574,
-          "right": -0.4949747468305833
+          "forward": -0.13719816172854069,
+          "right": -0.44180372546390784
         },
         "foot": "L",
-        "turn": {
-          "right": 0.041666666666666664
-        },
         "weight": true,
         "rise": 0,
-        "label": "turn right towards collected finish",
+        "label": "back on left, preparing the final pivot",
         "path": "around the front",
         "pathSetOff": -135,
         "bodyOffset": {
-          "right": 0.1092882822590578,
-          "forward": -0.13757273760576447
+          "right": 0.12727922061357855,
+          "forward": -0.07071067811865477
         }
       },
       "follow": {
         "go": {
-          "forward": 0.47643981758801085,
-          "right": -0.05254062328093592
+          "forward": 0.41233502632919966,
+          "right": -0.17511324988078636
         },
         "foot": "R",
-        "turn": {
-          "right": 0.041666666666666664
-        },
         "weight": true,
         "rise": 0,
-        "label": "turn right towards collected finish",
+        "label": "forward on right, preparing the final pivot",
         "bodyOffset": {
-          "right": 0.1092882822590577,
-          "forward": -0.13757273760576452
+          "right": 0.09899494936611664,
+          "forward": -0.09899494936611669
         }
       }
     },
@@ -195,47 +187,60 @@
       "beat": 3.5,
       "lead": {
         "go": {
-          "forward": -0.364771532037955,
-          "right": -0.6217505639487972
+          "forward": -0.3371981617285407,
+          "right": -0.4418037254639079
         },
         "foot": "R",
         "turn": {
-          "right": 0.20833333333333334
+          "right": 0.25
         },
         "weight": false,
         "rise": 0,
-        "label": "collect the free foot, completing the pivot",
+        "label": "free leg follows the pivot, feet apart",
         "path": "around the front",
-        "pathSetOff": 165
+        "pathSetOff": 195,
+        "bodyOffset": {
+          "right": -0.08920826299630741,
+          "forward": 0.0023924704943649663
+        }
       },
       "follow": {
         "go": {
-          "forward": 0.691555984812367,
-          "right": -0.032640687356019105
+          "forward": 0.6123350263291997,
+          "right": -0.17511324988078625
         },
         "foot": "L",
         "turn": {
-          "right": 0.20833333333333334
+          "right": 0.25
         },
         "weight": false,
         "rise": 0,
-        "label": "collect the free foot, completing the pivot",
+        "label": "free leg follows the pivot, feet apart",
         "path": "around the front",
-        "pathSetOff": -60
+        "pathSetOff": -105,
+        "bodyOffset": {
+          "right": -0.08920826299630741,
+          "forward": 0.0023924704943649733
+        }
       }
     }
   ],
   "expectBeats": 3,
-  "notes": "Owner's corrected compact right-turn study: three weight changes, lead LF back / RF forward / LF turning, with body headings 90, 135 and 225 degrees at the ends of counts 1, 2 and 3. This replaces the travelling 135-degree box-style interpretation. Each count has a travelling/weight-taking half and an unweighted free-leg pivot-follow half, using existing fractional beats and weight:false. These are three weight changes, not six walking steps; the free leg must follow the pivot rather than stay pinned across the standing leg. Body turns within counts are 30+60, 20+25 and 15+75 degrees. Explicit curved paths keep all feet and thigh/shin capsules apart. Small transient pelvis offsets maintain closed contact while the supporting feet establish the turn; all offsets reset at the finish. The collected closed finish is retained provisionally pending the owner's third-step foot-action clarification. The final lead centre is (0.2267766953, 0.3060660172) and the figure rotates 225 degrees; the couple's shared centre remains exactly at its starting location (0.05, 0.2). The lead necessarily changes sides around that centre, so do not measure net couple travel from the lead alone. Flat rise is a provisional compact pivot study, not a syllabus Natural Turn transcription. Distances, within-count timing, free-leg routes and shaping are provisional for visual review. All existing authoring, clearance, reach, lowering and balance limits remain active without exclusions. The accepted quarter-turn Box Turn and weave are unchanged.",
+  "notes": "Owner's compact right turn: lead LF back, RF forward, LF back; turn 90/45/90 degrees over three counts, finishing with feet apart in closed hold. Each count includes an unweighted free-leg action following the pivot. The owner confirmed the open finish. Dimensions, flat rise, within-count timing, curved routes and pelvis shaping remain provisional for visual review; this is the owner's described pattern, not a syllabus transcription.",
   "expectEnd": {
-    "stance": "closed",
-    "moved": {
-      "right": 0.2267766952966369,
-      "forward": 0.30606601717798215
+    "feet": {
+      "lead": {
+        "L": [0.3068100159417387, 0.3708375169908983],
+        "R": [0.023967303467119616, 0.3708375169908983]
+      },
+      "follow": {
+        "L": [-0.2068100159417387, 0.029162483009101736],
+        "R": [0.07603269653288036, 0.029162483009101736]
+      }
     },
-    "turned": {
-      "right": "5/8"
-    },
-    "leadStandingOn": "L"
+    "facing": {
+      "lead": 225,
+      "follow": 45
+    }
   }
 }

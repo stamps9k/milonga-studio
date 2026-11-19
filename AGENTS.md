@@ -132,6 +132,8 @@ or renderer-specific fields to the domain types.
 
 - Explain changes in enough detail that the repository owner can understand
   exactly what the code does, what changed, and why the change is needed.
+  That account of the change belongs in the PR and commit message; see
+  "Where explanations go" below.
 - Describe the affected behavior and how the implementation produces it. For
   behavior changes, include a concrete before-and-after example when helpful.
 - Document non-obvious algorithms, data transformations, assumptions, units,
@@ -145,6 +147,38 @@ or renderer-specific fields to the domain types.
   rules from provisional modeling choices, and explain material tradeoffs.
 - Keep explanations concrete and relevant; comments should add understanding
   beyond restating individual statements in the code.
+
+## Where explanations go
+
+Each kind of text has one job. Put an explanation where its reader will look
+for it, and don't repeat it anywhere else.
+
+- **PR descriptions and commit messages** hold the history of a change: what
+  was wrong, what was tried, measurements, test results, before and after,
+  and what was deliberately left alone. This is the only place for it.
+- **Code comments and guides** (`AGENTS.md` files, `db/FIGURES.md`, the
+  README) describe how things work now. When a change alters behaviour,
+  rewrite the passage so it describes the new state, rather than appending a
+  paragraph about the change. Leave out repair dates, "previously", "the old
+  X was the bug" and accounts of what stayed unchanged.
+- **A figure file's `notes`** are for whoever next edits that figure. They
+  say where the figure came from (the owner's description, a reference), what
+  the owner has confirmed, which choices are provisional, and any open
+  question. Keep them to a few plain sentences, about 600 characters at most.
+  Don't put coordinates, clearances, hip lowering, test results, earlier
+  versions or a list of what was kept in notes; the figure's own data and
+  its PR already hold those.
+- **`db/FIGURES.md`** explains the figure format and the features a figure
+  can use, each with a short example. Don't write up individual catalogue
+  figures or sample dances there; a figure's details go in its notes.
+- **The provisional modelling choices in `src/libs/dance/AGENTS.md`** name
+  each choice in the model and why it was made. Mention a figure only as a
+  brief example of a choice in use.
+
+Before adding to a guide, look for an existing passage to edit instead. If a
+section has grown beyond what a reader needs to use the feature, trim it in
+the same PR. Shorter, current text is more useful to the next reader, human
+or agent, than a complete record, and the complete record is in git.
 
 ## Naming and formatting
 

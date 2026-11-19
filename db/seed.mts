@@ -344,7 +344,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz contra check practice",
     tempo: 84,
     notes:
-      "Three-count contra check, then back-side-close in closed hold over three counts. Beginner recovery confirmed by the owner; compact depth and shaping are provisional for review.",
+      "Three-count contra check, then back-side-close in closed hold over three counts.",
   },
   {
     sequence: "Contra Check and Promenade Recovery",
@@ -352,7 +352,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz contra check promenade practice",
     tempo: 84,
     notes:
-      "Three-count held contra check, then recover into promenade over three counts. Separate alternative to the closed back-side-close; finish ready for Open Natural Turn. Timing and dimensions are provisional for review.",
+      "Three-count held contra check, then recover into promenade over three counts, ready for Open Natural Turn.",
   },
   {
     sequence: "Weave from Promenade Practice",
@@ -360,7 +360,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz weave practice",
     tempo: 84,
     notes:
-      "Six-count weave into promenade, then a separate three-count promenade walk and collected close: nine counts altogether. Partners continue the pivot together on 3 and exchange sides, then travel in opposed promenade with lead walking backward and follow forward. Dimensions and turn timing are provisional for review; no Whisk or Contra Check setup required.",
+      "Six-count weave into promenade, then a three-count promenade walk and close into closed hold: nine counts altogether.",
   },
   {
     sequence: "Promenade Close and Backward Natural Turn",
@@ -368,7 +368,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz backward natural turn practice",
     tempo: 84,
     notes:
-      "Three-count promenade walk and close, then a compact right turn: LF back, RF forward, LF turning, with 90/45/90 degrees over three counts. The couple finishes around the same centre. Collected finish, free-leg routes and within-count timing are provisional for review.",
+      "Promenade walk and close, then a compact three-count right turn: LF back, RF forward, LF back, turning 90/45/90 degrees and finishing with feet apart in closed hold.",
   },
 ];
 
