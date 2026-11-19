@@ -368,7 +368,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz backward natural turn practice",
     tempo: 84,
     notes:
-      "Three-count promenade walk and close, then LF back, RF side, LF close turning right over three counts. The new backward half turns three eighths; dimensions and turn timing are provisional for review.",
+      "Three-count promenade walk and close, then a compact right turn: LF back, RF forward, LF turning, with 90/45/90 degrees over three counts. The couple finishes around the same centre. Collected finish, free-leg routes and within-count timing are provisional for review.",
   },
 ];
 

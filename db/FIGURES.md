@@ -544,16 +544,20 @@ turns, compact stride lengths, underturned alignment and curved passing routes
 are modelling choices for subjective review, not an exact syllabus chart or a
 claim that the separate finish has a formal syllabus name.
 
-Natural Turn (backward half) is a separate three-count waltz following Promenade
-Walk and Close: lead LF back, RF side, LF close; follow RF forward, LF side,
-RF close. It turns right three eighths, ending in collected closed hold with
-lead LF / follow RF weighted. The existing quarter-turn Box Turn is unchanged.
-The 15/95/25-degree body split, compact travel, rise of 2/4/0 cm and follow's
-4 cm count-2 pelvis offset towards the old support are provisional modelling
-choices for review. Feet point to the final 135-degree heading on count 2;
-explicit closes complete the body turn and reset shaping. See the definition's
-notes for technique references. All authoring checks remain enabled, and dense
-regressions cover full footprints, thigh/shin capsules, reach, lowering,
-lateral balance and the exact join after Promenade Walk and Close. The new
-six-count practice preset demonstrates this connection without altering the
-accepted weave preset. No persisted model or database schema change is needed.
+Natural Turn (backward half) now follows the owner's corrected compact pattern:
+lead LF back, RF forward, LF turning, with body headings 90/135/225 degrees
+at the ends of its three counts. Each count explicitly includes a weight-taking
+half followed by the free leg following the pivot without transferring weight;
+this uses existing fractional beats and `weight: false`, not extra walking
+counts or a new model field. Within-count turns are 30+60, 20+25 and 15+75 degrees.
+Transient pelvis offsets keep closed contact while the supporting feet establish
+the turn; offsets reset at the finish. The collected closed finish is retained
+provisionally pending the owner's third-step foot-action clarification. The
+couple's centre finishes exactly where it started; the lead moves around that
+centre as the pair turns 225 degrees. Flat rise, dimensions, free-leg paths and
+within-count timing are provisional for visual review, not a syllabus claim.
+The existing quarter-turn Box Turn and accepted weave preset remain unchanged.
+All authoring checks stay active; dense regressions cover full footprints,
+thigh/shin capsules, reach, lowering, lateral balance, exact incoming/outgoing
+joins, turn per count, forward second stride and net couple displacement.
+No persisted model or database schema change is needed.

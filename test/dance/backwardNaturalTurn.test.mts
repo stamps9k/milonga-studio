@@ -18,6 +18,7 @@ import { footHeading, type Pose } from "../../src/libs/dance/pose.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import { applyTransform } from "../../src/libs/dance/floor.mts";
 import { normalizeDegrees } from "../../src/libs/dance/heading.mts";
+import { bodyPosition } from "../../src/libs/dance/weight.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
@@ -71,7 +72,19 @@ test("Backward Natural Turn: three right-turning counts from the free left foot"
     stancePose("closed", { lead: "right", follow: "left" }),
   );
   for (const partner of ["lead", "follow"] as const) {
-    const steps = turn.steps.filter((s) => s.partner === partner);
+    const all = turn.steps.filter((s) => s.partner === partner);
+    const steps = all.filter((s) => s.weight === 1);
+    assert.deepEqual(
+      all.map((s) => [s.beat, s.duration, s.weight]),
+      [
+        [1, 0.5, 1],
+        [1.5, 0.5, 0],
+        [2, 0.5, 1],
+        [2.5, 0.5, 0],
+        [3, 0.5, 1],
+        [3.5, 0.5, 0],
+      ],
+    );
     assert.deepEqual(
       steps.map((s) => s.foot),
       partner === "lead"
@@ -81,16 +94,11 @@ test("Backward Natural Turn: three right-turning counts from the free left foot"
     assert.deepEqual(
       steps.map((s) => [s.beat, s.duration, s.weight]),
       [
-        [1, 1, 1],
-        [2, 1, 1],
-        [3, 1, 1],
+        [1, 0.5, 1],
+        [2, 0.5, 1],
+        [3, 0.5, 1],
       ],
     );
-    assert.deepEqual(
-      steps.map((s) => s.footwork),
-      partner === "lead" ? ["TH", "T", "TH"] : ["HT", "T", "TH"],
-    );
-    assert.equal(steps[2].weightTiming, "late");
     close(turn.endPose[partner].rise, 0);
   }
   assert.ok(
@@ -101,15 +109,64 @@ test("Backward Natural Turn: three right-turning counts from the free left foot"
     poseAtBeat(turn, 1).follow.right.position.y <
       turn.startPose.follow.right.position.y,
   );
-  close(turn.endPose.lead.orientation, 135);
-  close(turn.endPose.follow.orientation, 315);
+  close(turn.endPose.lead.orientation, 225);
+  close(turn.endPose.follow.orientation, 45);
+  for (const [beat, heading] of [
+    [1, 90],
+    [2, 135],
+    [3, 225],
+  ]) {
+    close(poseAtBeat(turn, beat).lead.orientation, heading);
+    close(
+      footHeading(poseAtBeat(turn, beat).lead, beat === 2 ? "right" : "left"),
+      heading,
+    );
+  }
+  const before = poseAtBeat(turn, 1).lead,
+    after = poseAtBeat(turn, 2).lead;
+  assert.ok(
+    after.right.position.x - before.right.position.x > 0.09,
+    "RF moves forward along the new eastward heading",
+  );
+  // Turn about the shared floor-space centre, not about a fixed lead.
+  const centre = (p: Pose) => {
+    const feet = [p.lead.left, p.lead.right, p.follow.left, p.follow.right];
+    return {
+      x: feet.reduce((a, f) => a + f.position.x, 0) / 4,
+      y: feet.reduce((a, f) => a + f.position.y, 0) / 4,
+    };
+  };
+  const a = centre(turn.startPose),
+    b = centre(turn.endPose);
+  close(a.x, b.x);
+  close(a.y, b.y);
+  const hips = (p: Pose) => {
+    const l = bodyPosition(p.lead),
+      f = bodyPosition(p.follow);
+    return { x: (l.x + f.x) / 2, y: (l.y + f.y) / 2 };
+  };
+  const startHips = hips(turn.startPose),
+    endHips = hips(turn.endPose);
+  assert.ok(
+    Math.hypot(endHips.x - startHips.x, endHips.y - startHips.y) < 0.08,
+    "Pelvis midpoint also finishes within 8 cm",
+  );
+  for (let sample = 0; sample <= 3 * 256; sample++) {
+    const p = poseAtBeat(turn, sample / 256),
+      h = hips(p);
+    assert.ok(
+      Math.hypot(h.x - startHips.x, h.y - startHips.y) < 0.65,
+      "Pivot stays within a compact floor area",
+    );
+  }
+
   const end = turn.endPose,
     l = end.lead.left.position,
     r = end.lead.right.position;
   poseClose(
     end,
     applyTransform(
-      { position: { x: (l.x + r.x) / 2, y: (l.y + r.y) / 2 }, rotation: 135 },
+      { position: { x: (l.x + r.x) / 2, y: (l.y + r.y) / 2 }, rotation: 225 },
       stancePose("closed", { lead: "left", follow: "right" }),
     ),
   );
