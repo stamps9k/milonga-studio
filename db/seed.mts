@@ -338,6 +338,14 @@ const SAMPLE_DANCES: {
     tempo: 120,
     notes: "Forward basic into side basic",
   },
+  {
+    sequence: "Contra Check and Closed Recovery",
+    figures: ["Contra Check", "Contra Check Recovery (Closed)"],
+    dance: "Waltz contra check practice",
+    tempo: 84,
+    notes:
+      "Three-count contra check, then back-side-close in closed hold over three counts. Beginner recovery confirmed by the owner; compact depth and shaping are provisional for review.",
+  },
 ];
 
 let seededSequences = 0;

@@ -1,0 +1,59 @@
+{
+  "$schema": "../figure.schema.json",
+  "style": "waltz",
+  "time": "3/4",
+  "name": "Contra Check",
+  "notes": "Provisional beginner practice version for owner review (2026-11-19): one compact LF forward / follow RF back CBMP check on count 1, developing/holding the checked position through counts 2 and 3. This is the check only, not the standard complete contra-check exit to promenade. The bodies turn 15 degrees left while the moving feet retain their original directions. A 40 cm travel with 14 cm inward placement and 3 cm lowering is a modelling proposal, not a prescribed syllabus depth. cross marks the intentional CBMP foot order; dense footprint and full-leg clearance checks must still cover it. Follow with Contra Check Recovery (Closed), the owner-confirmed back-side-close over three counts.",
+  "steps": [
+    {
+      "lead": {
+        "go": {
+          "forward": 0.4,
+          "right": 0.14
+        },
+        "foot": "L",
+        "turn": {
+          "left": "1/24"
+        },
+        "pointing": {
+          "right": "1/24"
+        },
+        "footwork": "HT",
+        "cross": true,
+        "label": "forward in CBMP, check",
+        "rise": -0.03
+      },
+      "follow": {
+        "go": {
+          "forward": -0.4,
+          "right": -0.14
+        },
+        "foot": "R",
+        "turn": {
+          "left": "1/24"
+        },
+        "pointing": {
+          "right": "1/24"
+        },
+        "footwork": "TH",
+        "cross": true,
+        "label": "back in CBMP, check",
+        "rise": -0.03
+      },
+      "beat": 1
+    },
+    {
+      "both": "in place",
+      "weight": false,
+      "beat": 2,
+      "rise": -0.03,
+      "cross": true,
+      "label": "hold the check"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "contra check",
+    "leadStandingOn": "L"
+  }
+}

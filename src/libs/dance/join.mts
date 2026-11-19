@@ -16,8 +16,8 @@ import { normalizeDegrees } from "./heading.mts";
  *   the join (the lead's is 0 by construction, since fitTransform aligns
  *   it; the follow's can differ, as after the Ocho);
  * - weighted foot: the next figure's first travelling step for a partner
- *   moves the foot that partner is standing on at the join, which a
- *   dancer can't do.
+ *   moves a fully loaded foot, after accounting for any explicit stationary
+ *   weight changes before it. A dancer must release support before travelling.
  *
  * This is the "these two figures don't connect cleanly" signal that
  * fitTransform's docs point at. It is measurement only: nothing here
@@ -82,19 +82,28 @@ function signedTurn(from: number, to: number): number {
   return turn > 180 ? turn - 360 : turn;
 }
 
-/** The first step of `figure` that moves `partner`'s foot across the
- *  floor, in beat order. Zero-distance steps (weight changes, pivots)
- *  and airborne steps don't move a foot that's carrying weight, so they
- *  don't count. */
-function firstTravellingStep(figure: Figure, partner: Partner) {
-  return [...figure.steps]
+/** The first travelling step and its actual support weight, after any
+ * preceding stationary weight changes. A recovery may replace weight before
+ * moving the formerly loaded foot; judging only the boundary weights would
+ * incorrectly reject that legal transition. Airborne actions do not transfer
+ * support. Later travelling steps remain the figure's own authoring checks. */
+function firstTravelSupport(
+  figure: Figure,
+  partner: Partner,
+  previous: Pose[Partner],
+) {
+  const weights = { left: previous.left.weight, right: previous.right.weight };
+  const steps = [...figure.steps]
     .filter((step) => step.partner === partner)
-    .sort((a, b) => a.beat - b.beat)
-    .find(
-      (step) =>
-        step.contact === "floor" &&
-        (step.movement.type === "arc" || step.movement.distance > 0),
-    );
+    .sort((a, b) => a.beat - b.beat);
+  for (const step of steps) {
+    if (step.contact !== "floor") continue;
+    if (step.movement.type === "arc" || step.movement.distance > 0) {
+      return { step, weight: weights[step.foot] };
+    }
+    weights[step.foot] = step.weight;
+    weights[step.foot === "left" ? "right" : "left"] = 1 - step.weight;
+  }
 }
 
 /**
@@ -133,14 +142,15 @@ export function assessJoin(previousEnd: Pose, next: Figure): JoinAssessment {
 
   // Judged against the weights where the previous figure actually left
   // the couple, not against next.startPose's weights: the question is
-  // whether the next figure's first step can be taken from here.
+  // whether its first travelling step can be taken after any explicitly
+  // authored stationary recovery/weight changes.
   // Provisional rule (the same one test/db/seed.test.mts applies within
   // figures): a travelling step needs a foot that isn't carrying all of
   // the partner's weight.
   for (const partner of PARTNERS) {
-    const step = firstTravellingStep(next, partner);
-    if (step && previousEnd[partner][step.foot].weight >= 1 - 1e-9) {
-      issues.push({ kind: "weighted-foot", partner, foot: step.foot });
+    const travel = firstTravelSupport(next, partner, previousEnd[partner]);
+    if (travel && travel.weight >= 1 - 1e-9) {
+      issues.push({ kind: "weighted-foot", partner, foot: travel.step.foot });
     }
   }
 
