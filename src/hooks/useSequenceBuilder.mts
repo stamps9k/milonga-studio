@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 
+import { createFigureAdditionQueue } from "./figureAdditionQueue.mts";
 import { fetchFigure } from "../libs/api/figures.mts";
 import { placeEntry, removeEntry } from "../libs/dance/chain.mts";
 import type { SequenceEntry } from "../libs/dance/sequence.mts";
@@ -39,22 +40,23 @@ export function useSequenceBuilder(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const addFigure = useCallback(async (figureId: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const figure = await fetchFigure(figureId);
-      setEntries((previousEntries) => [
-        ...previousEntries,
-        placeEntry(figure, previousEntries[previousEntries.length - 1]),
-      ]);
-      setActiveFigureId(figureId);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // State initialization gives this editor a stable queue, independent of
+  // rerenders and of queues belonging to previously opened dances. Functional
+  // placement reads the latest entries, including removals made while fetching.
+  const [addFigure] = useState(() =>
+    createFigureAdditionQueue({
+      load: fetchFigure,
+      append: (figure) => {
+        setEntries((previousEntries) => [
+          ...previousEntries,
+          placeEntry(figure, previousEntries[previousEntries.length - 1]),
+        ]);
+        setActiveFigureId(figure.id);
+      },
+      setLoading,
+      setError,
+    }),
+  );
 
   const removeFigure = useCallback((index: number) => {
     setEntries((previousEntries) => removeEntry(previousEntries, index));
