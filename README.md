@@ -82,12 +82,22 @@ API before running it on an existing database. `DB_PATH` chooses another file.
 An API started without a database creates an empty schema; seed it to provide
 figures and preset dances. Personal IndexedDB saves are separate from SQLite.
 
+CI runs the following checks on pull requests, pushes to `main` and manual
+workflow runs, using Node 22. Run the same checks locally before submitting:
+
 ```sh
-npm test
 npm run lint
 npm run format:check
+npx tsc --noEmit -p config/tsconfig.dev.json
+npm test
 npm run build
+npm run audit:ci
 ```
+
+The TypeScript check covers the application, API and tests; the production
+build also checks the frontend with its production configuration. CI reports
+all checks after a successful dependency install, even when one fails. The
+existing `test` status check succeeds only when every validation passes.
 
 The API serves the built frontend from `dist/` in production. See `Dockerfile`,
 `docker-compose.yml`, and [AGENTS.md](AGENTS.md) for repository guidance.

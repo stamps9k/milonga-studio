@@ -25,7 +25,9 @@ confirmed dance rules from provisional modelling choices. -->
 - [ ] `npm test`
 - [ ] `npm run lint`
 - [ ] `npm run format:check`
+- [ ] `npx tsc --noEmit -p config/tsconfig.dev.json`
 - [ ] `npm run build`
+- [ ] `npm run audit:ci`
 - [ ] Manual check in the browser (describe what was checked)
 
 ## Risks and limitations
