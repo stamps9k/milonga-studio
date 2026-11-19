@@ -1,5 +1,6 @@
 import express, { type Request, type Response } from "express";
 import { db } from "./db.mts";
+import { sendApiError } from "./errors.mts";
 import {
   assembleFigure,
   assembleSequence,
@@ -24,8 +25,9 @@ function parseId(raw: string | string[], res: Response): number | null {
       .json({ success: false, error: `Invalid id: ${raw.join(",")}` });
     return null;
   }
+  // Reject values that could round to another id or fail during SQLite binding.
   const id = Number(raw);
-  if (!Number.isInteger(id) || id <= 0) {
+  if (!Number.isSafeInteger(id) || id <= 0) {
     res.status(400).json({ success: false, error: `Invalid id: ${raw}` });
     return null;
   }
@@ -45,7 +47,7 @@ interface FigureSummaryRow {
 // Lightweight summaries for browsing (e.g. the step/figure library) --
 // the full nested Figure (with steps and poses expanded) is only worth
 // paying for once a specific figure is actually selected.
-dance_routes.get("/api/figures", (_req: Request, res: Response) => {
+dance_routes.get("/api/figures", (req: Request, res: Response) => {
   try {
     const rows = db
       .prepare("SELECT id, name, style FROM figures ORDER BY name")
@@ -60,7 +62,7 @@ dance_routes.get("/api/figures", (_req: Request, res: Response) => {
     }));
     res.json({ success: true, message: figures });
   } catch (err) {
-    res.status(500).json({ success: false, error: (err as Error).message });
+    sendApiError(req, res, err);
   }
 });
 
@@ -70,7 +72,7 @@ dance_routes.get("/api/figures/:id", (req: Request, res: Response) => {
   try {
     res.json({ success: true, message: assembleFigure(id) });
   } catch (err) {
-    res.status(404).json({ success: false, error: (err as Error).message });
+    sendApiError(req, res, err, { entity: "figure", id });
   }
 });
 
@@ -84,7 +86,7 @@ dance_routes.get("/api/sequences/:id", (req: Request, res: Response) => {
   try {
     res.json({ success: true, message: assembleSequence(id) });
   } catch (err) {
-    res.status(404).json({ success: false, error: (err as Error).message });
+    sendApiError(req, res, err, { entity: "sequence", id });
   }
 });
 
@@ -99,7 +101,7 @@ interface DanceSummaryRow {
   updatedAt: string;
 }
 
-dance_routes.get("/api/dances", (_req: Request, res: Response) => {
+dance_routes.get("/api/dances", (req: Request, res: Response) => {
   try {
     const rows = db
       .prepare(
@@ -115,7 +117,7 @@ dance_routes.get("/api/dances", (_req: Request, res: Response) => {
     }));
     res.json({ success: true, message: dances });
   } catch (err) {
-    res.status(500).json({ success: false, error: (err as Error).message });
+    sendApiError(req, res, err);
   }
 });
 
@@ -125,7 +127,7 @@ dance_routes.get("/api/dances/:id", (req: Request, res: Response) => {
   try {
     res.json({ success: true, message: assembleDance(id) });
   } catch (err) {
-    res.status(404).json({ success: false, error: (err as Error).message });
+    sendApiError(req, res, err, { entity: "dance", id });
   }
 });
 

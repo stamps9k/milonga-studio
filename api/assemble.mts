@@ -7,6 +7,7 @@
  */
 
 import { db } from "./db.mts";
+import { RecordNotFoundError } from "./errors.mts";
 import type {
   Partner,
   Foot,
@@ -209,7 +210,7 @@ const figureStepsStmt = db.prepare(
 export function assembleFigure(figureId: number): Figure {
   const row = figureStmt.get(figureId) as FigureRow | undefined;
   if (!row) {
-    throw new Error(`No figure with id ${figureId}`);
+    throw new RecordNotFoundError("figure", figureId);
   }
 
   const stepRows = figureStepsStmt.all(figureId) as DanceStepRow[];
@@ -297,7 +298,7 @@ function assembleFloorTransform(transformId: number): FloorTransform {
 export function assembleSequence(sequenceId: number): Sequence {
   const row = sequenceStmt.get(sequenceId) as SequenceRow | undefined;
   if (!row) {
-    throw new Error(`No sequence with id ${sequenceId}`);
+    throw new RecordNotFoundError("sequence", sequenceId);
   }
 
   const entryRows = sequenceEntriesStmt.all(sequenceId) as SequenceEntryRow[];
@@ -337,7 +338,7 @@ const danceStmt = db.prepare("SELECT * FROM dances WHERE id = ?");
 export function assembleDance(danceId: number): Dance {
   const row = danceStmt.get(danceId) as DanceRow | undefined;
   if (!row) {
-    throw new Error(`No dance with id ${danceId}`);
+    throw new RecordNotFoundError("dance", danceId);
   }
 
   return {
