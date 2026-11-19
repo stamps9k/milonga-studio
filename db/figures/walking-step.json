@@ -3,7 +3,7 @@
   "name": "Walking Step",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "One walking step: the lead walks forward on his left, the follow walks back on her right. Ends mid-stride (open), so the expected end is given as exact foot positions rather than a stance.",
+  "notes": "One walking step: the lead walks forward on his left, the follow back on her right. Ends mid-stride (open), so the expected end is given as exact foot positions rather than a stance. Reviewed by the owner (2026-11-19).",
   "steps": [
     {
       "both": "forward",

@@ -3,7 +3,7 @@
   "name": "Side Step",
   "style": "argentine tango",
   "time": "4/4",
-  "notes": "One ordinary side step to the lead's right, mirrored as follow left. Provisional repair for the owner's subjective review (2026-11-18): specify lead right foot so neither dancer crosses the supporting leg. Retain 35 cm travel, one Q count, the original closed foot positions, body facings and flat rise. Starting support is now lead left/follow right; ending support is lead right/follow left, matching a rightward step and the adjacent Walking Step/Cruzada foot order. The lead's right lands at (0.45, 0), follow's left at (0.55, 0.4); supporting feet remain at lead left (-0.1, 0), follow right (0, 0.4). The old crossed exit and opposite weight assignment were the seed bug and are corrected. No curves, shaping, turnout, cross flags or skipChecks are needed. Dense linear/eased tests cover all footprint pairs, every thigh/shin capsule pair, hold, reach, hip lowering and balance throughout. Default mannequins have over 4.9 cm leg clearance and under 6 cm hip lowering. This removes the catalogue's final figure-level authoring exclusions; all catalogue figures now run all standard checks. Existing tango sequence foot-position gaps remain separate data work: correcting foot order removes weighted-foot warnings but does not close the gaps. Dimensions remain provisional; shared geometry, body and hold limits are unchanged.",
+  "notes": "One side step: lead right foot to his right, follow left foot to her left, neither crossing the supporting leg. Ends open, lead on his right. Originally from the old seed. Reviewed by the owner (2026-11-19).",
   "steps": [
     {
       "both": "side right",

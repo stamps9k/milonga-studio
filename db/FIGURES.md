@@ -202,13 +202,14 @@ just an action, or inside a partner object.
 | `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `"riseTiming"`    | `"late"`: the rise holds and changes at the end of the step, for a chart's "commence to rise at end of 1" or "lower at end of 3". Default `"even"`: it changes steadily across the step ("continue to rise on 2").                                                                                                                                                                                                                                                                                               |
-| `"bodyOffset"`    | Optional pelvis displacement in metres, e.g. `{ "forward": 0.05, "right": 0.03 }`, measured in each dancer's facing after the turn. Independent of foot mirroring, including on `both` rows. Interpolates linearly from the previous displacement; omission returns to zero. Feet and support weights are unchanged. Used provisionally in Closed Promenade to keep hips close while the feet leave a passing channel.                                                                                           |
+| `"bodyOffset"`    | Optional pelvis displacement in metres, e.g. `{ "forward": 0.05, "right": 0.03 }`, measured in each dancer's facing after the turn. Independent of foot mirroring, including on `both` rows. Interpolates linearly from the previous displacement; omission returns to zero. Feet and support weights are unchanged. Closed Promenade uses it to keep the hips close while the feet pass beneath them.                                                                                                           |
 | `"footwork"`      | The chart's footwork: letters for the parts of the foot that meet the floor, in order, H heel, T toe, B ball, F flat (`"HT"`, `"T"`, `"TH"`, `"BF"`). The first letter decides how the foot lands: heel first (toes up), toe or ball first (heel up), or flat. On a row it can be one each: `{ "lead": "HT", "follow": "TH" }`. Default: none, the foot travels flat.                                                                                                                                            |
 | `"weight": false` | A step without weight, such as a tap: the foot moves, the weight stays.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `"air": true`     | An airborne action (boleo, gancho): the free leg goes out and back, carrying no weight.                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `"pathSetOff"`    | Optional departure angle in degrees clockwise from this dancer's facing before the step. Requires `path`; overrides its preset departure while preserving the landing point. For example, Closed Promenade uses -50 for lead and +50 for follow to pass close beneath the hips. Compiles to the existing arc `setOff`, so no database/snapshot field is added.                                                                                                                                                   |
+| `"pathSetOff"`    | Optional departure angle in degrees clockwise from this dancer's facing before the step. Requires `path`; overrides its preset departure while preserving the landing point. For example, Closed Promenade uses -50 for the lead and +50 for the follow so the outer feet pass close beneath the hips.                                                                                                                                                                                                           |
 | `"cross": true`   | The step crosses the feet on purpose (a whisk's cross behind). Without it, a step may not put the left foot to the right of the right foot. See "What gets checked".                                                                                                                                                                                                                                                                                                                                             |
 | `"path"`          | The foot curves instead of going straight, and lands where the step says. `"around the front"`: it sets off the way the dancer faces (before the step's turn), for a foot that swings round in front of the body on a turning step. `"around the back"`: it sets off diagonally back towards the side it lands on, so it passes behind the standing foot; use it to uncross feet that crossed with this foot behind (the Open Natural Turn's count 2). The curve may turn at most 120° from the way it sets off. |
+| `"hold"`          | `"opposed promenade"`: after this row, check the partners in an opposite-facing, side-by-side formation instead of closed hold or promenade (see "What gets checked"). Only that row is affected. The Weave uses it while the couple travels shoulder to shoulder.                                                                                                                                                                                                                                               |
 | `"label"`         | Text shown for the step. One string, or `{ "lead": …, "follow": … }`. Default: generated.                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 ### How a foot travels
@@ -346,6 +347,12 @@ A stance is a named position for both partners, used by `start` and by
   her left. By default each
   partner stands on the inside foot (the lead's right, the follow's left).
 
+- **`"contra check"`**: where Contra Check ends and its recoveries start.
+  From closed hold, the lead's left foot is 40 cm forward and 14 cm inward,
+  the follow's right foot matching it back, both bodies turned 15° left and
+  lowered 3 cm, the feet in CBMP. The lead stands on his left, the follow on
+  her right. As with `"crossed promenade"`, the feet may start crossed.
+
 `"crossed promenade"` measures from the lead's right foot rather than the
 middle of his feet, so a whisk's ending reads as where that foot went:
 
@@ -408,19 +415,14 @@ The reset stops, listing every problem with its file and location, if:
   aren't in hold. The follow's weight must be within 20 cm of where closed hold
   or promenade puts it from the lead's, and she must face within 30° of the
   way that position faces. A row explicitly marked `"hold": "opposed promenade"`
-  instead checks an opposite-facing, side-by-side formation: nominally 35 cm
-  to the lead's right and 10 cm forward in the lead's frame. This puts the
-  backward-moving lead slightly ahead along shared travel. The same distance
-  and facing tolerances apply. The annotation is authoring-only, applies to
-  that row alone, and does not enable the new formation on unmarked rows. Mirrored (`both`) steps keep the hold on their own,
+  instead checks an opposite-facing, side-by-side formation: the follow 35 cm
+  to the lead's right and 10 cm forward in his frame, with the same
+  tolerances. Mirrored (`both`) steps keep the hold on their own,
   so this mostly checks steps written for `lead` and `follow` separately.
 
-The format retains `"skipChecks"` for historical figure files, listing any of
-`"crossed feet"`, `"own feet"`, `"partner spacing"` and `"hold"`. The current
-catalogue uses no exclusions: every figure runs all authoring checks, and a
-regression test prevents silently reintroducing bypasses. Intentional crosses
-use `cross: true` for foot order; dedicated footprint and leg-clearance tests
-cover the repaired crossing figures without skipping their crossing intervals.
+`"skipChecks"` can list any of `"crossed feet"`, `"own feet"`, `"partner
+spacing"` and `"hold"` to leave them out, with a note saying why. No figure in
+`db/figures/` uses it, and a test fails if one does.
 
 The sample dances in `db/seed.mts` refer to figures by name. If one of their
 figures is missing (because a file was renamed or removed), that sample is
@@ -431,115 +433,3 @@ skipped with a warning, and the rest of the seed carries on.
 Curved paths other than `"around the front"` and `"around the back"`, and
 stances other than the named positions above. These will be added when a
 figure needs them.
-
-## Continuous Argentine tango practice sequences
-
-The seeded Basic Combination uses Walking Step and Collect → Side Step and
-Collect → Cruzada (six Q counts). Ocho Combination uses Walking Step and Collect
-→ Weight Change → Ocho (seven Q counts). Each collection takes its own Q and
-keeps the weight on the supporting feet. Weight Change takes one Q with the
-feet stationary, so Ocho begins on the correct support. These are explicit
-catalogue figures and visible sequence entries, not automatic join adjustments.
-
-The collected walk travels 50 cm for full-leg clearance; the original 60 cm
-Walking Step and original one-count Side Step remain available with their open
-endings. They still require a compatible next figure. The existing Cruzada and
-Ocho movements are unchanged. New presets require reseeding; saved/exported
-dances retain their embedded figures and sequence entries.
-
-## Waltz contra check and closed recovery
-
-`Contra Check` is the check portion of the figure over three counts: lead LF
-forward / follow RF back in a narrowed CBMP track on 1, then hold the shape
-through 2–3. It starts from normal closed stance, lead on RF / follow on LF.
-The compact 40 cm travel, 14 cm inward placement, 15° left body turn and 3 cm
-lowering are provisional dimensions for the owner's subjective review.
-
-`Contra Check Recovery (Closed)` is a descriptive name for the owner-confirmed
-beginner back-side-close, not a formal syllabus title or a promenade exit.
-On 1, replace weight onto lead RF / follow LF and unwind the contra turn;
-on 2, step to the lead's left / follow's right, level with the standing feet;
-on 3, close with weight and lower. It finishes in normal closed stance with
-lead RF / follow LF weighted, ready for an LF figure or another check.
-
-The new `"contra check"` named stance is the exact checked connection pose:
-lead LF at (0.04, 0.4), RF at (0.1, 0); follow RF at (0.14, 0.8), LF at
-(0.2, 0.4). The bodies face 345°/165°, the checking feet still point 0°/180°,
-and both partners are lowered 3 cm. It is authoring metadata; compiled figures
-use the existing pose/step storage with no database or snapshot schema change.
-Intentional `cross: true` marks CBMP in the turned body frame. No figure skips
-checks, and dense footprint/thigh/shin regressions include the full check,
-recovery and boundary under linear and eased playback.
-
-After reseeding, **Open → Waltz contra check practice** loads the six-count
-pair at 84 BPM for review. Existing browser saves keep their embedded figures.
-
-### Alternative promenade recovery
-
-`Contra Check Recovery (Promenade)` is a separate selectable three-count
-alternative. Its checked entry and count-1 stationary recovery are identical
-to the closed recovery. On 2, lead LF / follow RF steps out into promenade,
-opening the bodies to 315°/225°. On 3, hold/develop that feet-apart position
-and lower without closing or changing support. Timing and dimensions are a
-provisional visual proposal; the existing closed back-side-close is unchanged.
-
-It ends in the existing `"promenade apart"` stance, translated by
-(-0.3707106781, -0.0707106781) in the original closed frame. Both initially
-supporting feet remain in place. Lead LF / follow RF are weighted at the
-finish, ready for Open Natural Turn with matching positions, directions,
-weights, rise and facing. No new stance, persisted field or check exception
-is needed. Both recovery variants receive the full dense clearance tests.
-
-After reseeding, **Open → Waltz contra check promenade practice** loads the
-check plus this alternative; the original **Waltz contra check practice**
-continues to load the closed option.
-
-### Waltz weave and separate promenade close
-
-`weave-from-promenade.json` is one six-count figure (two bars of 3/4), with
-alternating support on every count. It uses the owner's feet-apart
-`promenade apart` stance, without a Whisk or required preceding figure.
-Promenade Chassé and Contra Check Recovery (Promenade) both connect to its entry.
-
-The first two counts are preserved. On 3 both partners continue the follow's
-left pivot together through a quarter turn (lead 270° to 180°, follow 90° to 0°).
-Their relative sides swap, and the couple's centre travels northwest instead
-of reversing east. This is within the owner's requested eighth-to-quarter
-bias back towards the opening line. The outer lead route and compact follow
-passing route keep the shared pivot together; a common 12 cm southward pelvis
-displacement lets the hips follow it within ordinary reach and balance limits.
-
-Counts 4–5 follow the new northward heading: lead backward and follow forward,
-shoulder-to-shoulder with opposite facings. Lateral torso spacing remains
-34–38 cm at count landings, with the lead 15 cm ahead along shared travel.
-Rows 2–5 retain the checked `opposed promenade` formation. Count 4's follow arc
-fits the new third landing; the remaining local movement/shaping retains the
-accepted pattern, reoriented with the turn. Count 6 still opens to an exact
-`promenade apart` stance, now rotated 180°, preserving all compatible joins.
-The turn, dimensions and routes are provisional for subjective review.
-
-`promenade-walk-and-close.json` is a separate three-count finish: inner feet
-step through, outer feet step side/uncross, then the inner feet collect in
-ordinary closed hold, lead RF / follow LF weighted. This descriptive name and
-three equal counts reflect the owner's confirmed class ending; the owner
-clarified that it comes **after** the six-count weave. It uses the reviewed
-opening passing route and a compact uncrossing adapted from Closed Promenade,
-with provisional waltz rise. Its collected exit connects to LF Closed Change
-or Contra Check.
-
-**Waltz weave practice** includes both figures, nine counts altogether. They
-remain separately selectable so either can be used with another compatible
-figure. Regression tests check the synchronized third-count pivot, side exchange,
-opening-direction progress, opposed spacing and genuine subsequent travel, exact incoming/outgoing connections, and all footprint/thigh/shin
-pairs across all nine counts and their join with linear/eased playback.
-Normal reach, lowering and balance limits apply; there are no `skipChecks`.
-The authoring parser and JSON editor schema both support the row-level hold
-annotation. No persisted Pose/Step fields, database schema or snapshot version
-change is needed.
-
-The [BallroomDancers.com](https://www.ballroomdancers.com/dances/info.asp?sid=495)
-and [Ballroom Guide](https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html)
-references provide six-count weave context. The owner's path, modest preparation
-turns, compact stride lengths, underturned alignment and curved passing routes
-are modelling choices for subjective review, not an exact syllabus chart or a
-claim that the separate finish has a formal syllabus name.
