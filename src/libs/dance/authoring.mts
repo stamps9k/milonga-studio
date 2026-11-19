@@ -115,7 +115,7 @@ export const HOLD_OFFSET = STANCE_WIDTH / 2;
  *   along the line of travel. See tangoPromenadePose.
  * - "contra check": the compact checked position in the original closed
  *   frame, lead LF / follow RF weighted, with 15° left contra rotation and
- *   3 cm lowering. See CONTRA_CHECK_* for provisional dimensions.
+ *   3 cm lowering. See CONTRA_CHECK_* for the dimensions.
  */
 export type StanceName =
   | "closed"
@@ -126,15 +126,14 @@ export type StanceName =
 
 /** In "crossed promenade", how far the crossing foot is behind the
  *  other foot, and how far across it, in metres, measured in the
- *  opened facing. Provisional: from the owner's description of the
- *  whisk ("toe just behind the right heel"), not technique. */
+ *  opened facing. From the owner's description of the whisk ("toe
+ *  just behind the right heel"). */
 export const CROSS_BEHIND = 0.25;
 export const CROSS_ACROSS = 0.05;
 
 /** In "promenade apart", how far the leading foot is past the trailing
  *  foot along the line of travel, in metres: the chassé's side step.
- *  Provisional: the owner's agreed side-step size for the waltz
- *  figures, not technique. */
+ *  The owner's side-step size for the waltz figures. */
 export const PROMENADE_SIDE_STEP = 0.4;
 
 /** In "promenade apart", how far apart the feet are across the dancer's
@@ -151,14 +150,15 @@ export const PROMENADE_CLOSE_WIDTH = 0.1;
 export const PROMENADE_SEPARATION = 0.05 * Math.SQRT2;
 
 /** In "tango promenade", how far each partner's outside foot is along
- *  the line of travel from the inside foot, in metres. Provisional: the
- *  owner's link steps wide, landing level with the other foot 0.4 out
- *  from where it was, from a closed stance 0.2 wide (2026-11-17). */
+ *  the line of travel from the inside foot, in metres. The owner's
+ *  link steps wide, landing level with the other foot 0.4 out from
+ *  where it was, from a closed stance 0.2 wide. */
 export const TANGO_PROMENADE_WIDTH = 0.6;
 
-/** Provisional compact contra-check connection, in metres/degrees. These
- * define the checked pose shared by the check and its separate recovery;
- * they do not alter ordinary closed hold or any existing figure. */
+/** The owner's compact contra check, in metres and degrees: how far
+ *  the lead's left foot goes forward and inward from closed stance, the
+ *  bodies' left turn and the lowering. Shared by Contra Check's end and
+ *  its recoveries' start. */
 export const CONTRA_CHECK_ADVANCE = 0.4;
 export const CONTRA_CHECK_INWARD = 0.14;
 export const CONTRA_CHECK_TURN = 15;
@@ -194,8 +194,7 @@ export function stancePose(
     case "tango promenade":
       return tangoPromenadePose(weight);
     case "contra check":
-      // Provisional compact CBMP check, not a syllabus depth prescription.
-      // Feet retain their forward/back line while the bodies turn 15° left.
+      // A compact CBMP check. Feet retain their forward/back line while the bodies turn 15° left.
       // This is also the recovery's exact entry: no boundary repositioning.
       return {
         lead: {
