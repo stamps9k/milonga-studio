@@ -1,4 +1,4 @@
-name: Tests
+name: CI
 
 on:
   pull_request:
@@ -11,6 +11,7 @@ permissions:
   contents: read
 
 jobs:
+  # Preserve the existing status-check name used by branch protection.
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -26,7 +27,31 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        id: install
         run: npm ci
 
+      # Run every validation after a successful install, even if another
+      # check fails. Do not continue after cancellation or a broken install.
+      - name: Lint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run lint
+
+      - name: Check formatting
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run format:check
+
+      - name: Type-check application, API and tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npx tsc --noEmit -p config/tsconfig.dev.json
+
       - name: Run tests
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm test
+
+      - name: Build production frontend
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run build
+
+      - name: Audit dependencies
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run audit:ci

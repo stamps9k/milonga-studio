@@ -168,9 +168,13 @@ or renderer-specific fields to the domain types.
   needs a written reason in the file and in the PR.
 - Stage `package-lock.json` together with any `package.json` change; the
   hook rejects the commit otherwise.
-- CI (`.github/workflows/test.yml`) currently runs only `npm test`. Lint,
-  formatting and build checks are not enforced by CI yet, so run them locally
-  and report the results.
+- CI (`.github/workflows/test.yml`) runs tests, lint, formatting, the development
+  TypeScript check (`npx tsc --noEmit -p config/tsconfig.dev.json`, including
+  application, API and tests), the production build, and `npm run audit:ci`
+  on Node 22. Each validation runs after a successful install even if another
+  check fails; any failed validation fails the job. The job id stays `test`
+  to preserve the existing status-check name. Run applicable checks locally
+  too and report the results.
 
 ## Pull requests and handoff
 
