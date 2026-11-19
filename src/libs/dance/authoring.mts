@@ -113,9 +113,16 @@ export const HOLD_OFFSET = STANCE_WIDTH / 2;
  *   uncrossed: each partner stands on the inside foot (the lead's right,
  *   the follow's left) with the outside foot TANGO_PROMENADE_WIDTH out
  *   along the line of travel. See tangoPromenadePose.
+ * - "contra check": the compact checked position in the original closed
+ *   frame, lead LF / follow RF weighted, with 15° left contra rotation and
+ *   3 cm lowering. See CONTRA_CHECK_* for provisional dimensions.
  */
 export type StanceName =
-  "closed" | "crossed promenade" | "promenade apart" | "tango promenade";
+  | "closed"
+  | "crossed promenade"
+  | "promenade apart"
+  | "tango promenade"
+  | "contra check";
 
 /** In "crossed promenade", how far the crossing foot is behind the
  *  other foot, and how far across it, in metres, measured in the
@@ -149,11 +156,20 @@ export const PROMENADE_SEPARATION = 0.05 * Math.SQRT2;
  *  from where it was, from a closed stance 0.2 wide (2026-11-17). */
 export const TANGO_PROMENADE_WIDTH = 0.6;
 
+/** Provisional compact contra-check connection, in metres/degrees. These
+ * define the checked pose shared by the check and its separate recovery;
+ * they do not alter ordinary closed hold or any existing figure. */
+export const CONTRA_CHECK_ADVANCE = 0.4;
+export const CONTRA_CHECK_INWARD = 0.14;
+export const CONTRA_CHECK_TURN = 15;
+export const CONTRA_CHECK_LOWERING = 0.03;
+
 export const STANCE_NAMES: readonly StanceName[] = [
   "closed",
   "crossed promenade",
   "promenade apart",
   "tango promenade",
+  "contra check",
 ];
 
 type ShortFoot = "L" | "R";
@@ -177,6 +193,44 @@ export function stancePose(
       return promenadeApartPose(weight);
     case "tango promenade":
       return tangoPromenadePose(weight);
+    case "contra check":
+      // Provisional compact CBMP check, not a syllabus depth prescription.
+      // Feet retain their forward/back line while the bodies turn 15° left.
+      // This is also the recovery's exact entry: no boundary repositioning.
+      return {
+        lead: {
+          left: {
+            position: {
+              x: -half + CONTRA_CHECK_INWARD,
+              y: CONTRA_CHECK_ADVANCE,
+            },
+            weight: weight("lead", "left"),
+            direction: 0,
+          },
+          right: {
+            position: { x: half, y: 0 },
+            weight: weight("lead", "right"),
+          },
+          orientation: 360 - CONTRA_CHECK_TURN,
+          rise: -CONTRA_CHECK_LOWERING,
+        },
+        follow: {
+          left: {
+            position: { x: HOLD_OFFSET + half, y: PARTNER_DISTANCE },
+            weight: weight("follow", "left"),
+          },
+          right: {
+            position: {
+              x: HOLD_OFFSET - half + CONTRA_CHECK_INWARD,
+              y: PARTNER_DISTANCE + CONTRA_CHECK_ADVANCE,
+            },
+            weight: weight("follow", "right"),
+            direction: 180,
+          },
+          orientation: 180 - CONTRA_CHECK_TURN,
+          rise: -CONTRA_CHECK_LOWERING,
+        },
+      };
     case "closed":
       return {
         lead: {
@@ -1481,6 +1535,7 @@ const DEFAULT_STANDING: Record<StanceName, Record<Partner, Foot>> = {
   "crossed promenade": { lead: "left", follow: "right" },
   "promenade apart": { lead: "left", follow: "right" },
   "tango promenade": { lead: "right", follow: "left" },
+  "contra check": { lead: "left", follow: "right" },
 };
 
 function inferStanding(
@@ -1983,7 +2038,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     name,
     figure,
     resolved.map(({ cross, where }) => ({ cross, where })),
-    start === "crossed promenade",
+    start === "crossed promenade" || start === "contra check",
     new Set(definition.skipChecks ?? []),
   );
 

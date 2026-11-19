@@ -252,6 +252,10 @@ the owner before building more on top of them.
   turns less" is `turn` 1/4 plus `pointing` 1/8. Turned-out feet, and a
   foot pointing differently from the step's facing at a join, aren't
   checked.
+- `assessJoin` applies explicit stationary support transfers before checking
+  the first travelling step. A contra-check recovery replaces weight on RF/LF
+  before moving LF/RF; using only boundary weights falsely rejected it. Airborne
+  steps do not transfer support. It still rejects moving a fully loaded foot.
 - `assessJoin`'s tolerances (`JOIN_FOOT_GAP_TOLERANCE`, 5 cm, and
   `JOIN_FACING_TOLERANCE`, 10 degrees) are judgement calls, not technique.
 - Seed figures (`db/seed.mts`) are plausible test data, not syllabus
@@ -326,6 +330,27 @@ the owner before building more on top of them.
   step) along the line of travel from the inside foot, measured from the
   lead's right foot, partners at closed hold's distance and offset. Its default
   starting weight is on the inside feet.
+- The "contra check" stance is the new waltz pair's shared checked pose, in
+  the original closed frame. Lead LF / follow RF travel 40 cm forward/back
+  and 14 cm inward, with 15° left body rotation and 3 cm lowering. Their moving
+  feet retain directions 0/180; the other feet follow the bodies. CBMP crosses
+  in the body frame deliberately, so this named starting stance permits that
+  initial foot order just like crossed promenade. This is not a check bypass:
+  dense tests cover every footprint and full thigh/shin capsule throughout both
+  figures and their boundary with linear/eased motion. Default body reach,
+  lowering and lateral balance limits remain unchanged. The owner confirmed
+  back-side-close in closed hold over the recovery's three counts. The preceding
+  check takes three counts (arrive on 1, hold 2–3); its depth, timing, modest
+  shaping and recovery rise are provisional for review, not syllabus claims.
+  Recovery ends in ordinary closed stance, lead RF / follow LF weighted. The
+  new name is authoring-only; existing pose/step fields persist it unchanged.
+  A separate Contra Check Recovery (Promenade) shares the same entry and first
+  recovery count, steps out/open on 2, and holds/lowers without closing on 3.
+  It ends in the existing promenade-apart stance, lead LF / follow RF weighted,
+  exactly matching Open Natural Turn. Original closed recovery is unchanged.
+  This is a provisional three-count development using the owner's existing
+  symmetric 45° opening model, not a claim of standard syllabus timing. Both
+  alternatives have dense full-footprint and thigh/shin clearance regressions.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

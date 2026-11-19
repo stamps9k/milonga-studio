@@ -1,0 +1,79 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Contra Check Recovery (Promenade)",
+  "style": "waltz",
+  "time": "3/4",
+  "start": "contra check",
+  "notes": "Separate promenade alternative requested by the owner (2026-11-19); the closed recovery remains available unchanged. A three-count recovery from the same held Contra Check: replace weight onto lead RF / follow LF on 1 and unwind the contra shape, then step lead LF side / follow RF side into promenade on 2, developing/holding that shape through 3. Lead opens 45 degrees left and follow 45 degrees right, using the existing owner-agreed symmetric promenade model; this is a provisional visual timing/size proposal, not a standard syllabus transcription. The finish is the existing promenade-apart stance, lead LF / follow RF weighted, so Open Natural Turn can follow with no repositioning. No closing step or turn back to closed hold. Supporting feet stay in place; foot placements are explicit to avoid invoking a coupled travelling turn. No check exclusions.",
+  "steps": [
+    {
+      "lead": {
+        "go": "in place",
+        "foot": "R",
+        "turn": {
+          "right": "1/24"
+        },
+        "footwork": "TH",
+        "label": "recover back",
+        "cross": true,
+        "rise": 0
+      },
+      "follow": {
+        "go": "in place",
+        "foot": "L",
+        "turn": {
+          "right": "1/24"
+        },
+        "footwork": "HT",
+        "label": "recover forward",
+        "cross": true,
+        "rise": 0
+      },
+      "beat": 1
+    },
+    {
+      "lead": {
+        "go": {
+          "forward": -0.47071067811865475,
+          "right": -0.41071067811865475
+        },
+        "turn": {
+          "left": "1/8"
+        },
+        "rise": 0.03,
+        "footwork": "T",
+        "label": "side, opening to promenade"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.3292893218813453,
+          "right": 0.41071067811865475
+        },
+        "turn": {
+          "right": "1/8"
+        },
+        "rise": 0.03,
+        "footwork": "T",
+        "label": "side, opening to promenade"
+      },
+      "beat": 2
+    },
+    {
+      "both": "in place",
+      "weight": false,
+      "beat": 3,
+      "rise": 0,
+      "riseTiming": "late",
+      "label": "hold promenade"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "promenade apart",
+    "moved": {
+      "right": -0.37071067811865477,
+      "forward": -0.07071067811865477
+    },
+    "leadStandingOn": "L"
+  }
+}

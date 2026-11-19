@@ -31,7 +31,8 @@
         "closed",
         "crossed promenade",
         "promenade apart",
-        "tango promenade"
+        "tango promenade",
+        "contra check"
       ],
       "description": "Starting stance. Default \"closed\"."
     },
@@ -347,7 +348,8 @@
             "closed",
             "crossed promenade",
             "promenade apart",
-            "tango promenade"
+            "tango promenade",
+            "contra check"
           ]
         },
         "moved": {

@@ -66,18 +66,18 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 
 ## The figure
 
-| Field         | Meaning                                                                                                                      |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `name`        | Shown in the library. Must be unique across the figure files.                                                                |
-| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                                                  |
-| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                                          |
-| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"` or `"tango promenade"`. See "Stances". |
-| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.                                |
-| `steps`       | The steps, in time order.                                                                                                    |
-| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                                        |
-| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                                       |
-| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".                        |
-| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.                       |
+| Field         | Meaning                                                                                                                                        |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Shown in the library. Must be unique across the figure files.                                                                                  |
+| `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                                                                    |
+| `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                                                            |
+| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"`, `"tango promenade"` or `"contra check"`. See "Stances". |
+| `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.                                                  |
+| `steps`       | The steps, in time order.                                                                                                                      |
+| `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                                                          |
+| `expectBeats` | Optional, but recommended: how many beats the figure lasts. See below.                                                                         |
+| `skipChecks`  | Only for figures known to be wrong: checks to leave out until they're fixed. See "What gets checked".                                          |
+| `notes`       | Optional free text for whoever edits the file: sources, caveats, open questions. Not shown in the app.                                         |
 
 Closed stance: the lead stands at the origin facing line of dance, feet 20 cm
 apart; the follow faces him 40 cm away.
@@ -392,8 +392,8 @@ The reset stops, listing every problem with its file and location, if:
 - at any moment, a dancer's left foot is to the right of their right foot, in
   their own frame (the feet are crossed). Crossing is allowed during a step
   marked `"cross": true` and until the feet uncross afterwards, or from the
-  start of a figure that starts in `"crossed promenade"` until they first
-  uncross. While the feet are crossed, the foot in front must stay in front,
+  start of a figure that starts in `"crossed promenade"` or `"contra check"`
+  until they first uncross. While the feet are crossed, the foot in front must stay in front,
   so they uncross the way they crossed: if the foot that was behind came out
   in front, its leg would have gone through the other leg. To uncross a foot
   that crossed behind, take it `"path": "around the back"`;
@@ -424,7 +424,7 @@ skipped with a warning, and the rest of the seed carries on.
 ## Not supported yet
 
 Curved paths other than `"around the front"` and `"around the back"`, and
-stances other than closed hold and the promenades. These will be added when a
+stances other than the named positions above. These will be added when a
 figure needs them.
 
 ## Continuous Argentine tango practice sequences
@@ -441,3 +441,50 @@ Walking Step and original one-count Side Step remain available with their open
 endings. They still require a compatible next figure. The existing Cruzada and
 Ocho movements are unchanged. New presets require reseeding; saved/exported
 dances retain their embedded figures and sequence entries.
+
+## Waltz contra check and closed recovery
+
+`Contra Check` is the check portion of the figure over three counts: lead LF
+forward / follow RF back in a narrowed CBMP track on 1, then hold the shape
+through 2–3. It starts from normal closed stance, lead on RF / follow on LF.
+The compact 40 cm travel, 14 cm inward placement, 15° left body turn and 3 cm
+lowering are provisional dimensions for the owner's subjective review.
+
+`Contra Check Recovery (Closed)` is a descriptive name for the owner-confirmed
+beginner back-side-close, not a formal syllabus title or a promenade exit.
+On 1, replace weight onto lead RF / follow LF and unwind the contra turn;
+on 2, step to the lead's left / follow's right, level with the standing feet;
+on 3, close with weight and lower. It finishes in normal closed stance with
+lead RF / follow LF weighted, ready for an LF figure or another check.
+
+The new `"contra check"` named stance is the exact checked connection pose:
+lead LF at (0.04, 0.4), RF at (0.1, 0); follow RF at (0.14, 0.8), LF at
+(0.2, 0.4). The bodies face 345°/165°, the checking feet still point 0°/180°,
+and both partners are lowered 3 cm. It is authoring metadata; compiled figures
+use the existing pose/step storage with no database or snapshot schema change.
+Intentional `cross: true` marks CBMP in the turned body frame. No figure skips
+checks, and dense footprint/thigh/shin regressions include the full check,
+recovery and boundary under linear and eased playback.
+
+After reseeding, **Open → Waltz contra check practice** loads the six-count
+pair at 84 BPM for review. Existing browser saves keep their embedded figures.
+
+### Alternative promenade recovery
+
+`Contra Check Recovery (Promenade)` is a separate selectable three-count
+alternative. Its checked entry and count-1 stationary recovery are identical
+to the closed recovery. On 2, lead LF / follow RF steps out into promenade,
+opening the bodies to 315°/225°. On 3, hold/develop that feet-apart position
+and lower without closing or changing support. Timing and dimensions are a
+provisional visual proposal; the existing closed back-side-close is unchanged.
+
+It ends in the existing `"promenade apart"` stance, translated by
+(-0.3707106781, -0.0707106781) in the original closed frame. Both initially
+supporting feet remain in place. Lead LF / follow RF are weighted at the
+finish, ready for Open Natural Turn with matching positions, directions,
+weights, rise and facing. No new stance, persisted field or check exception
+is needed. Both recovery variants receive the full dense clearance tests.
+
+After reseeding, **Open → Waltz contra check promenade practice** loads the
+check plus this alternative; the original **Waltz contra check practice**
+continues to load the closed option.

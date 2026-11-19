@@ -110,7 +110,7 @@ test("GET /api/dances: lists dances, most recently updated first", async () => {
   const { status, body } = await get("/api/dances");
   assert.equal(status, 200);
   const dances = body.message as { updatedAt: string; tempo: number }[];
-  assert.equal(dances.length, 5);
+  assert.equal(dances.length, 7);
   const times = dances.map((dance) => Date.parse(dance.updatedAt));
   assert.deepEqual(
     times,

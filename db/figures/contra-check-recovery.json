@@ -1,0 +1,72 @@
+{
+  "$schema": "../figure.schema.json",
+  "style": "waltz",
+  "time": "3/4",
+  "name": "Contra Check Recovery (Closed)",
+  "start": "contra check",
+  "notes": "Owner confirmed a beginner back-side-close recovery in closed hold (2026-11-19). Descriptive name, not a claim of a formal syllabus title. Count 1 replaces weight onto lead RF / follow LF without moving those feet and unwinds the modest contra body turn; count 2 steps to the lead left / follow right, level with the supporting feet; count 3 closes lead RF / follow LF with weight. The 40 cm side separation and gentle 3 cm rise/lowering are provisional for subjective review. Ends in the normal closed stance, lead on RF, ready for an LF figure. No promenade opening. The side step is written for each partner explicitly so the contra-body unwind does not invoke the mirrored couple-turn placement rule; both supporting feet stay at their checked locations until the recovery. Its named start is the exact Contra Check ending, including foot directions and lowering.",
+  "steps": [
+    {
+      "lead": {
+        "go": "in place",
+        "foot": "R",
+        "turn": {
+          "right": "1/24"
+        },
+        "footwork": "TH",
+        "label": "recover back",
+        "cross": true,
+        "rise": 0
+      },
+      "follow": {
+        "go": "in place",
+        "foot": "L",
+        "turn": {
+          "right": "1/24"
+        },
+        "footwork": "HT",
+        "label": "recover forward",
+        "cross": true,
+        "rise": 0
+      },
+      "beat": 1
+    },
+    {
+      "lead": {
+        "go": {
+          "forward": -0.4,
+          "right": -0.34
+        },
+        "rise": 0.03,
+        "footwork": "T",
+        "label": "side"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.4,
+          "right": 0.34
+        },
+        "rise": 0.03,
+        "footwork": "T",
+        "label": "side"
+      },
+      "beat": 2
+    },
+    {
+      "both": "close",
+      "beat": 3,
+      "rise": 0,
+      "riseTiming": "late",
+      "footwork": "TH",
+      "label": "close"
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "right": -0.2
+    },
+    "leadStandingOn": "R"
+  }
+}

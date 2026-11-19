@@ -186,7 +186,7 @@ test("assessJoin: stepping first with the foot a partner is standing on is repor
 
 test("assessJoin: the weight check uses the first travelling step, skipping weight changes and airborne steps", () => {
   const weightedLeft = stance({ leadWeightOnLeft: true });
-  // Lead's first step is an in-place weight change onto the right, then
+  // Lead's first step is an in-place weight change onto the left, then
   // an airborne flick of the left; his first travelling step is the
   // right foot, which is free. Steps are stored out of beat order.
   const next = figureFrom(NEUTRAL, [
@@ -235,4 +235,34 @@ test("assessSequenceJoins: null for the first entry, then each entry assessed ag
   );
   assert.equal(joins[2]?.fits, true);
   assert.deepEqual(assessSequenceJoins([]), []);
+});
+
+test("assessJoin: an explicit stationary recovery frees the previously loaded foot", () => {
+  const weightedLeft = stance({ leadWeightOnLeft: true });
+  const next = figureFrom(weightedLeft, [
+    step("lead", "right", 1, 0),
+    step("lead", "left", 2, 0.3),
+  ]);
+  assert.equal(assessJoin(weightedLeft, next).fits, true);
+});
+
+test("assessJoin: a stationary transfer cannot hide a later step on its newly loaded foot", () => {
+  const weightedLeft = stance({ leadWeightOnLeft: true });
+  const next = figureFrom(weightedLeft, [
+    step("lead", "right", 1, 0),
+    step("lead", "right", 2, 0.3),
+  ]);
+  assert.deepEqual(assessJoin(weightedLeft, next).issues, [
+    { kind: "weighted-foot", partner: "lead", foot: "right" },
+  ]);
+});
+
+test("assessJoin: airborne actions after a recovery never change the support foot", () => {
+  const weightedLeft = stance({ leadWeightOnLeft: true });
+  const next = figureFrom(weightedLeft, [
+    step("lead", "left", 3, 0.3),
+    step("lead", "right", 1, 0),
+    step("lead", "left", 2, 0.2, "air"),
+  ]);
+  assert.equal(assessJoin(weightedLeft, next).fits, true);
 });
