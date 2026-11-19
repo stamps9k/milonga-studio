@@ -407,7 +407,12 @@ The reset stops, listing every problem with its file and location, if:
 - after any step (once every step on its row has finished), the partners
   aren't in hold. The follow's weight must be within 20 cm of where closed hold
   or promenade puts it from the lead's, and she must face within 30° of the
-  way that position faces. Mirrored (`both`) steps keep the hold on their own,
+  way that position faces. A row explicitly marked `"hold": "opposed promenade"`
+  instead checks an opposite-facing, side-by-side formation: nominally 35 cm
+  to the lead's right and 10 cm forward in the lead's frame. This puts the
+  backward-moving lead slightly ahead along shared travel. The same distance
+  and facing tolerances apply. The annotation is authoring-only, applies to
+  that row alone, and does not enable the new formation on unmarked rows. Mirrored (`both`) steps keep the hold on their own,
   so this mostly checks steps written for `lead` and `follow` separately.
 
 The format retains `"skipChecks"` for historical figure files, listing any of
@@ -497,12 +502,20 @@ alternating support on every count. It uses the owner's feet-apart
 Promenade Chassé and Contra Check Recovery (Promenade) both connect to its entry.
 
 After the follow's opening turn, the lead stays on the left side of the pair,
-facing west and walking backward on 3–5 while the follow walks forward. The
-follow cuts across the front as count 6 opens to promenade. This replaces the
-initial proposal's lead swing and repeated turning. Count 2's landing is 15 cm
-less far along -x to give the follow room to progress. The first count is unchanged.
-The six-count exit is an exact rotated `promenade apart` stance, ready for
-another promenade figure.
+facing west and walking backward on 3–5 while the follow faces east and walks
+forward. The partners are shoulder-to-shoulder rather than facing each other
+in closed hold: torso centres are 34–38 cm apart laterally at count landings,
+with the lead 15 cm ahead **along shared travel**, even though moving backward.
+Rows 2–5 explicitly select the checked `opposed promenade` formation. The label
+is descriptive; the dimensions and compact paths are provisional for review.
+
+The first count is unchanged. Revised follow landings and compact passing arcs
+create the side-by-side lanes. The last travelling count uses modest checked
+pelvis displacement while its feet prepare the canonical promenade exit; normal
+support and loaded-leg balance limits still apply. The follow cuts across the
+front as count 6 opens to promenade. The exit moves 55 cm farther along the floor
+than the preceding proposal, but retains the exact `promenade apart` stance and
+support, so every previously compatible incoming/outgoing figure still fits.
 
 `promenade-walk-and-close.json` is a separate three-count finish: inner feet
 step through, outer feet step side/uncross, then the inner feet collect in
@@ -519,7 +532,9 @@ figure. Regression tests check the lead's side/facing and genuine backward
 progress, exact incoming/outgoing connections, and all footprint/thigh/shin
 pairs across all nine counts and their join with linear/eased playback.
 Normal reach, lowering and balance limits apply; there are no `skipChecks`.
-No schema or model changes are needed.
+The authoring parser and JSON editor schema both support the row-level hold
+annotation. No persisted Pose/Step fields, database schema or snapshot version
+change is needed.
 
 The [BallroomDancers.com](https://www.ballroomdancers.com/dances/info.asp?sid=495)
 and [Ballroom Guide](https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html)

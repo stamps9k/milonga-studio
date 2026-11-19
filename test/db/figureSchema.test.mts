@@ -56,6 +56,7 @@ const WITH_STANCE_END = {
     {
       both: "forward",
       turnCentre: "between",
+      hold: "opposed promenade",
       foot: "L",
       by: 0.3,
       turn: { right: "1/8" },

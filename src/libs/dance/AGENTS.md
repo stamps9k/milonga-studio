@@ -353,19 +353,24 @@ the owner before building more on top of them.
   alternatives have dense full-footprint and thigh/shin clearance regressions.
 - Weave from Promenade Position is a six-count waltz from the owner's
   feet-apart promenade. After the opening follow turn, lead facing 270 keeps
-  the left side and walks backward on 3–5, follow facing 90 walking forward.
-  Count 6 opens to an exact rotated promenade-apart stance, with the follow
-  cutting across the front; the lead turns only 45 degrees. Count 1 is unchanged
-  from the initial proposal; count 2 lands 15 cm less far along -x for clearer
-  progress. Promenade Walk and Close is a separate three-count step-through,
-  side/uncross and collected close, ending in ordinary closed stance with lead
-  RF / follow LF weighted. The owner confirmed the overall combination is nine
-  counts, including this separate finish. The practice preset includes both.
-  Dimensions, preparation turns, rise and routes are provisional; see
-  db/FIGURES.md and the figure notes. Dense regressions cover all footprints,
-  thigh/shin pairs, normal reach/lowering/balance, the nine-count join, the
-  backward passage and exact entry/exit connections. All authoring checks run
-  without figure exclusions; no model or persisted schema changes are needed.
+  the left side and walks backward on 3–5 while follow facing 90 walks forward.
+  Rows 2–5 explicitly use authoring-only `hold: "opposed promenade"`: opposite
+  facings with nominal follow position 35 cm right / 10 cm forward of the lead.
+  This uses the ordinary hold distance/facing tolerances, is restricted to the
+  annotated row, and leaves every unmarked row's existing checks unchanged.
+  The actual weave has 34–38 cm lateral torso spacing and the backward-moving
+  lead 15 cm ahead along shared travel at count landings. Passing paths and
+  checked pelvis displacement on 5 keep legs clear before the exact promenade
+  exit on 6. The final position translates 55 cm farther along travel while
+  preserving the canonical stance, support and all connections. Count 1 is
+  unchanged. Promenade Walk and Close remains a separate three-count finish,
+  ending feet collected in closed hold, lead RF / follow LF weighted. The
+  practice preset contains both, nine counts altogether. Dimensions, shaping,
+  preparation turns and routes are provisional for review; see db/FIGURES.md.
+  Dense regressions cover shoulder spacing/stagger, genuine backward/forward
+  progress, all footprints/thigh/shin pairs, reach/lowering/balance and joins.
+  All authoring checks remain enabled. Parser/editor schema changes are
+  authoring-only; persisted steps/poses and database/snapshot schemas are unchanged.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

@@ -12,6 +12,7 @@ import {
   figureDurationBeats,
   footprintGap,
   footEase,
+  type PoseOptions,
 } from "../../src/libs/dance/fold.mts";
 import { footHeading, type Pose } from "../../src/libs/dance/pose.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
@@ -132,8 +133,33 @@ test("Weave: the lead stays left and travels backward while the follow advances"
       close(p.follow.orientation, 90);
       // With the lead facing west, north is their right: the follow stays
       // on that side, rather than the lead circling in front of the follow.
-      assert.ok(follow.y - lead.y >= 0.09, `Pair sides at ${sample / 256}`);
+      assert.ok(
+        follow.y - lead.y >= 0.28 && follow.y - lead.y <= 0.52,
+        `Shoulder spacing at ${sample / 256}`,
+      );
+      assert.ok(
+        lead.x - follow.x >= 0.04 && lead.x - follow.x <= 0.26,
+        `Lead ahead along travel at ${sample / 256}`,
+      );
     }
+  }
+  assert.deepEqual(
+    definition.steps.map((row) => row.hold),
+    [
+      undefined,
+      "opposed promenade",
+      "opposed promenade",
+      "opposed promenade",
+      "opposed promenade",
+      undefined,
+    ],
+  );
+  for (const beat of [2, 3, 4, 5]) {
+    const p = poseAtBeat(weave, beat),
+      l = bodyPosition(p.lead),
+      f = bodyPosition(p.follow);
+    assert.ok(f.y - l.y >= 0.33 && f.y - l.y <= 0.39);
+    close(l.x - f.x, 0.15);
   }
   for (const beat of [3, 4, 5]) {
     const a = poseAtBeat(weave, beat - 1),
@@ -194,65 +220,89 @@ test("Weave and separate close: all nine counts clear every footprint and thigh/
     entries = [first, placeEntry(promenadeClose, first)];
   // No interval is omitted for cross:true. Include all nine beats, both easing
   // modes and the join itself. These are mannequin capsule proxies, not meshes.
-  for (const options of [{}, { footEasing: footEase }])
-    for (let sample = 0; sample <= 9 * 256; sample++) {
-      const beat = sample / 256,
-        p = sequencePoseAtBeat(entries, beat, options);
-      assert.ok(p, `Pair has a pose at beat ${beat}`);
-      const skeleton = solveSkeleton(p),
-        feet = [],
-        bones = [];
-      for (const partner of ["lead", "follow"] as const) {
-        const s = skeleton[partner];
-        assert.deepEqual(s.legShortfall, { left: 0, right: 0 });
-        assert.ok(s.hipDrop <= 0.16, `Hip lowering ${partner} at ${beat}`);
-        assert.equal(
-          assessLateralBalance(p[partner], s).plausible,
-          true,
-          `Balance ${partner} at ${beat}`,
-        );
-        for (const side of ["left", "right"] as const) {
-          feet.push({
-            p: p[partner][side].position,
-            h: footHeading(p[partner], side),
-          });
-          const j = s.joints;
-          bones.push(
-            {
-              partner,
-              side,
-              a: j[`${side}UpperLeg`],
-              b: j[`${side}LowerLeg`],
-              r: 0.06,
-            },
-            {
-              partner,
-              side,
-              a: j[`${side}LowerLeg`],
-              b: j[`${side}Foot`],
-              r: 0.045,
-            },
+  // Keep authored poses and placed playback covered independently. The
+  // existing floor transform currently omits foot pitch; this guards both
+  // solver inputs without changing that separate playback behaviour here.
+  const sources = [
+    {
+      name: "placed pair",
+      beats: 9,
+      at: (beat: number, options: PoseOptions) =>
+        sequencePoseAtBeat(entries, beat, options),
+    },
+    {
+      name: "authored weave",
+      beats: 6,
+      at: (beat: number, options: PoseOptions) =>
+        poseAtBeat(weave, beat, options),
+    },
+    {
+      name: "authored close",
+      beats: 3,
+      at: (beat: number, options: PoseOptions) =>
+        poseAtBeat(promenadeClose, beat, options),
+    },
+  ];
+  for (const source of sources)
+    for (const options of [{}, { footEasing: footEase }])
+      for (let sample = 0; sample <= source.beats * 256; sample++) {
+        const beat = sample / 256,
+          p = source.at(beat, options);
+        assert.ok(p, `${source.name} has a pose at beat ${beat}`);
+        const skeleton = solveSkeleton(p),
+          feet = [],
+          bones = [];
+        for (const partner of ["lead", "follow"] as const) {
+          const s = skeleton[partner];
+          assert.deepEqual(s.legShortfall, { left: 0, right: 0 });
+          assert.ok(s.hipDrop <= 0.16, `Hip lowering ${partner} at ${beat}`);
+          assert.equal(
+            assessLateralBalance(p[partner], s).plausible,
+            true,
+            `Balance ${partner} at ${beat}`,
           );
+          for (const side of ["left", "right"] as const) {
+            feet.push({
+              p: p[partner][side].position,
+              h: footHeading(p[partner], side),
+            });
+            const j = s.joints;
+            bones.push(
+              {
+                partner,
+                side,
+                a: j[`${side}UpperLeg`],
+                b: j[`${side}LowerLeg`],
+                r: 0.06,
+              },
+              {
+                partner,
+                side,
+                a: j[`${side}LowerLeg`],
+                b: j[`${side}Foot`],
+                r: 0.045,
+              },
+            );
+          }
         }
+        for (let i = 0; i < feet.length; i++)
+          for (let k = i + 1; k < feet.length; k++) {
+            const a = feet[i],
+              b = feet[k];
+            assert.ok(
+              footprintGap(a.p, a.h, b.p, b.h) >= 0.005,
+              `Footprints ${i}/${k} at ${beat}`,
+            );
+          }
+        for (let i = 0; i < bones.length; i++)
+          for (let k = i + 1; k < bones.length; k++) {
+            const a = bones[i],
+              b = bones[k];
+            if (a.partner === b.partner && a.side === b.side) continue;
+            assert.ok(
+              segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
+              `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat}`,
+            );
+          }
       }
-      for (let i = 0; i < feet.length; i++)
-        for (let k = i + 1; k < feet.length; k++) {
-          const a = feet[i],
-            b = feet[k];
-          assert.ok(
-            footprintGap(a.p, a.h, b.p, b.h) >= 0.005,
-            `Footprints ${i}/${k} at ${beat}`,
-          );
-        }
-      for (let i = 0; i < bones.length; i++)
-        for (let k = i + 1; k < bones.length; k++) {
-          const a = bones[i],
-            b = bones[k];
-          if (a.partner === b.partner && a.side === b.side) continue;
-          assert.ok(
-            segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
-            `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat}`,
-          );
-        }
-    }
 });

@@ -70,8 +70,8 @@
       },
       "follow": {
         "go": {
-          "forward": 0.9841527794111165,
-          "right": 0.03539738364982109
+          "forward": 0.7902297309569838,
+          "right": 0.13128195633102
         },
         "turn": {
           "left": 0.4166666666666667
@@ -81,10 +81,11 @@
         },
         "rise": 0.04,
         "footwork": "T",
-        "label": "side and back, closing to partner",
+        "label": "side and back, into opposed promenade",
         "path": "around the front",
         "pathSetOff": 120
-      }
+      },
+      "hold": "opposed promenade"
     },
     {
       "beat": 3,
@@ -96,79 +97,90 @@
         "rise": 0,
         "riseTiming": "late",
         "footwork": "TH",
-        "label": "back, keeping the left side of the pair",
+        "label": "back, shoulder to shoulder and slightly ahead",
         "path": "around the front",
         "pathSetOff": -150
       },
       "follow": {
         "go": {
-          "forward": 0.11999999999999994,
-          "right": 0.07000000000000008
+          "forward": 0.30000000000000004,
+          "right": -0.09000000000000001
         },
         "rise": 0,
         "riseTiming": "late",
         "footwork": "TH",
-        "label": "forward, outside partner"
-      }
+        "label": "forward, facing opposite in opposed promenade"
+      },
+      "hold": "opposed promenade"
     },
     {
       "beat": 4,
       "lead": {
         "go": {
-          "forward": -0.8,
-          "right": -0.040000000000000153
+          "forward": -1.1,
+          "right": -0.12000000000000023
         },
         "rise": 0.02,
         "riseTiming": "late",
         "footwork": "TH",
-        "label": "back, keeping the left side of the pair",
+        "label": "back, shoulder to shoulder and slightly ahead",
         "path": "around the front",
-        "pathSetOff": 150
+        "pathSetOff": -180
       },
       "follow": {
         "go": {
-          "forward": 0.6699999999999999,
-          "right": 0.10000000000000006
+          "forward": 1.1,
+          "right": 0.08000000000000008
         },
         "rise": 0.02,
         "riseTiming": "late",
         "footwork": "HT",
-        "label": "forward, outside partner",
+        "label": "forward, facing opposite in opposed promenade",
         "path": "around the front",
-        "pathSetOff": -30
-      }
+        "pathSetOff": -5
+      },
+      "hold": "opposed promenade"
     },
     {
       "beat": 5,
       "lead": {
         "go": {
-          "forward": -0.5999999999999999,
-          "right": -1.1021821192326175e-16
+          "forward": -1.15,
+          "right": -2.112515728529184e-16
         },
         "rise": 0.04,
         "footwork": "T",
-        "label": "back, keeping the left side of the pair",
+        "label": "back, shoulder to shoulder and slightly ahead",
         "path": "around the front",
-        "pathSetOff": 150
+        "pathSetOff": -165,
+        "bodyOffset": {
+          "forward": 0.08500000000000002,
+          "right": -0.12999999999999998
+        }
       },
       "follow": {
         "go": {
-          "forward": 0.53,
-          "right": 0.08000000000000004
+          "forward": 0.8999999999999999,
+          "right": 0.24000000000000016
         },
         "rise": 0.04,
         "footwork": "T",
-        "label": "forward, outside partner",
+        "label": "forward, facing opposite in opposed promenade",
         "path": "around the front",
-        "pathSetOff": -30
-      }
+        "pathSetOff": -5,
+        "bodyOffset": {
+          "forward": 0.165,
+          "right": -0.10999999999999999
+        }
+      },
+      "hold": "opposed promenade"
     },
     {
       "beat": 6,
       "lead": {
         "go": {
-          "forward": -0.4207106781186546,
-          "right": -0.23071067811865484
+          "forward": -0.6707106781186548,
+          "right": -0.15071067811865485
         },
         "turn": {
           "left": 0.125
@@ -182,8 +194,8 @@
       },
       "follow": {
         "go": {
-          "forward": 0.2792893218813452,
-          "right": 0.23071067811865473
+          "forward": 0.27928932188134536,
+          "right": 0.43071067811865477
         },
         "turn": {
           "right": 0.125
@@ -201,7 +213,7 @@
   "expectEnd": {
     "stance": "promenade apart",
     "moved": {
-      "right": 0.7207106781186546,
+      "right": 1.2707106781186548,
       "forward": -0.35071067811865475
     },
     "turned": {
@@ -209,5 +221,5 @@
     },
     "leadStandingOn": "L"
   },
-  "notes": "Owner's six-count weave, revised after visual review: keep the opening follow turn, then keep the lead on the left facing 270 and travelling backward on 3-5 while the follow faces 90 and travels forward. The follow cuts across the front on 6 as the couple opens to feet-apart promenade; the lead turns only 45 degrees here. Count 2 lands 15 cm less far along -x than the first proposal, giving room for genuine forward/backward progress. The separate three-count Promenade Walk and Close completes the owner's nine-count combination. Entry and exit exactly match the existing promenade-apart stance; no Whisk setup is required. The first step, support alternation, 1-2-3 / 1-2-3 timing and rise are preserved. Dimensions, underturned alignment and curved routes are provisional for subjective review, not an exact syllabus chart. Standard six-count context: https://www.ballroomdancers.com/dances/info.asp?sid=495 and https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html . All authoring and body checks run without exclusions; dense tests cover complete footprints and thigh/shin capsules with linear and eased playback."
+  "notes": "Owner's six-count weave from feet-apart promenade. Keep the first count, then the opening follow turn arrives in an explicit opposed-promenade formation: shoulders side by side, partners facing opposite directions. On 3-5 the lead faces 270 and travels backward, the follow faces 90 and travels forward. At count landings the follow is 34-38 cm to the lead's right, with the lead 15 cm ahead along their shared direction of travel (floor +x). These dimensions are provisional for visual review; the formation label is descriptive, not a claim of a formal syllabus name. Row hold annotations on 2-5 require this side-by-side relationship using the existing hold tolerances; ordinary rows retain their existing hold checks. Revised foot landings and compact arcs make space for the opposed legs. The final travelling count uses balanced pelvis displacement to preserve the formation while the feet prepare the exact promenade-apart finish. On 6 the follow cuts across the front as the couple opens to promenade. The exit is 55 cm farther along travel but has the same canonical stance and support, so subsequent figures fit exactly. The separate three-count Promenade Walk and Close completes the owner's nine-count combination. No Whisk setup, check exclusions, relaxed body limits or persisted schema changes. Full footprints and every mannequin thigh/shin pair are sampled through both figures and their join with linear/eased playback. Six-count reference context: https://www.ballroomdancers.com/dances/info.asp?sid=495 and https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html . Paths, shaping, rise and compact alignment remain modelling proposals for subjective review."
 }

@@ -691,6 +691,12 @@ export interface StepRow extends Omit<
    *  TurnCentre). Default: whoever the step sends backward. Only
    *  allowed with `both` and a `turn`. */
   turnCentre?: TurnCentre;
+  /** Explicit opposite-facing, side-by-side formation at this row's end.
+   * The follow is nominally 35 cm to the lead's right and 10 cm in front,
+   * so the backward-travelling lead is slightly ahead along shared travel.
+   * Descriptive authoring label, not a new persisted stance or a check bypass.
+   * Omission retains the ordinary closed/promenade checks on every other row. */
+  hold?: "opposed promenade";
   lead?: Action | PartnerMove;
   follow?: Action | PartnerMove;
   beat?: number;
@@ -1203,8 +1209,9 @@ export const HOLD_FACING_TOLERANCE = 30;
 
 /**
  * The "hold" check: at the end of every row, once all of its steps have
- * finished, the partners must be in a recognised hold position
- * (HOLD_POSITIONS). The model has no arms, so this stands in for them:
+ * finished, the partners must be in a recognised hold position. Unmarked
+ * rows use HOLD_POSITIONS; an explicit row hold selects its own reference
+ * with the same tolerances, without granting it to other rows. The model has no arms, so this stands in for them:
  * it catches a figure whose separately written steps leave one partner
  * out of reach of the other mid-figure. Mirrored (`both`) steps keep the
  * hold by construction, so in practice it checks `lead`/`follow` rows.
@@ -1219,6 +1226,7 @@ function checkHold(
   figure: Figure,
   rowEnds: Map<number, number>,
   carriedTurn: readonly number[],
+  rowHolds: readonly StepRow["hold"][],
 ): void {
   for (const [row, beat] of [...rowEnds].sort((a, b) => a[0] - b[0])) {
     const pose = poseAtBeat(figure, beat);
@@ -1227,22 +1235,34 @@ function checkHold(
     const facing = normalizeDegrees(
       pose.follow.orientation - pose.lead.orientation,
     );
+    // The opposed side-by-side formation is opt-in for this row. It is a
+    // geometric constraint, not a hold exemption: ordinary distance/facing
+    // limits still apply, and closed hold alone no longer satisfies the row.
     // An explicitly shaped body may keep close promenade contact while the
     // supporting feet open a passing channel. This provisional 27 cm centre
     // separation accounts for hip widths; the usual hold/facing tolerances
     // still apply. Unshaped figures retain their existing hold checks.
     const holds =
-      pose.lead.bodyOffset || pose.follow.bodyOffset
+      rowHolds[row] === "opposed promenade"
         ? [
-            ...HOLD_POSITIONS,
             {
-              name: "contact promenade",
-              facing: 270,
-              frame: 45,
-              at: { x: HOLD_OFFSET, y: 0.27 },
+              name: "opposed promenade",
+              facing: 180,
+              frame: 0,
+              at: { x: 0.35, y: 0.1 },
             },
           ]
-        : HOLD_POSITIONS;
+        : pose.lead.bodyOffset || pose.follow.bodyOffset
+          ? [
+              ...HOLD_POSITIONS,
+              {
+                name: "contact promenade",
+                facing: 270,
+                frame: 45,
+                at: { x: HOLD_OFFSET, y: 0.27 },
+              },
+            ]
+          : HOLD_POSITIONS;
     const misses = holds.map((hold) => {
       // Smallest angle between her facing and the hold's, 0-180.
       const turnedBy = Math.abs(
@@ -2050,7 +2070,13 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       const end = step.beat - 1 + step.duration;
       rowEnds.set(row, Math.max(rowEnds.get(row) ?? 0, end));
     });
-    checkHold(name, figure, rowEnds, carriedTurn);
+    checkHold(
+      name,
+      figure,
+      rowEnds,
+      carriedTurn,
+      rows.map((row) => row.hold),
+    );
   }
 
   if (definition.expectEnd) {
@@ -2438,6 +2464,7 @@ export function parseFigureDefinition(
       checkKeys(path, row, [
         "both",
         "turnCentre",
+        "hold",
         "lead",
         "follow",
         "beat",
@@ -2447,6 +2474,7 @@ export function parseFigureDefinition(
       ]);
       if (row.both !== undefined) checkAction(`${path}.both`, row.both);
       checkOneOf(`${path}.turnCentre`, row.turnCentre, TURN_CENTRES);
+      checkOneOf(`${path}.hold`, row.hold, ["opposed promenade"]);
       checkPartner(`${path}.lead`, row.lead);
       checkPartner(`${path}.follow`, row.follow);
       checkMoveOptions(`${path}.`, row, true);
