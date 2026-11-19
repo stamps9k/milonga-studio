@@ -44,7 +44,14 @@ implementation's choice, not a confirmed dance rule.
   (relative directions, mirrored steps, counts) into a figure's steps and
   poses and checks it, and `parseFigureDefinition`, which checks the shape
   of a JSON figure file. Used by the seed figures in `db/figures/*.json`;
-  the guide is `db/FIGURES.md`.
+  the guide is `db/FIGURES.md`. It is the public entry point and only
+  re-exports; the code is in `authoring/`: `definition.mts` (the
+  figure-file format's types, `FigureError`), `stances.mts` (named
+  stances and their measurements, `stancePose`), `moves.mts` (rows into
+  model steps: offsets, turns, mirroring, foot choice, curved paths),
+  `checks.mts` (hold, feet and `expectEnd` checks), `define.mts`
+  (`defineFigure`) and `parse.mts` (`parseFigureDefinition`). Import from
+  `authoring.mts`, not the modules, so the split can change freely.
 
 Everything here is plain data and pure functions with no React, DOM or
 network dependencies. Keep it that way so it stays testable under `node:test`
@@ -108,7 +115,7 @@ and usable by any renderer.
 ## Frames, placement and derived data
 
 - Every figure is authored in its own local frame: the frame of the named
-  stance it starts in (`stancePose` in `authoring.mts`). For closed hold
+  stance it starts in (`stancePose` in `authoring/stances.mts`). For closed hold
   that is the lead's feet centred on the origin, facing 0 degrees. For
   the two promenade stances it is the closed hold the couple opened from,
   so the lead starts facing 315 (owner's decision, 2026-11-16, to keep promenade
@@ -304,7 +311,7 @@ the owner before building more on top of them.
   pairs with the follow's right and his right with her left, and each
   pair turns by everything since it was last placed (`pairFacing`), so
   the couple still ends exactly in hold (2026-11-17).
-- The "crossed promenade" stance (`authoring.mts`) is the owner's whisk
+- The "crossed promenade" stance (`authoring/stances.mts`) is the owner's whisk
   ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
   (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured
   from the lead's right foot. Its default starting weight is on the
