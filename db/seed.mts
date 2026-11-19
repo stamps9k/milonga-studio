@@ -362,6 +362,14 @@ const SAMPLE_DANCES: {
     notes:
       "Six-count weave into promenade, then a separate three-count promenade walk and collected close: nine counts altogether. Partners continue the pivot together on 3 and exchange sides, then travel in opposed promenade with lead walking backward and follow forward. Dimensions and turn timing are provisional for review; no Whisk or Contra Check setup required.",
   },
+  {
+    sequence: "Promenade Close and Backward Natural Turn",
+    figures: ["Promenade Walk and Close", "Natural Turn (backward half)"],
+    dance: "Waltz backward natural turn practice",
+    tempo: 84,
+    notes:
+      "Three-count promenade walk and close, then LF back, RF side, LF close turning right over three counts. The new backward half turns three eighths; dimensions and turn timing are provisional for review.",
+  },
 ];
 
 let seededSequences = 0;

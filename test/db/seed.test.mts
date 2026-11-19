@@ -77,8 +77,8 @@ test("seed: stores every figure file, plus the 8 sample sequences and dances", (
   const count = (table: string) =>
     (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
   assert.equal(count("figures"), FIGURE_FILES.length);
-  assert.equal(count("sequences"), 8);
-  assert.equal(count("dances"), 8);
+  assert.equal(count("sequences"), 9);
+  assert.equal(count("dances"), 9);
   assert.deepEqual(
     figures.map((figure) => figure.name).sort(),
     FIGURE_FILES.map((figure) => figure.name).sort(),

@@ -543,3 +543,17 @@ references provide six-count weave context. The owner's path, modest preparation
 turns, compact stride lengths, underturned alignment and curved passing routes
 are modelling choices for subjective review, not an exact syllabus chart or a
 claim that the separate finish has a formal syllabus name.
+
+Natural Turn (backward half) is a separate three-count waltz following Promenade
+Walk and Close: lead LF back, RF side, LF close; follow RF forward, LF side,
+RF close. It turns right three eighths, ending in collected closed hold with
+lead LF / follow RF weighted. The existing quarter-turn Box Turn is unchanged.
+The 15/95/25-degree body split, compact travel, rise of 2/4/0 cm and follow's
+4 cm count-2 pelvis offset towards the old support are provisional modelling
+choices for review. Feet point to the final 135-degree heading on count 2;
+explicit closes complete the body turn and reset shaping. See the definition's
+notes for technique references. All authoring checks remain enabled, and dense
+regressions cover full footprints, thigh/shin capsules, reach, lowering,
+lateral balance and the exact join after Promenade Walk and Close. The new
+six-count practice preset demonstrates this connection without altering the
+accepted weave preset. No persisted model or database schema change is needed.

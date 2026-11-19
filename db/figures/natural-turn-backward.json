@@ -1,0 +1,103 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Natural Turn (backward half)",
+  "style": "waltz",
+  "time": "3/4",
+  "steps": [
+    {
+      "both": {
+        "forward": -0.4,
+        "right": -0.25
+      },
+      "foot": "L",
+      "turn": {
+        "right": 0.041666666666666664
+      },
+      "rise": 0.02,
+      "riseTiming": "late",
+      "footwork": {
+        "lead": "TH",
+        "follow": "HT"
+      },
+      "beat": 1,
+      "label": "back/forward, beginning the natural turn"
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "forward": -0.46457351518782963,
+          "right": -0.6519750370880953
+        },
+        "turn": {
+          "right": 0.2638888888888889
+        },
+        "pointing": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side, continuing the natural turn",
+        "path": "around the front",
+        "pathSetOff": 135
+      },
+      "follow": {
+        "go": {
+          "forward": 1.163428290592153,
+          "right": 0.3486298401622183
+        },
+        "turn": {
+          "right": 0.2638888888888889
+        },
+        "pointing": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side, continuing the natural turn",
+        "bodyOffset": {
+          "forward": -0.004086596398382356,
+          "right": 0.039790699037296755
+        },
+        "path": "around the front",
+        "pathSetOff": -45
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": "close",
+        "turn": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "close, completing the natural turn"
+      },
+      "follow": {
+        "go": "close",
+        "turn": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "close, completing the natural turn"
+      }
+    }
+  ],
+  "expectBeats": 3,
+  "notes": "Lead LF back, RF side, LF close while turning right; follow RF forward, LF side, RF close. Interprets the owner's left-foot/right-turn request as counts 4\u20136 of a Natural Turn, not a Reverse Turn. Reference pattern and usual three-eighths turn: https://www.ballroomdancers.com/Dances/info.asp?sid=128 and https://dance.djurredeboer.nl/standard/waltz/natural_turn.html . Total turn, travel dimensions, and body split 15/95/25 degrees are provisional for owner review. Count 1 opens a modest passing lane; count 2 places both feet for the final 135-degree closed stance, with feet pointing 25 degrees ahead of the bodies. The follow's pelvis remains 4 cm towards the previous support to keep the outside stride within normal reach. Explicit separate closing steps complete the body turn and reset shaping. Both count-2 arcs depart at floor heading 150 degrees, passing clear of standing legs. Rise is 2/4/0 cm, with late lowering and late closing weight. The existing quarter-turn flat Box Turn (backward half) is unchanged. All authoring and body checks remain active; dense footprint and full thigh/shin capsule regressions cover authored and placed playback.",
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "forward": -0.20928932188134527,
+      "right": -0.5792893218813453
+    },
+    "turned": {
+      "right": "3/8"
+    },
+    "leadStandingOn": "L"
+  }
+}
