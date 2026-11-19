@@ -407,7 +407,12 @@ The reset stops, listing every problem with its file and location, if:
 - after any step (once every step on its row has finished), the partners
   aren't in hold. The follow's weight must be within 20 cm of where closed hold
   or promenade puts it from the lead's, and she must face within 30° of the
-  way that position faces. Mirrored (`both`) steps keep the hold on their own,
+  way that position faces. A row explicitly marked `"hold": "opposed promenade"`
+  instead checks an opposite-facing, side-by-side formation: nominally 35 cm
+  to the lead's right and 10 cm forward in the lead's frame. This puts the
+  backward-moving lead slightly ahead along shared travel. The same distance
+  and facing tolerances apply. The annotation is authoring-only, applies to
+  that row alone, and does not enable the new formation on unmarked rows. Mirrored (`both`) steps keep the hold on their own,
   so this mostly checks steps written for `lead` and `follow` separately.
 
 The format retains `"skipChecks"` for historical figure files, listing any of
@@ -488,3 +493,53 @@ is needed. Both recovery variants receive the full dense clearance tests.
 After reseeding, **Open → Waltz contra check promenade practice** loads the
 check plus this alternative; the original **Waltz contra check practice**
 continues to load the closed option.
+
+### Waltz weave and separate promenade close
+
+`weave-from-promenade.json` is one six-count figure (two bars of 3/4), with
+alternating support on every count. It uses the owner's feet-apart
+`promenade apart` stance, without a Whisk or required preceding figure.
+Promenade Chassé and Contra Check Recovery (Promenade) both connect to its entry.
+
+The first two counts are preserved. On 3 both partners continue the follow's
+left pivot together through a quarter turn (lead 270° to 180°, follow 90° to 0°).
+Their relative sides swap, and the couple's centre travels northwest instead
+of reversing east. This is within the owner's requested eighth-to-quarter
+bias back towards the opening line. The outer lead route and compact follow
+passing route keep the shared pivot together; a common 12 cm southward pelvis
+displacement lets the hips follow it within ordinary reach and balance limits.
+
+Counts 4–5 follow the new northward heading: lead backward and follow forward,
+shoulder-to-shoulder with opposite facings. Lateral torso spacing remains
+34–38 cm at count landings, with the lead 15 cm ahead along shared travel.
+Rows 2–5 retain the checked `opposed promenade` formation. Count 4's follow arc
+fits the new third landing; the remaining local movement/shaping retains the
+accepted pattern, reoriented with the turn. Count 6 still opens to an exact
+`promenade apart` stance, now rotated 180°, preserving all compatible joins.
+The turn, dimensions and routes are provisional for subjective review.
+
+`promenade-walk-and-close.json` is a separate three-count finish: inner feet
+step through, outer feet step side/uncross, then the inner feet collect in
+ordinary closed hold, lead RF / follow LF weighted. This descriptive name and
+three equal counts reflect the owner's confirmed class ending; the owner
+clarified that it comes **after** the six-count weave. It uses the reviewed
+opening passing route and a compact uncrossing adapted from Closed Promenade,
+with provisional waltz rise. Its collected exit connects to LF Closed Change
+or Contra Check.
+
+**Waltz weave practice** includes both figures, nine counts altogether. They
+remain separately selectable so either can be used with another compatible
+figure. Regression tests check the synchronized third-count pivot, side exchange,
+opening-direction progress, opposed spacing and genuine subsequent travel, exact incoming/outgoing connections, and all footprint/thigh/shin
+pairs across all nine counts and their join with linear/eased playback.
+Normal reach, lowering and balance limits apply; there are no `skipChecks`.
+The authoring parser and JSON editor schema both support the row-level hold
+annotation. No persisted Pose/Step fields, database schema or snapshot version
+change is needed.
+
+The [BallroomDancers.com](https://www.ballroomdancers.com/dances/info.asp?sid=495)
+and [Ballroom Guide](https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html)
+references provide six-count weave context. The owner's path, modest preparation
+turns, compact stride lengths, underturned alignment and curved passing routes
+are modelling choices for subjective review, not an exact syllabus chart or a
+claim that the separate finish has a formal syllabus name.

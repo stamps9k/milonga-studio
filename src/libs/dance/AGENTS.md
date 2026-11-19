@@ -351,6 +351,27 @@ the owner before building more on top of them.
   This is a provisional three-count development using the owner's existing
   symmetric 45° opening model, not a claim of standard syllabus timing. Both
   alternatives have dense full-footprint and thigh/shin clearance regressions.
+- Weave from Promenade Position is a six-count waltz from feet-apart
+  promenade. Its first two counts are preserved. On 3 both partners continue
+  the follow's left pivot together by 90° (lead 270→180, follow 90→0), swapping
+  relative sides while the centre progresses northwest instead of reversing
+  east. This fits the owner's eighth-to-quarter directional bias. A common
+  12 cm southward pelvis displacement helps the hips follow the shared turn
+  within normal reach, lowering and balance limits. Counts 4–5 travel north:
+  lead backward, follow forward, with opposite facings and 34–38 cm lateral
+  spacing / 15 cm lead-ahead stagger at landings. Rows 2–5 explicitly use
+  authoring-only `hold: "opposed promenade"`, nominally follow 35 cm right and
+  10 cm forward of lead, using unchanged hold tolerances on that row only.
+  Count 4's follow arc accommodates the new landing; subsequent local movement
+  and shaping retain the accepted pattern reoriented with the turn. Count 6
+  ends in exact promenade-apart stance rotated 180°, preserving connections.
+  Promenade Walk and Close remains a separate three-count finish to ordinary
+  collected closed stance (lead RF / follow LF weighted); the preset has nine
+  counts total. Dimensions/routes/turn shaping are provisional for review.
+  Dense regressions cover synchronized turn, side swap, opening-direction
+  progress, opposed spacing, all footprints/thigh/shin pairs, body limits and
+  exact joins, in both authored and placed playback. All checks remain active;
+  no further authoring/persisted schema changes are needed for this turn.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

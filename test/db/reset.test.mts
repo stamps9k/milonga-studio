@@ -58,15 +58,15 @@ test("db:reset creates and seeds a database that doesn't exist yet", () => {
   const result = runScript("db/reset.mts");
   assert.equal(result.status, 0, result.stderr);
   assert.equal(countRows("figures"), FIGURE_COUNT);
-  assert.equal(countRows("sequences"), 7);
-  assert.equal(countRows("dances"), 7);
+  assert.equal(countRows("sequences"), 8);
+  assert.equal(countRows("dances"), 8);
 });
 
 test("db:reset can run again without duplicating data", () => {
   assert.equal(runScript("db/reset.mts").status, 0);
   assert.equal(runScript("db/reset.mts").status, 0);
   assert.equal(countRows("figures"), FIGURE_COUNT);
-  assert.equal(countRows("dances"), 7);
+  assert.equal(countRows("dances"), 8);
 });
 
 test("db:reset throws away data and tables that aren't in the schema", () => {
@@ -85,7 +85,7 @@ test("db:reset throws away data and tables that aren't in the schema", () => {
     .get() as { n: number };
   rebuilt.close();
   assert.equal(leftover.n, 0);
-  assert.equal(countRows("dances"), 7);
+  assert.equal(countRows("dances"), 8);
 });
 
 test("db:reset removes a stale rollback journal left next to the database", () => {
@@ -191,5 +191,5 @@ test("db:reset leaves the existing database alone when a figure file has a probl
   assert.doesNotMatch(result.stdout, /Recreated/);
   // The database was never deleted, so the old data is still there.
   assert.equal(countRows("figures"), FIGURE_COUNT);
-  assert.equal(countRows("dances"), 7);
+  assert.equal(countRows("dances"), 8);
 });

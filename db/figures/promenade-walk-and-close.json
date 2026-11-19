@@ -1,0 +1,130 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Promenade Walk and Close",
+  "style": "waltz",
+  "time": "3/4",
+  "start": "promenade apart",
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "forward": 0.7071067811865477,
+          "right": -0.6656854249492378
+        },
+        "turn": {
+          "left": 0.041666666666666664
+        },
+        "pointing": {
+          "left": 0.08333333333333333
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "HT",
+        "label": "forward through promenade",
+        "path": "around the front",
+        "pathSetOff": -20,
+        "bodyOffset": {
+          "forward": 0.005000000000000001,
+          "right": 0.008660254037844387
+        },
+        "cross": true
+      },
+      "follow": {
+        "go": {
+          "forward": 0.7576093065034892,
+          "right": 0.6151828996322964
+        },
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "pointing": {
+          "right": 0.08333333333333333
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "HT",
+        "label": "forward through promenade",
+        "path": "around the front",
+        "pathSetOff": 30,
+        "bodyOffset": {
+          "forward": 0.0050000000000000044,
+          "right": -0.008660254037844385
+        },
+        "cross": true
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "forward": 0.9260254037844386,
+          "right": -0.3960769515458675
+        },
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side, uncrossing",
+        "path": "around the front",
+        "pathSetOff": -95,
+        "bodyOffset": {
+          "forward": 0.014142135623730932,
+          "right": 0.07071067811865475
+        }
+      },
+      "follow": {
+        "go": {
+          "forward": 0.8767360819030933,
+          "right": 0.48144856131497415
+        },
+        "turn": {
+          "left": 0.041666666666666664
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side, uncrossing",
+        "path": "around the front",
+        "pathSetOff": 60,
+        "bodyOffset": {
+          "forward": -0.04242640687119284,
+          "right": -0.07071067811865477
+        }
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": "close",
+        "turn": {
+          "right": 0.125
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "close, facing partner"
+      },
+      "follow": {
+        "go": "close",
+        "turn": {
+          "left": 0.125
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "close, facing partner"
+      }
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "right": -0.9,
+      "forward": 0.12
+    },
+    "leadStandingOn": "R"
+  },
+  "notes": "Descriptive name for the owner's separate three-count finish after the six-count weave: inner feet forward through promenade on 1, outer feet side/uncrossing on 2, inner feet close on 3. Starts in the existing feet-apart promenade and finishes with feet collected in ordinary closed hold, lead RF / follow LF weighted. This is a reusable figure, not a compulsory part of the weave. The compact passing route uses the already-reviewed weave opening and adapts the Tango Closed Promenade's uncrossing idea to this waltz stance and three equal counts. Distances, modest preparation turn, pelvis displacement and rise are provisional for visual review, not a formal syllabus name or a transcription of tango timing. All authoring, footprint, thigh/shin clearance, reach, hip lowering and lateral balance checks remain active with unchanged limits."
+}

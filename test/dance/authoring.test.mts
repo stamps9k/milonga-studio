@@ -1567,3 +1567,70 @@ test("per-partner paths: row options apply to plain actions, with independent de
   pointClose(authored.endPose.lead.left.position, [-0.1, 0.3]);
   pointClose(authored.endPose.follow.right.position, [0, 0.7]);
 });
+
+test("hold: opposed promenade is explicit and uses the ordinary distance/facing limits", () => {
+  // Isolate hold recognition; these artificial foot placements are not a
+  // catalogue figure. Other dedicated suites cover full movement geometry.
+  const checks: Partial<FigureDefinition> = {
+    skipChecks: ["crossed feet", "own feet", "partner spacing"],
+  };
+  const row: StepRow = {
+    lead: "in place",
+    follow: { go: { forward: 0.3, right: -0.25 } },
+    hold: "opposed promenade",
+    length: "Q",
+  };
+  assert.doesNotThrow(() => figure([row], checks));
+  const unmarked = { ...row };
+  delete unmarked.hold;
+  assert.throws(() => figure([unmarked], checks), /partners aren't in hold/);
+  assert.throws(
+    () =>
+      figure(
+        [{ ...row, follow: { go: { forward: 0.3, right: -0.55 } } }],
+        checks,
+      ),
+    /nearest is opposed promenade.*follow is 0.30.*at most 0.2/,
+  );
+  assert.throws(
+    () =>
+      figure(
+        [
+          {
+            ...row,
+            follow: {
+              go: { forward: 0.3, right: -0.25 },
+              turn: { right: "1/4" },
+            },
+          },
+        ],
+        checks,
+      ),
+    /nearest is opposed promenade.*facing is 90° off/,
+  );
+  // The annotation applies to one row; it must not implicitly grant a
+  // different hold to later unmarked rows.
+  assert.throws(
+    () =>
+      figure(
+        [
+          row,
+          {
+            both: "in place",
+            weight: false,
+            length: "Q",
+          },
+        ],
+        checks,
+      ),
+    /after step 2.*partners aren't in hold/,
+  );
+  assert.throws(
+    () =>
+      figure(
+        [{ both: "in place", hold: "opposed promenade", length: "Q" }],
+        checks,
+      ),
+    /nearest is opposed promenade/,
+  );
+});
