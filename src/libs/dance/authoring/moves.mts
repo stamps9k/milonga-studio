@@ -499,7 +499,7 @@ const AROUND_THE_BACK_SET_OFF = 135;
  *
  * The model draws an arc from where the foot is, setting off at a given
  * angle from the dancer's facing before the step (Movement.arc's
- * `setOff`; see arcHeading in fold.mts) and bending with a constant
+ * `setOff`; see arcHeading in fold/paths.mts) and bending with a constant
  * curvature. There is exactly one such arc through the landing spot:
  * if the landing spot is `theta` degrees round from the set-off heading
  * (clockwise positive) and `chord` metres away, the arc turns through

@@ -19,7 +19,13 @@ implementation's choice, not a confirmed dance rule.
 - `heading.mts`: the shared angle and vector primitives. Use these instead of
   writing new trigonometry.
 - `fold.mts`: folds a figure's steps into foot trails and interpolated poses
-  over time, at figure and sequence level.
+  over time, at figure and sequence level. It is the public entry point and
+  only re-exports; the code is in `fold/`: `paths.mts` (where a foot is
+  along a movement, airborne excursions), `passing.mts` (footprint geometry
+  and passing routes), `trails.mts` (foot trails), `timing.mts` (timing
+  within a step: phases, rise, pitch, easing, the standing foot's swivel)
+  and `playback.mts` (poses at any beat, for figures and sequences). Import
+  from `fold.mts`, not the modules.
 - `floor.mts`: applies floor transforms and fits the transform that chains
   one figure onto the end of the previous one.
 - `join.mts`: measures how cleanly one figure follows another (foot gaps,
@@ -154,7 +160,7 @@ the owner before building more on top of them.
 
 - An arc sets off along the partner's frame orientation immediately
   before the step, turned by the arc's optional `setOff` (degrees, 0 when
-  left out; `arcHeading` in `fold.mts`). `defineFigure` builds arcs only
+  left out; `arcHeading` in `fold/paths.mts`). `defineFigure` builds arcs only
   for a step's `path` (`curveAround`): `"around the front"` sets off the
   way the dancer faces, `"around the back"` diagonally back towards the
   landing side (`AROUND_THE_BACK_SET_OFF`, provisional). A figure can
