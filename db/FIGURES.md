@@ -489,28 +489,41 @@ After reseeding, **Open → Waltz contra check promenade practice** loads the
 check plus this alternative; the original **Waltz contra check practice**
 continues to load the closed option.
 
-### Waltz Weave from Promenade Position
+### Waltz weave and separate promenade close
 
 `weave-from-promenade.json` is one six-count figure (two bars of 3/4), with
-alternating steps on every count, including across the bar line. It uses the
-owner's existing feet-apart `promenade apart` stance, without a Whisk or any
-required preceding figure. Both Promenade Chassé and Contra Check Recovery
-(Promenade) connect to its entry. The standalone **Waltz weave practice** preset
-makes it available for review without either setup.
+alternating support on every count. It uses the owner's feet-apart
+`promenade apart` stance, without a Whisk or required preceding figure.
+Promenade Chassé and Contra Check Recovery (Promenade) both connect to its entry.
 
-The couple closes during the opening two counts, passes outside partner on 4,
-and finishes in closed hold with feet apart and lead LF / follow RF weighted.
-Closed hold here describes the partners' relationship, not a foot close: the exit
-is deliberately not the catalogue's collected-feet closed starting stance.
-Review join warnings when choosing a continuation.
+After the follow's opening turn, the lead stays on the left side of the pair,
+facing west and walking backward on 3–5 while the follow walks forward. The
+follow cuts across the front as count 6 opens to promenade. This replaces the
+initial proposal's lead swing and repeated turning. Count 2's landing is 15 cm
+less far along -x to give the follow room to progress. The first count is unchanged.
+The six-count exit is an exact rotated `promenade apart` stance, ready for
+another promenade figure.
 
-The six-step order and footwork follow the teaching references at
-[BallroomDancers.com](https://www.ballroomdancers.com/dances/info.asp?sid=495) and
-[Ballroom Guide](https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html).
-Dimensions, turn distribution, rise and curved passing paths are provisional
-choices for this model and the owner's review, not an exact syllabus alignment
-chart. Only count 1 has intentional body-frame crosses. Dense regressions sample
-all footprint and thigh/shin pairs throughout both linear and eased playback,
-including these crosses; ordinary authoring, reach, hip lowering and balance
-checks run without exclusions or relaxed limits. No schema or model changes are
-needed.
+`promenade-walk-and-close.json` is a separate three-count finish: inner feet
+step through, outer feet step side/uncross, then the inner feet collect in
+ordinary closed hold, lead RF / follow LF weighted. This descriptive name and
+three equal counts reflect the owner's confirmed class ending; the owner
+clarified that it comes **after** the six-count weave. It uses the reviewed
+opening passing route and a compact uncrossing adapted from Closed Promenade,
+with provisional waltz rise. Its collected exit connects to LF Closed Change
+or Contra Check.
+
+**Waltz weave practice** includes both figures, nine counts altogether. They
+remain separately selectable so either can be used with another compatible
+figure. Regression tests check the lead's side/facing and genuine backward
+progress, exact incoming/outgoing connections, and all footprint/thigh/shin
+pairs across all nine counts and their join with linear/eased playback.
+Normal reach, lowering and balance limits apply; there are no `skipChecks`.
+No schema or model changes are needed.
+
+The [BallroomDancers.com](https://www.ballroomdancers.com/dances/info.asp?sid=495)
+and [Ballroom Guide](https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html)
+references provide six-count weave context. The owner's path, modest preparation
+turns, compact stride lengths, underturned alignment and curved passing routes
+are modelling choices for subjective review, not an exact syllabus chart or a
+claim that the separate finish has a formal syllabus name.

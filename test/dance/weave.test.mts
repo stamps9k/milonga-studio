@@ -8,12 +8,15 @@ import {
 } from "../../src/libs/dance/authoring.mts";
 import {
   poseAtBeat,
+  sequencePoseAtBeat,
   figureDurationBeats,
   footprintGap,
   footEase,
 } from "../../src/libs/dance/fold.mts";
 import { footHeading, type Pose } from "../../src/libs/dance/pose.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
+import { applyTransform } from "../../src/libs/dance/floor.mts";
+import { bodyPosition } from "../../src/libs/dance/weight.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
@@ -42,6 +45,9 @@ function load(file: string) {
   return { definition, figure };
 }
 const { definition, figure: weave } = load("weave-from-promenade");
+const { definition: closeDefinition, figure: promenadeClose } = load(
+  "promenade-walk-and-close",
+);
 const close = (a: number, b: number) =>
   assert.ok(Math.abs(a - b) < 1e-8, `${a} != ${b}`);
 function poseClose(a: Pose, b: Pose) {
@@ -98,30 +104,100 @@ test("Weave: existing promenade entries connect without a Whisk or contra check 
     assert.equal(assessJoin(incoming.resolvedEndPose, weave).fits, true);
     poseClose(incoming.resolvedEndPose, next.resolvedStartPose);
   }
-  // Closed hold does not imply collected feet: count 6 leaves a side step,
-  // ready for the usual outside-partner continuation rather than an extra close.
-  const end = weave.endPose;
-  close((end.follow.orientation - end.lead.orientation + 360) % 360, 180);
-  close(end.lead.left.weight, 1);
-  close(end.follow.right.weight, 1);
-  for (const partner of ["lead", "follow"] as const) {
-    const { left, right } = end[partner];
-    assert.ok(
-      Math.hypot(
-        left.position.x - right.position.x,
-        left.position.y - right.position.y,
-      ) > 0.25,
-    );
+  poseClose(
+    weave.endPose,
+    applyTransform(
+      { position: weave.endPose.lead.left.position, rotation: 270 },
+      stancePose("promenade apart", { lead: "left", follow: "right" }),
+    ),
+  );
+  for (const next of [
+    promenadeClose,
+    load("open-natural-turn").figure,
+    weave,
+  ]) {
+    assert.equal(assessJoin(weave.endPose, next).fits, true);
   }
 });
 
-test("Weave: every footprint and thigh/shin pair clears, with normal reach and balance", () => {
-  // No interval is omitted for cross:true. Include all six beats, both easing
+test("Weave: the lead stays left and travels backward while the follow advances", () => {
+  // These behavioural bounds reject the old 90-degree lead swing and circular
+  // shuffling even if a future path happens to pass collision checks.
+  for (const options of [{}, { footEasing: footEase }]) {
+    for (let sample = 2 * 256; sample <= 5 * 256; sample++) {
+      const p = poseAtBeat(weave, sample / 256, options),
+        lead = bodyPosition(p.lead),
+        follow = bodyPosition(p.follow);
+      close(p.lead.orientation, 270);
+      close(p.follow.orientation, 90);
+      // With the lead facing west, north is their right: the follow stays
+      // on that side, rather than the lead circling in front of the follow.
+      assert.ok(follow.y - lead.y >= 0.09, `Pair sides at ${sample / 256}`);
+    }
+  }
+  for (const beat of [3, 4, 5]) {
+    const a = poseAtBeat(weave, beat - 1),
+      b = poseAtBeat(weave, beat);
+    assert.ok(bodyPosition(b.lead).x - bodyPosition(a.lead).x >= 0.2);
+    assert.ok(bodyPosition(b.follow).x - bodyPosition(a.follow).x >= 0.17);
+  }
+  close(poseAtBeat(weave, 1).lead.orientation, 300);
+  close(poseAtBeat(weave, 1).follow.orientation, 240);
+  close(weave.endPose.lead.orientation, 225);
+  close(weave.endPose.follow.orientation, 135);
+});
+
+test("Promenade Walk and Close: separate three counts and an exact collected closed exit", () => {
+  assert.deepEqual(closeDefinition.skipChecks ?? [], []);
+  assert.equal(figureDurationBeats(promenadeClose), 3);
+  poseClose(promenadeClose.startPose, weave.startPose);
+  for (const partner of ["lead", "follow"] as const) {
+    const steps = promenadeClose.steps.filter((s) => s.partner === partner);
+    assert.deepEqual(
+      steps.map((s) => s.foot),
+      partner === "lead"
+        ? ["right", "left", "right"]
+        : ["left", "right", "left"],
+    );
+    assert.deepEqual(
+      steps.map((s) => [s.beat, s.duration, s.weight]),
+      [
+        [1, 1, 1],
+        [2, 1, 1],
+        [3, 1, 1],
+      ],
+    );
+    assert.equal(steps[2].weightTiming, "late");
+  }
+  const end = promenadeClose.endPose,
+    l = end.lead.left.position,
+    r = end.lead.right.position;
+  poseClose(
+    end,
+    applyTransform(
+      { position: { x: (l.x + r.x) / 2, y: (l.y + r.y) / 2 }, rotation: 0 },
+      stancePose("closed", { lead: "right", follow: "left" }),
+    ),
+  );
+  for (const next of [
+    load("lf-closed-change").figure,
+    load("contra-check").figure,
+  ])
+    assert.equal(assessJoin(end, next).fits, true);
+  const first = placeEntry(weave, undefined),
+    second = placeEntry(promenadeClose, first);
+  poseClose(first.resolvedEndPose, second.resolvedStartPose);
+});
+
+test("Weave and separate close: all nine counts clear every footprint and thigh/shin pair, with normal reach and balance", () => {
+  const first = placeEntry(weave, undefined),
+    entries = [first, placeEntry(promenadeClose, first)];
+  // No interval is omitted for cross:true. Include all nine beats, both easing
   // modes and the join itself. These are mannequin capsule proxies, not meshes.
   for (const options of [{}, { footEasing: footEase }])
-    for (let sample = 0; sample <= 6 * 256; sample++) {
+    for (let sample = 0; sample <= 9 * 256; sample++) {
       const beat = sample / 256,
-        p = poseAtBeat(weave, beat, options);
+        p = sequencePoseAtBeat(entries, beat, options);
       assert.ok(p, `Pair has a pose at beat ${beat}`);
       const skeleton = solveSkeleton(p),
         feet = [],
@@ -164,7 +240,7 @@ test("Weave: every footprint and thigh/shin pair clears, with normal reach and b
           const a = feet[i],
             b = feet[k];
           assert.ok(
-            footprintGap(a.p, a.h, b.p, b.h) >= 0.003,
+            footprintGap(a.p, a.h, b.p, b.h) >= 0.005,
             `Footprints ${i}/${k} at ${beat}`,
           );
         }
@@ -174,7 +250,7 @@ test("Weave: every footprint and thigh/shin pair clears, with normal reach and b
             b = bones[k];
           if (a.partner === b.partner && a.side === b.side) continue;
           assert.ok(
-            segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.003,
+            segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
             `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat}`,
           );
         }

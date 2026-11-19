@@ -356,11 +356,11 @@ const SAMPLE_DANCES: {
   },
   {
     sequence: "Weave from Promenade Practice",
-    figures: ["Weave from Promenade Position"],
+    figures: ["Weave from Promenade Position", "Promenade Walk and Close"],
     dance: "Waltz weave practice",
     tempo: 84,
     notes:
-      "Standalone six-count weave from feet-apart promenade; closed-hold finish with feet apart. Compact dimensions and turn timing are provisional for review. No Whisk or Contra Check setup required.",
+      "Six-count weave into promenade, then a separate three-count promenade walk and collected close: nine counts altogether. Lead stays left and walks backward as follow advances. Dimensions and turn timing are provisional for review; no Whisk or Contra Check setup required.",
   },
 ];
 
