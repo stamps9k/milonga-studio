@@ -30,10 +30,12 @@
     "db:reset": "tsx db/reset.mts",
     "audit:ci": "npx --yes audit-ci@7.1.0 --config audit-ci.jsonc",
     "format:check": "prettier --check . --config config/.prettierrc",
-    "format:fix": "prettier --write . --config config/.prettierrc"
+    "format:fix": "prettier --write . --config config/.prettierrc",
+    "test:e2e": "npm run build && playwright test --config config/playwright.config.mts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/better-sqlite3": "^9.6.0",
     "@types/express": "^5.0.6",
     "@types/node": "^22.10.0",

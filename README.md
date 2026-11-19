@@ -101,3 +101,37 @@ existing `test` status check succeeds only when every validation passes.
 
 The API serves the built frontend from `dist/` in production. See `Dockerfile`,
 `docker-compose.yml`, and [AGENTS.md](AGENTS.md) for repository guidance.
+
+## Automated browser checks
+
+Playwright tests in `e2e/` exercise the built application in desktop Chromium
+(1280×720) and mobile Chromium with an iPhone-sized touch viewport. They cover
+sequence ordering/removal and network failures, local saves and copies,
+unsaved-change dialogs, JSON import/export, share links, playback/tempo/metronome,
+and responsive library/dialog/3D controls.
+
+```sh
+npm ci
+npx playwright install chromium
+npm run test:e2e
+```
+
+On Linux, `npx playwright install --with-deps chromium` also installs the required
+system libraries. `test:e2e` builds the frontend, starts a dedicated API on port
+58745 and seeds a new temporary SQLite database. It never resets the development
+database or reuses an existing server; leave port 58745 free. Each test receives
+fresh browser storage. Only network failure/order tests intercept figure requests;
+normal workflows use the real API and IndexedDB. The app's existing CDN assets
+remain in use, so these checks require access to those hosts.
+
+For a locally installed Chromium, optionally set
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium`. CI installs Playwright's
+matching Chromium and runs the suite as part of the existing `test` check.
+Browser tests are separate from `npm test`; the development TypeScript check
+includes their source and configuration.
+
+Failures retain screenshots, traces and browser logs under `test-results/`, with
+an HTML report in `playwright-report/`. Run `npx playwright show-report` to view
+the report. CI uploads failure reports for seven days. These generated files are
+ignored by Git, lint and formatting. Visual dance technique and subjective
+movement quality still require manual review.

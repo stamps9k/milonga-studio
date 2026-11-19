@@ -14,7 +14,7 @@ jobs:
   # Preserve the existing status-check name used by branch protection.
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -55,3 +55,23 @@ jobs:
       - name: Audit dependencies
         if: ${{ !cancelled() && steps.install.outcome == 'success' }}
         run: npm run audit:ci
+
+      - name: Install Chromium for browser tests
+        id: browser
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npx playwright install --with-deps chromium
+
+      - name: Test editor workflows on desktop and mobile
+        id: e2e
+        if: ${{ !cancelled() && steps.browser.outcome == 'success' }}
+        run: npm run test:e2e
+
+      - name: Upload browser failure reports
+        if: ${{ !cancelled() && steps.e2e.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-failures
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

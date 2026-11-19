@@ -148,3 +148,6 @@ db/*.sqlite3
 
 # Macos indeing file
 .DS_Store
+# Playwright reports and failure artifacts
+playwright-report/
+test-results/
