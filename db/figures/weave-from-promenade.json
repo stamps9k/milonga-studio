@@ -1,0 +1,216 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Weave from Promenade Position",
+  "style": "waltz",
+  "time": "3/4",
+  "start": "promenade apart",
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "forward": 0.7071067811865477,
+          "right": -0.6656854249492378
+        },
+        "turn": {
+          "left": 0.041666666666666664
+        },
+        "pointing": {
+          "left": 0.08333333333333333
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "HT",
+        "label": "forward across in promenade",
+        "path": "around the front",
+        "pathSetOff": -20,
+        "bodyOffset": {
+          "forward": 0.005000000000000001,
+          "right": 0.008660254037844387
+        },
+        "cross": true
+      },
+      "follow": {
+        "go": {
+          "forward": 0.7576093065034892,
+          "right": 0.6151828996322964
+        },
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "pointing": {
+          "right": 0.08333333333333333
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "HT",
+        "label": "forward in promenade",
+        "path": "around the front",
+        "pathSetOff": 30,
+        "bodyOffset": {
+          "forward": 0.0050000000000000044,
+          "right": -0.008660254037844385
+        },
+        "cross": true
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "forward": 0.522916512459885,
+          "right": -0.39428203230275516
+        },
+        "turn": {
+          "left": 0.08333333333333333
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "forward, closing from promenade"
+      },
+      "follow": {
+        "go": {
+          "forward": 1.1140565899787824,
+          "right": 0.11039738364982127
+        },
+        "turn": {
+          "left": 0.4166666666666667
+        },
+        "pointing": {
+          "right": 0.08333333333333333
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side and back, closing to partner",
+        "path": "around the front",
+        "pathSetOff": 120
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": {
+          "forward": 0.51,
+          "right": 0.1700000000000001
+        },
+        "turn": {
+          "left": 0.25
+        },
+        "pointing": {
+          "left": 0.09722222222222222
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "side and back, turning left",
+        "path": "around the front",
+        "pathSetOff": 90
+      },
+      "follow": {
+        "go": {
+          "forward": -0.7299999999999999,
+          "right": 0.3999999999999999
+        },
+        "turn": {
+          "left": 0.25
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "side and forward, turning left",
+        "path": "around the front",
+        "pathSetOff": -90
+      }
+    },
+    {
+      "beat": 4,
+      "lead": {
+        "go": {
+          "forward": -0.6000000000000001,
+          "right": 0.5049999999999999
+        },
+        "turn": {
+          "left": 0.125
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "back in CBMP, partner outside",
+        "path": "around the front",
+        "pathSetOff": -125
+      },
+      "follow": {
+        "go": {
+          "forward": 0.06523340597112987,
+          "right": -0.12307611844574873
+        },
+        "turn": {
+          "left": 0.125
+        },
+        "pointing": {
+          "left": 0.041666666666666664
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "HT",
+        "label": "forward outside partner",
+        "path": "around the front",
+        "pathSetOff": -175
+      }
+    },
+    {
+      "beat": 5,
+      "lead": {
+        "go": {
+          "forward": -0.3146625176280136,
+          "right": 0.10253048327204929
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "back, continuing the turn"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.0977996026178613,
+          "right": 0.008596500450031498
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "forward, continuing the turn"
+      }
+    },
+    {
+      "beat": 6,
+      "lead": {
+        "go": {
+          "forward": -0.10856041981621513,
+          "right": -0.09642838546025093
+        },
+        "turn": {
+          "left": 0.16666666666666666
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "side, finishing closed",
+        "path": "around the front",
+        "pathSetOff": 120
+      },
+      "follow": {
+        "go": {
+          "forward": 0.18779874487228013,
+          "right": 0.44111310885831845
+        },
+        "turn": {
+          "left": 0.16666666666666666
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "side and back, finishing closed"
+      }
+    }
+  ],
+  "expectBeats": 6,
+  "notes": "Six-count Weave from Promenade Position: one uninterrupted 1-2-3, 1-2-3 figure. Starts in the owner's existing feet-apart promenade (not a Whisk), closes during the opening two counts, passes outside partner on 4, and finishes in closed hold with feet apart, lead LF / follow RF weighted. A standalone figure; it does not require a Contra Check. Standard six-step order and footwork informed by https://www.ballroomdancers.com/dances/info.asp?sid=495 and https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html . Distances, compact turn distribution, rise and passing routes are provisional for subjective review, not an exact syllabus alignment chart. Only the first travelling steps intentionally cross in the body frame; dense tests cover every footprint and thigh/shin pair without omitting those intervals. All authoring, reach, lowering and balance checks run with unchanged limits. The open-foot closed-hold exit is not the catalogue's feet-collected closed stance; check joins when adding another figure."
+}

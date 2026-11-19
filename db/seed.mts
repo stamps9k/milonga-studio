@@ -354,6 +354,14 @@ const SAMPLE_DANCES: {
     notes:
       "Three-count held contra check, then recover into promenade over three counts. Separate alternative to the closed back-side-close; finish ready for Open Natural Turn. Timing and dimensions are provisional for review.",
   },
+  {
+    sequence: "Weave from Promenade Practice",
+    figures: ["Weave from Promenade Position"],
+    dance: "Waltz weave practice",
+    tempo: 84,
+    notes:
+      "Standalone six-count weave from feet-apart promenade; closed-hold finish with feet apart. Compact dimensions and turn timing are provisional for review. No Whisk or Contra Check setup required.",
+  },
 ];
 
 let seededSequences = 0;

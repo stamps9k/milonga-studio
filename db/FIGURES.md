@@ -488,3 +488,29 @@ is needed. Both recovery variants receive the full dense clearance tests.
 After reseeding, **Open → Waltz contra check promenade practice** loads the
 check plus this alternative; the original **Waltz contra check practice**
 continues to load the closed option.
+
+### Waltz Weave from Promenade Position
+
+`weave-from-promenade.json` is one six-count figure (two bars of 3/4), with
+alternating steps on every count, including across the bar line. It uses the
+owner's existing feet-apart `promenade apart` stance, without a Whisk or any
+required preceding figure. Both Promenade Chassé and Contra Check Recovery
+(Promenade) connect to its entry. The standalone **Waltz weave practice** preset
+makes it available for review without either setup.
+
+The couple closes during the opening two counts, passes outside partner on 4,
+and finishes in closed hold with feet apart and lead LF / follow RF weighted.
+Closed hold here describes the partners' relationship, not a foot close: the exit
+is deliberately not the catalogue's collected-feet closed starting stance.
+Review join warnings when choosing a continuation.
+
+The six-step order and footwork follow the teaching references at
+[BallroomDancers.com](https://www.ballroomdancers.com/dances/info.asp?sid=495) and
+[Ballroom Guide](https://ballroomguide.github.io/BallroomGuide/standard/waltz/weave_from_pp.html).
+Dimensions, turn distribution, rise and curved passing paths are provisional
+choices for this model and the owner's review, not an exact syllabus alignment
+chart. Only count 1 has intentional body-frame crosses. Dense regressions sample
+all footprint and thigh/shin pairs throughout both linear and eased playback,
+including these crosses; ordinary authoring, reach, hip lowering and balance
+checks run without exclusions or relaxed limits. No schema or model changes are
+needed.

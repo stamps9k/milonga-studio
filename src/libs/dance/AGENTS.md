@@ -351,6 +351,18 @@ the owner before building more on top of them.
   This is a provisional three-count development using the owner's existing
   symmetric 45° opening model, not a claim of standard syllabus timing. Both
   alternatives have dense full-footprint and thigh/shin clearance regressions.
+- Weave from Promenade Position is a standalone six-count waltz from the
+  owner's feet-apart promenade, without a Whisk setup. All six counts travel;
+  there is no collection or pause at the bar line. It closes during the opening
+  two counts, passes outside partner on 4, and finishes in closed hold with feet
+  apart (not the canonical collected-feet closed stance), lead LF / follow RF
+  weighted. Existing Promenade Chassé and promenade Contra Check Recovery match
+  its entry exactly. Turn distribution, dimensions, rise and routes are
+  provisional for review; references and limitations are in db/FIGURES.md and
+  the figure's notes. Only count 1 intentionally crosses in the body frame.
+  Full-footprint and all thigh/shin pair tests cover the entire figure with
+  linear/eased motion, normal reach, lowering and balance limits, and no
+  figure-check exclusions. No authoring or persisted schema changes are needed.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a
