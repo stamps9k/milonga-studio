@@ -363,6 +363,18 @@ const SAMPLE_DANCES: {
       "Six-count weave into promenade, then a three-count promenade walk and close into closed hold: nine counts altogether.",
   },
   {
+    sequence: "Open Natural Turn to Weave",
+    figures: [
+      "Open Natural Turn",
+      "Outside Change ending in Promenade Position",
+      "Weave from Promenade Position",
+    ],
+    dance: "Waltz open natural turn to weave practice",
+    tempo: 87,
+    notes:
+      "Twelve counts: an Open Natural Turn into closed hold, an Outside Change backing down the line into promenade (the follow curving round to his right), then the Weave from promenade.",
+  },
+  {
     sequence: "Natural Spin Turn",
     figures: [
       "Natural Spin Turn (1–3)",

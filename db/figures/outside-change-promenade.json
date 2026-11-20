@@ -1,0 +1,103 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Outside Change ending in Promenade Position",
+  "style": "waltz",
+  "time": "3/4",
+  "notes": "Standard name (International Style waltz), the nearest book figure; the owner's version closes on count 2 instead of passing back. Links Open Natural Turn (ends closed) to Weave from Promenade Position (starts in \"promenade apart\"), with the promenade travelling back up the line the lead backed down. Owner's description, confirmed by sketch 2026-11-20: lead LF back, RF closes, LF forward in promenade; the follow curves round to his right side on count 2. The lead's turn mostly on count 2 is provisional: needed to keep hold as she comes round. Flat, like the Open Natural Turn.",
+  "start": "closed",
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "promenade apart",
+    "moved": {
+      "right": -0.004416755658,
+      "forward": -0.140403368485
+    },
+    "turned": {
+      "right": "1/4"
+    },
+    "leadStandingOn": "L"
+  },
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "right": 0,
+          "forward": -0.5
+        },
+        "foot": "L",
+        "label": "back"
+      },
+      "follow": {
+        "go": {
+          "right": 0.06,
+          "forward": 0.5
+        },
+        "foot": "R",
+        "label": "forward"
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": "close",
+        "foot": "R",
+        "turn": {
+          "right": "3/32"
+        },
+        "label": "back, closing to the left foot"
+      },
+      "follow": {
+        "go": {
+          "right": -0.266293922461,
+          "forward": 1.111114046604
+        },
+        "foot": "L",
+        "turn": {
+          "right": "3/8"
+        },
+        "duration": 1,
+        "label": "round him to his right side, turning into promenade",
+        "path": "around the front",
+        "pathSetOff": -45
+      }
+    },
+    {
+      "beat": 2.3,
+      "follow": {
+        "go": {
+          "right": 0.090023115037,
+          "forward": -0.804268887901
+        },
+        "foot": "R",
+        "weight": false,
+        "duration": 0.7,
+        "label": "right foot follows round beside the left",
+        "path": "around the front",
+        "pathSetOff": 120
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": {
+          "right": -0.120306621248,
+          "forward": 0.352096877123
+        },
+        "foot": "L",
+        "turn": {
+          "right": "1/32"
+        },
+        "label": "forward in promenade"
+      },
+      "follow": {
+        "go": {
+          "right": 0.232842712475,
+          "forward": 0.282842712475
+        },
+        "foot": "R",
+        "label": "forward in promenade"
+      }
+    }
+  ]
+}
