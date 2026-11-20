@@ -1,6 +1,7 @@
 /**
  * Named stances a figure can start or end in, and the measurements
- * behind them: closed hold, the promenades and the contra check.
+ * behind them: closed hold, the promenades, the contra check and the
+ * spin turn's finish.
  * stancePose builds the feet of a stance.
  */
 
@@ -65,13 +66,20 @@ export const HOLD_OFFSET = STANCE_WIDTH / 2;
  * - "contra check": the compact checked position in the original closed
  *   frame, lead LF / follow RF weighted, with 15° left contra rotation and
  *   3 cm lowering. See CONTRA_CHECK_* for the dimensions.
+ * - "spin turn finish": where the owner's Underturned Natural Spin Turn
+ *   (4–6) ends, so the Reverse Turn (4–6) can start there. Not the book's
+ *   standard closed position: the lead stands on his left with his right
+ *   forward on a diagonal, and the follow is slightly to his left and
+ *   close in front, the slightly open finish the owner dances. See
+ *   SPIN_TURN_FINISH. Named by the owner (2026-11-20).
  */
 export type StanceName =
   | "closed"
   | "crossed promenade"
   | "promenade apart"
   | "tango promenade"
-  | "contra check";
+  | "contra check"
+  | "spin turn finish";
 
 /** In "crossed promenade", how far the crossing foot is behind the
  *  other foot, and how far across it, in metres, measured in the
@@ -113,12 +121,33 @@ export const CONTRA_CHECK_INWARD = 0.14;
 export const CONTRA_CHECK_TURN = 15;
 export const CONTRA_CHECK_LOWERING = 0.03;
 
+/** "spin turn finish", measured from where the Underturned Natural Spin
+ *  Turn (4–6) ends rather than designed, so the numbers aren't round;
+ *  they're kept to full precision so the two figures join exactly. In
+ *  metres, with the midpoint of the lead's feet at the origin, the lead
+ *  facing 0 and the follow facing 180. `body` is each partner's pelvis
+ *  offset (bodyOffset) at that moment, kept so the next figure starts
+ *  without a jump. If the spin turn's ending changes, measure again. */
+export const SPIN_TURN_FINISH = {
+  lead: {
+    left: { x: -0.1237436867076459, y: -0.1590990257669731 },
+    right: { x: 0.1237436867076458, y: 0.159099025766973 },
+    body: { x: -0.0892082629963074, y: 0.002392470494365 },
+  },
+  follow: {
+    left: { x: -0.1590990257669732, y: 0.5833630944789014 },
+    right: { x: -0.2021602127002605, y: 0.2456859152217565 },
+    body: { x: 0.0892082629963074, y: -0.002392470494365 },
+  },
+} as const;
+
 export const STANCE_NAMES: readonly StanceName[] = [
   "closed",
   "crossed promenade",
   "promenade apart",
   "tango promenade",
   "contra check",
+  "spin turn finish",
 ];
 
 export type ShortFoot = "L" | "R";
@@ -179,6 +208,19 @@ export function stancePose(
           rise: -CONTRA_CHECK_LOWERING,
         },
       };
+    case "spin turn finish": {
+      const partner = (who: Partner, orientation: number) => {
+        const f = SPIN_TURN_FINISH[who];
+        return {
+          left: { position: { ...f.left }, weight: weight(who, "left") },
+          right: { position: { ...f.right }, weight: weight(who, "right") },
+          orientation,
+          rise: 0,
+          bodyOffset: { ...f.body },
+        };
+      };
+      return { lead: partner("lead", 0), follow: partner("follow", 180) };
+    }
     case "closed":
       return {
         lead: {

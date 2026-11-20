@@ -1,0 +1,101 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Reverse Turn (4–6)",
+  "style": "waltz",
+  "time": "3/4",
+  "start": "spin turn finish",
+  "notes": "Owner's description: the Reverse Box Turn (backward half), lead's right back, side, close, a quarter turn to the left, danced from where the Underturned Natural Spin Turn (4–6) ends (\"spin turn finish\") and ending in closed hold, ready for the Reverse Box Turn. Named after the book's 4–6 of the Reverse Turn, which follows a Natural Spin Turn; the book turns 3/8 here, the owner a quarter. From count 1 on, the feet land where the Reverse Box Turn (backward half) puts them. The follow's right foot curves round on count 2 because she starts slightly to the lead's left.",
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "forward": -0.5591,
+          "right": 0.2763
+        },
+        "foot": "R",
+        "turn": {
+          "left": "1/24"
+        },
+        "label": "back, starting to turn"
+      }
+    },
+    {
+      "beat": 1,
+      "follow": {
+        "go": {
+          "forward": 0.5711,
+          "right": -0.5522
+        },
+        "foot": "L",
+        "turn": {
+          "left": "1/24"
+        },
+        "label": "forward, starting to turn"
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "forward": -0.4525,
+          "right": 0.3641
+        },
+        "foot": "L",
+        "turn": {
+          "left": "1/8"
+        },
+        "label": "side, turning"
+      }
+    },
+    {
+      "beat": 2,
+      "follow": {
+        "go": {
+          "forward": 0.6637,
+          "right": 0.0254
+        },
+        "foot": "R",
+        "turn": {
+          "left": "1/8"
+        },
+        "label": "side, turning",
+        "path": "around the front"
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": "close",
+        "foot": "R",
+        "turn": {
+          "left": "1/12"
+        },
+        "label": "close"
+      }
+    },
+    {
+      "beat": 3,
+      "follow": {
+        "go": "close",
+        "foot": "L",
+        "turn": {
+          "left": "1/12"
+        },
+        "label": "close"
+      }
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "forward": -0.4019,
+      "right": 0.3451
+    },
+    "turned": {
+      "left": "1/4"
+    },
+    "leadStandingOn": "R"
+  }
+}
