@@ -135,7 +135,11 @@ test("Natural Spin Turn: separate three-count halves connect exactly, with six s
       poseClose(poseAtBeat(roundTrip, beat), poseAtBeat(originalFigure, beat));
   }
 });
-test("Underturned Natural Spin Turn: 135-degree pivot keeps RF forward in CBMP, then toe-pivots with an unweighted brush", () => {
+test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as the pivot, RF drawn in, then forward at a right angle), then toe-pivots with an unweighted brush", () => {
+  // The lead's frame at the start: x right, y forward.
+  const inStartFrame = (p: { x: number; y: number }) =>
+    rotatePoint(p, -spin.startPose.lead.orientation);
+  const left0 = spin.startPose.lead.left.position;
   for (const options of [{}, { footEasing: footEase }]) {
     let previous = 0,
       total = 0;
@@ -150,27 +154,50 @@ test("Underturned Natural Spin Turn: 135-degree pivot keeps RF forward in CBMP, 
         normalizeDegrees(p.follow.orientation - p.lead.orientation + 180) - 180,
       );
       assert.ok(
-        Math.abs(opposition - 180) <= 10 + 1e-8,
-        "Partners remain facing each other",
+        Math.abs(opposition - 180) <= 30 + 1e-8,
+        "Partners stay roughly facing each other",
       );
-      if (i / 256 >= 0.3 && i / 256 <= 1) {
-        const relative = rotatePoint(
-          {
-            x: p.lead.right.position.x - p.lead.left.position.x,
-            y: p.lead.right.position.y - p.lead.left.position.y,
-          },
-          -p.lead.orientation,
-        );
-        close(relative.x, 0);
-        close(relative.y, 0.3);
+      if (i / 256 >= 0.5 && i / 256 <= 1) {
+        // The pivot: all the weight on the LF, which doesn't move.
         assert.equal(p.lead.left.weight, 1);
+        const back = inStartFrame({
+          x: p.lead.left.position.x - left0.x,
+          y: p.lead.left.position.y - left0.y,
+        });
+        close(back.x, 0);
+        assert.ok(back.y < -0.6, "A full stride straight back");
       }
     }
     close(total, 225);
   }
-  close(poseAtBeat(spin, 1).lead.orientation, 135);
+  // 90° on the count-4 pivot, 90° more by the end of count 5.
+  close(poseAtBeat(spin, 1).lead.orientation, 90);
   close(poseAtBeat(spin, 2).lead.orientation, 180);
   close(spin.endPose.lead.orientation, 225);
+  // The RF comes in to 15 cm to his right of the pivot, then goes out.
+  const gap = (p: Pose) =>
+    Math.hypot(
+      p.lead.right.position.x - p.lead.left.position.x,
+      p.lead.right.position.y - p.lead.left.position.y,
+    );
+  const pivotEnd = poseAtBeat(spin, 1);
+  const beside = rotatePoint(
+    {
+      x: pivotEnd.lead.right.position.x - pivotEnd.lead.left.position.x,
+      y: pivotEnd.lead.right.position.y - pivotEnd.lead.left.position.y,
+    },
+    -pivotEnd.lead.orientation,
+  );
+  close(beside.x, 0.15);
+  close(beside.y, 0);
+  assert.ok(gap(poseAtBeat(spin, 0.5)) > 0.4);
+  // The V: start → pivot and pivot → count-5 RF meet at a right angle.
+  const pivot = pivotEnd.lead.left.position,
+    stride = { x: pivot.x - left0.x, y: pivot.y - left0.y },
+    r5 = poseAtBeat(spin, 2).lead.right.position,
+    out = { x: r5.x - pivot.x, y: r5.y - pivot.y };
+  close(stride.x * out.x + stride.y * out.y, 0);
+  assert.ok(Math.hypot(out.x, out.y) > 0.4, "The RF goes back out");
   const partial = poseAtBeat(spin, 0.5);
   close(partial.follow.right.weight, 0.8);
   close(partial.follow.left.weight, 0.2);
@@ -179,17 +206,7 @@ test("Underturned Natural Spin Turn: 135-degree pivot keeps RF forward in CBMP, 
     assert.equal(p.follow.left.weight, 1);
     assert.equal(p.follow.right.weight, 0);
   }
-  const before = poseAtBeat(spin, 1),
-    after = poseAtBeat(spin, 2);
-  const forward = rotatePoint(
-    {
-      x: after.lead.right.position.x - before.lead.right.position.x,
-      y: after.lead.right.position.y - before.lead.right.position.y,
-    },
-    -135,
-  );
-  assert.ok(forward.y > 0.3);
-  close(forward.x, 0);
+  const after = poseAtBeat(spin, 2);
   const brush = rotatePoint(
     {
       x: after.follow.right.position.x - after.follow.left.position.x,
