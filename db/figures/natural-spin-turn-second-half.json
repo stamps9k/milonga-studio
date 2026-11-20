@@ -338,21 +338,16 @@
     }
   ],
   "expectBeats": 3,
-  "notes": "Underturned spinning half of the Natural Spin Turn, counts 4–6: a three-eighths right pivot, then another quarter turn over the last two counts. Lead RF advances in CBMP and the follow brushes RF to LF without weight; finish feet apart in closed hold. The owner confirmed the 135° pivot and 225° total turn. Reference: https://secure.ballroomdancers.com/Dances/info.asp?sid=130 . Dimensions, rise sizes, within-count timing and pelvis shaping are provisional for visual review.",
+  "notes": "Underturned spinning half of the Natural Spin Turn, counts 4–6: a three-eighths right pivot, then another quarter turn over the last two counts. Lead RF advances in CBMP and the follow brushes RF to LF without weight; ends in the owner's slightly open finish, the \"spin turn finish\" stance, ready for Reverse Turn (4–6). The owner confirmed the 135° pivot and 225° total turn, and kept this finish over the book's closed position (2026-11-20). Reference: https://secure.ballroomdancers.com/Dances/info.asp?sid=130",
   "expectEnd": {
-    "feet": {
-      "lead": {
-        "L": [0.7474873734152917, -0.6217514421272201],
-        "R": [0.3474873734152917, -0.6717514421272202]
-      },
-      "follow": {
-        "L": [0.24748737341529173, -1.1717514421272202],
-        "R": [0.5167100540064333, -0.9634264761090167]
-      }
+    "stance": "spin turn finish",
+    "moved": {
+      "right": 0.5475,
+      "forward": -0.6468
     },
-    "facing": {
-      "lead": 225,
-      "follow": 45
-    }
+    "turned": {
+      "right": "5/8"
+    },
+    "leadStandingOn": "L"
   }
 }

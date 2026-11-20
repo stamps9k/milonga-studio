@@ -71,7 +71,7 @@ and run `FIGURES_DIR=path/to/folder npm run db:reset`.
 | `name`        | Shown in the library. Must be unique across the figure files.                                                                                                                                                               |
 | `style`       | Free-form tag that groups the library: `"tango"`, `"waltz"`, `"cha-cha"`, …                                                                                                                                                 |
 | `time`        | Time signature: `"3/4"` or `"4/4"`.                                                                                                                                                                                         |
-| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"`, `"tango promenade"` or `"contra check"`. See "Stances".                                                                              |
+| `start`       | Starting stance: `"closed"` (the default), `"crossed promenade"`, `"promenade apart"`, `"tango promenade"`, `"contra check"` or `"spin turn finish"`. See "Stances".                                                        |
 | `slow`        | Beats in an S when using `length`. Default 2 (so a Q is 1). Use `1` for tango-style counting.                                                                                                                               |
 | `steps`       | The steps, in time order.                                                                                                                                                                                                   |
 | `expectEnd`   | Optional, but recommended: where the figure should finish. See below.                                                                                                                                                       |
@@ -405,6 +405,13 @@ A stance is a named position for both partners, used by `start` and by
   the follow's right foot matching it back, both bodies turned 15° left and
   lowered 3 cm, the feet in CBMP. The lead stands on his left, the follow on
   her right. As with `"crossed promenade"`, the feet may start crossed.
+- **`"spin turn finish"`**: where the Underturned Natural Spin Turn (4–6)
+  ends and the Reverse Turn (4–6) starts: the lead on his left with his
+  right forward on a diagonal, the follow slightly to his left and close in
+  front, each pelvis shifted as the spin leaves it. It's measured from the
+  spin turn rather than designed, so it isn't the book's closed position;
+  if the spin turn's ending changes, measure it again (`SPIN_TURN_FINISH`
+  in `src/libs/dance/authoring/stances.mts`).
 
 `"crossed promenade"` measures from the lead's right foot rather than the
 middle of his feet, so a whisk's ending reads as where that foot went:

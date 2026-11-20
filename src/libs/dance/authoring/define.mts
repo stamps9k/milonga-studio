@@ -63,6 +63,7 @@ const DEFAULT_STANDING: Record<StanceName, Record<Partner, Foot>> = {
   "promenade apart": { lead: "left", follow: "right" },
   "tango promenade": { lead: "right", follow: "left" },
   "contra check": { lead: "left", follow: "right" },
+  "spin turn finish": { lead: "left", follow: "right" },
 };
 
 /** Which foot each partner stands on at the start, worked out from
