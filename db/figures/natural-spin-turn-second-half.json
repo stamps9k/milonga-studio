@@ -8,28 +8,30 @@
       "beat": 1,
       "lead": {
         "go": {
-          "right": 0,
-          "forward": -0.671751442127
+          "right": -0.22,
+          "forward": -0.5
         },
         "foot": "L",
         "duration": 0.5,
         "weight": true,
         "rise": 0,
         "riseTiming": "late",
-        "label": "back, full stride",
+        "label": "back, curving left into the pivot",
         "footwork": "THT",
         "bodyOffset": {
           "right": 0.056568542495,
           "forward": 0.056568542495
-        }
+        },
+        "path": "around the back",
+        "pathSetOff": 180
       }
     },
     {
       "beat": 1,
       "follow": {
         "go": {
-          "right": 0.07,
-          "forward": 0.571751442127
+          "right": 0.22,
+          "forward": 0.4
         },
         "foot": "R",
         "duration": 0.5,
@@ -46,8 +48,8 @@
       "beat": 1.4,
       "lead": {
         "go": {
-          "right": -0.02,
-          "forward": -0.591751442127
+          "right": -0.27,
+          "forward": -0.45
         },
         "foot": "R",
         "duration": 0.2,
@@ -80,8 +82,8 @@
       "beat": 1.5,
       "follow": {
         "go": {
-          "right": -0.368205080757,
-          "forward": 0.210288568297
+          "right": -0.324264068712,
+          "forward": 0.287867965644
         },
         "foot": "R",
         "duration": 0.25,
@@ -102,8 +104,8 @@
       "beat": 1.5,
       "follow": {
         "go": {
-          "right": -0.570003419536,
-          "forward": 0.684929301856
+          "right": -0.324787206664,
+          "forward": 0.672143689315
         },
         "foot": "L",
         "duration": 0.25,
@@ -132,8 +134,8 @@
       "beat": 1.6,
       "lead": {
         "go": {
-          "right": 0.23,
-          "forward": -0.18
+          "right": 0.2,
+          "forward": -0.15
         },
         "foot": "R",
         "duration": 0.4,
@@ -149,8 +151,8 @@
       "beat": 1.75,
       "follow": {
         "go": {
-          "right": -0.235256717329,
-          "forward": 0.432613311112
+          "right": -0.162358830044,
+          "forward": 0.324717660088
         },
         "foot": "R",
         "duration": 0.25,
@@ -171,8 +173,8 @@
       "beat": 1.75,
       "follow": {
         "go": {
-          "right": -0.570828413877,
-          "forward": 0.114503396609
+          "right": -0.454729519501,
+          "forward": 0.112845998589
         },
         "foot": "L",
         "duration": 0.25,
@@ -186,8 +188,8 @@
       "beat": 2,
       "lead": {
         "go": {
-          "right": -0.15,
-          "forward": 0.671751442127
+          "right": 0.35,
+          "forward": 0.22
         },
         "foot": "R",
         "duration": 0.65,
@@ -200,22 +202,22 @@
         "weight": true,
         "rise": 0,
         "riseTiming": "late",
-        "label": "forward in CBMP, continue right",
+        "label": "forward, curving round to the line of dance, continue right",
         "footwork": "HT",
         "bodyOffset": {
           "right": 0.108692793643,
           "forward": -0.102538136967
         },
         "path": "around the front",
-        "pathSetOff": 0
+        "pathSetOff": 26
       }
     },
     {
       "beat": 2,
       "follow": {
         "go": {
-          "right": -0.15,
-          "forward": -0.121751442127
+          "right": -0.7,
+          "forward": 0.33
         },
         "foot": "L",
         "duration": 0.65,
@@ -237,8 +239,8 @@
       "beat": 2,
       "lead": {
         "go": {
-          "right": -0.750771644663,
-          "forward": 0.538639610307
+          "right": -0.077781745931,
+          "forward": 0.572756492761
         },
         "foot": "L",
         "duration": 1,
@@ -257,8 +259,8 @@
       "beat": 2,
       "follow": {
         "go": {
-          "right": 0.086091270347,
-          "forward": -0.227512626585
+          "right": -0.657609306503,
+          "forward": -0.332340187158
         },
         "foot": "R",
         "duration": 0.65,
@@ -275,8 +277,8 @@
       "beat": 2.65,
       "follow": {
         "go": {
-          "right": -0.134350288425,
-          "forward": -0.148492424049
+          "right": -0.098994949366,
+          "forward": -0.11313708499
         },
         "foot": "R",
         "duration": 0.35,
@@ -377,12 +379,12 @@
     }
   ],
   "expectBeats": 3,
-  "notes": "Spinning half of the Natural Spin Turn (counts 4–6) in the owner's V shape, confirmed 2026-11-20: the lead's LF goes a full stride straight back as the pivot; he turns 90° on it while the RF draws in to about 15 cm beside it, then the RF goes forward the same distance at a right angle, turning 90° more by the end of count 5. The follow's count-4 route round the outside of his pivot is provisional: shaped to clear his RF, not yet closely reviewed. Ends in the \"spin turn finish\" stance for Reverse Turn (4–6). Reference: https://secure.ballroomdancers.com/Dances/info.asp?sid=130",
+  "notes": "Spinning half of the Natural Spin Turn (counts 4–6) in the owner's \"bird\" shape, confirmed by sketch 2026-11-20: the lead's LF goes back, setting off straight and curving left into a pivot on his left; he turns 90° on it while the RF draws in to about 15 cm beside it, then the RF goes forward curving back onto the line he started on, mirroring count 4, for 90° more. The follow's count-4 route is provisional: shaped to clear his RF, not yet closely reviewed. Ends in the \"spin turn finish\" stance. Reference: https://secure.ballroomdancers.com/Dances/info.asp?sid=130",
   "expectEnd": {
     "stance": "spin turn finish",
     "moved": {
-      "right": 0.7718,
-      "forward": -0.6468
+      "right": 0.1,
+      "forward": -0.975
     },
     "turned": {
       "right": "5/8"

@@ -135,7 +135,7 @@ test("Natural Spin Turn: separate three-count halves connect exactly, with six s
       poseClose(poseAtBeat(roundTrip, beat), poseAtBeat(originalFigure, beat));
   }
 });
-test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as the pivot, RF drawn in, then forward the same distance at a right angle), then toe-pivots with an unweighted brush", () => {
+test("Underturned Natural Spin Turn: a bird shape over counts 4–5 (LF back curving into a pivot on his left, RF drawn in, then forward curving back to the line), then toe-pivots with an unweighted brush", () => {
   // The lead's frame at the start: x right, y forward.
   const inStartFrame = (p: { x: number; y: number }) =>
     rotatePoint(p, -spin.startPose.lead.orientation);
@@ -164,8 +164,8 @@ test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as 
           x: p.lead.left.position.x - left0.x,
           y: p.lead.left.position.y - left0.y,
         });
-        close(back.x, 0);
-        assert.ok(back.y < -0.6, "A full stride straight back");
+        assert.ok(back.x < -0.15, "The pivot is to his left");
+        assert.ok(back.y < -0.45, "A full stride back");
       }
     }
     close(total, 225);
@@ -175,11 +175,6 @@ test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as 
   close(poseAtBeat(spin, 2).lead.orientation, 180);
   close(spin.endPose.lead.orientation, 225);
   // The RF comes in to 15 cm to his right of the pivot, then goes out.
-  const gap = (p: Pose) =>
-    Math.hypot(
-      p.lead.right.position.x - p.lead.left.position.x,
-      p.lead.right.position.y - p.lead.left.position.y,
-    );
   const pivotEnd = poseAtBeat(spin, 1);
   const beside = rotatePoint(
     {
@@ -190,15 +185,35 @@ test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as 
   );
   close(beside.x, 0.15);
   close(beside.y, 0);
-  assert.ok(gap(poseAtBeat(spin, 0.5)) > 0.4);
-  // The V: start → pivot and pivot → count-5 RF meet at a right angle.
-  const pivot = pivotEnd.lead.left.position,
-    stride = { x: pivot.x - left0.x, y: pivot.y - left0.y },
+  // It starts a stride away, where count 4 left it.
+  assert.ok(
+    Math.hypot(
+      spin.startPose.lead.right.position.x - pivotEnd.lead.left.position.x,
+      spin.startPose.lead.right.position.y - pivotEnd.lead.left.position.y,
+    ) > 0.5,
+  );
+  // The bird: the count-5 RF lands where the start LF mirrors across
+  // the pivot, on the line he started on, so both arms are the same.
+  const pivot = inStartFrame({
+      x: pivotEnd.lead.left.position.x - left0.x,
+      y: pivotEnd.lead.left.position.y - left0.y,
+    }),
     r5 = poseAtBeat(spin, 2).lead.right.position,
-    out = { x: r5.x - pivot.x, y: r5.y - pivot.y };
-  close(stride.x * out.x + stride.y * out.y, 0);
-  // The second arm mirrors the first: the same length.
-  close(Math.hypot(out.x, out.y), Math.hypot(stride.x, stride.y));
+    landed = inStartFrame({ x: r5.x - left0.x, y: r5.y - left0.y });
+  close(landed.x, 0);
+  close(landed.y, 2 * pivot.y);
+  // The arms curve: count 4 sets off straight back, count 5 lands
+  // heading straight down the line (the way he started backing).
+  const heading = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+    Math.atan2(b.x - a.x, b.y - a.y);
+  const l0 = poseAtBeat(spin, 0.02).lead.left.position;
+  assert.ok(
+    Math.abs(normalizeDegrees((heading(left0, l0) * 180) / Math.PI) - 180) < 5,
+  );
+  const r4 = poseAtBeat(spin, 1.63).lead.right.position;
+  assert.ok(
+    Math.abs(normalizeDegrees((heading(r4, r5) * 180) / Math.PI) - 180) < 5,
+  );
   const partial = poseAtBeat(spin, 0.5);
   close(partial.follow.right.weight, 0.8);
   close(partial.follow.left.weight, 0.2);
