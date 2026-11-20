@@ -196,42 +196,6 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     carriedTurn[index - 1] = turnDegrees(row.turn);
   });
 
-  // The same holds when the lead and the follow each close separately,
-  // on the same beat and with the same turn: the steps before have put
-  // the feet where the turned couple ends, so the hold check of the rows
-  // in the beat before compares the bodies with the hold the turn
-  // finishes in. Only the hold check reads carriedTurn for rows that
-  // aren't `both`, so this places no feet. (2026-11-20, for the Reverse
-  // Turn (4–6), which starts from an asymmetric stance and so can't
-  // use mirrored steps.)
-  const turningClose = (row: StepRow, who: Partner) => {
-    const move = row[who];
-    if (move === undefined) return undefined;
-    const isObject = typeof move === "object" && "go" in move;
-    const go = isObject ? move.go : move;
-    const turn = isObject ? move.turn : row.turn;
-    return go === "close" && turn !== undefined && turnDegrees(turn) !== 0
-      ? turnDegrees(turn)
-      : undefined;
-  };
-  rows.forEach((row) => {
-    const leadTurn = turningClose(row, "lead");
-    if (leadTurn === undefined || row.beat === undefined) return;
-    const followTurn = rows
-      .filter((other) => other.beat === row.beat)
-      .map((other) => turningClose(other, "follow"))
-      .find((turn) => turn !== undefined);
-    if (followTurn !== leadTurn) return;
-    const first = rows.findIndex((other) => other.beat === row.beat);
-    const before = rows[first - 1]?.beat;
-    if (before === undefined) return;
-    rows.forEach((other, k) => {
-      if (other.beat === before && other.both === undefined) {
-        carriedTurn[k] = leadTurn;
-      }
-    });
-  });
-
   // In hold the lead's left foot pairs with the follow's right, and his
   // right with her left (each is in front of the other). A mirrored
   // turning step only moves one pair, so the other pair is left in the

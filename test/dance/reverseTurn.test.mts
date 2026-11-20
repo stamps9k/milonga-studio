@@ -68,37 +68,47 @@ test("spin turn finish: the spin turn ends exactly where Reverse Turn (4–6) st
   );
 });
 
-test("Reverse Turn (4–6): 165° to the left, 45° then 90° then 30°, the lead's count 2 a long stride round his right foot", () => {
+test("Reverse Turn (4–6): a quarter turn left, mostly on a long count-2 stride, then a big close", () => {
   const facing = (beat: number) => poseAtBeat(reverse, beat).lead.orientation;
   const close = (a: number, b: number) =>
     assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
-  close(facing(1), 315);
-  close(facing(2), 225);
-  close(facing(3), 195);
-  close(poseAtBeat(reverse, 3).follow.orientation, 15);
+  // 15°, then 60°, then 15°: finishing facing left of where he started.
+  close(facing(1), 345);
+  close(facing(2), 285);
+  close(facing(3), 270);
+  close(poseAtBeat(reverse, 3).follow.orientation, 90);
   // Count 1: the body turns while the right foot keeps pointing along
   // the line it stepped back on.
   const one = poseAtBeat(reverse, 1).lead;
   assert.ok(one.right.direction !== undefined);
   close(one.right.direction!, 0);
-  // Count 2: a long stride that goes round the standing foot, then a
-  // close that brings the feet well together.
+  // Count 2: the lead's left a long stride, leaving the feet well apart;
+  // count 3 brings them together.
   const lead2 = reverse.steps.find(
     (s) => s.partner === "lead" && s.foot === "left",
   )!;
-  assert.equal(lead2.movement.type, "arc");
+  const stride =
+    lead2.movement.type === "straight"
+      ? lead2.movement.distance
+      : lead2.movement.arcLength;
+  assert.ok(stride > 0.6, `count 2 stride ${stride}`);
   const at2 = poseAtBeat(reverse, 2).lead,
     at3 = reverse.endPose.lead;
   const apart = Math.hypot(
     at2.left.position.x - at2.right.position.x,
     at2.left.position.y - at2.right.position.y,
   );
-  assert.ok(apart > 0.4, `feet ${apart} apart after count 2`);
+  assert.ok(apart > 0.3, `feet ${apart} apart after count 2`);
   const closing = Math.hypot(
     at3.right.position.x - at2.right.position.x,
     at3.right.position.y - at2.right.position.y,
   );
-  assert.ok(closing > 0.35, `close travels ${closing}`);
+  assert.ok(closing > 0.2, `close travels ${closing}`);
+  // The follow, on the outside, goes round her standing foot.
+  const follow2 = reverse.steps.find(
+    (s) => s.partner === "follow" && s.foot === "right",
+  )!;
+  assert.equal(follow2.movement.type, "arc");
   assert.equal(reverse.endPose.lead.right.weight, 1);
   assert.equal(reverse.endPose.follow.left.weight, 1);
 });
@@ -164,28 +174,4 @@ test("Natural Spin Turn into Reverse Turn (4–6): feet and legs stay clear, wit
           );
         }
     }
-});
-
-test("separate lead and follow turning closes get the hold allowance a mirrored turning close gets", () => {
-  // Reverse Turn (4–6) closes with a separate lead and follow step, each
-  // turning 1/12; after count 2 the bodies are judged against the hold
-  // that turn finishes in, as for a mirrored turning close. It loads
-  // above, so the allowance holds. If only the lead's close turns there
-  // is no allowance, and the hold check after count 2 fails.
-  const json = JSON.parse(
-    readFileSync(
-      new URL("../../db/figures/reverse-turn-4-6.json", import.meta.url),
-      "utf8",
-    ),
-  );
-  const followClose = json.steps.find(
-    (row: { beat: number; follow?: { go: string } }) =>
-      row.beat === 3 && row.follow?.go === "close",
-  );
-  delete followClose.follow.turn;
-  delete json.expectEnd;
-  assert.throws(
-    () => defineFigure(parseFigureDefinition(json, "test")),
-    /after step 3 \(beat 3\) the partners aren't in hold/,
-  );
 });

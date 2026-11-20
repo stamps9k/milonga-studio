@@ -141,9 +141,7 @@ A turn can also start earlier, spread over several mirrored steps (a chart's
 the turn on count 1 is what keeps the partner on the outside of a turn from
 lunging round on count 2; see the backward halves of the box turns.
 
-A turn on a `both` close needs a mirrored travelling step before it. When the
-lead and the follow close separately on the same beat with the same turn, the
-hold check after the beat before allows for that turn in the same way. A turn on
+A turn on a `both` close needs a mirrored travelling step before it. A turn on
 a `both` in place or pivot is an error, because each partner would turn on
 their own standing foot and the hold would come apart.
 

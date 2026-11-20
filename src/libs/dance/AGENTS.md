@@ -335,11 +335,7 @@ the owner before building more on top of them.
   1, as a chart's "commence to turn"): in hold the lead's left foot
   pairs with the follow's right and his right with her left, and each
   pair turns by everything since it was last placed (`pairFacing`), so
-  the couple still ends exactly in hold (2026-11-17). Separate `lead`
-  and `follow` closes on the same beat with the same turn get the same
-  allowance in the hold check of the rows in the beat before; their
-  feet are written explicitly, so nothing is placed for them
-  (2026-11-20, for figures that start from an asymmetric stance).
+  the couple still ends exactly in hold (2026-11-17).
 - The "crossed promenade" stance (`authoring/stances.mts`) is the owner's whisk
   ending: each partner opened an eighth, the crossing foot `CROSS_BEHIND`
   (25 cm) behind and `CROSS_ACROSS` (5 cm) across the other, measured
