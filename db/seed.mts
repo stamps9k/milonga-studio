@@ -372,7 +372,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz natural spin turn practice",
     tempo: 84,
     notes:
-      "Nine counts: a Natural Turn, the underturned spin with a 135-degree pivot and another 90 degrees, then Reverse Turn (4–6) back into closed hold.",
+      "Nine counts: a Natural Turn, the underturned spin in a bird shape (back curving into a 90-degree pivot, then forward curving back onto the line for 90 degrees more), then Reverse Turn (4–6) back into closed hold.",
   },
 ];
 
