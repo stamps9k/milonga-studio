@@ -63,8 +63,9 @@ function connection(actual: Pose, expected: Pose) {
     }
   }
 }
-// Original resolved endpoint, including the historic rounded follow offsets.
-// Pin all four feet, not just an equivalent closed stance or rounded expectEnd.
+// The resolved endpoint: exactly closed hold, so closed-start figures join
+// with no gap. Pin all four feet, not just an equivalent closed stance or
+// rounded expectEnd.
 const originalEnd: Pose = {
   lead: {
     left: {
@@ -80,11 +81,11 @@ const originalEnd: Pose = {
   },
   follow: {
     left: {
-      position: { x: -0.2280580709048679, y: 0.11686200525370732 },
+      position: { x: -0.229, y: 0.117 },
       weight: 1,
     },
     right: {
-      position: { x: -0.228058070904868, y: 0.31686200525370734 },
+      position: { x: -0.229, y: 0.317 },
       weight: 0,
     },
     orientation: 270,
@@ -165,8 +166,7 @@ test("Open Natural Turn: retains joins from Promenade Chassé to closed-start fi
   for (const file of ["box-turn-backward", "lf-closed-change"]) {
     const join = assessJoin(middle.resolvedEndPose, load(file));
     assert.equal(join.fits, true, JSON.stringify(join.issues));
-    // Original rounded follow geometry leaves this sub-millimetre fit error.
-    close(join.maxFootGap, 0.0004759918513644262);
+    assert.ok(join.maxFootGap < 1e-6, `foot gap ${join.maxFootGap}`);
   }
 });
 
