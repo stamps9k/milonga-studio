@@ -429,7 +429,26 @@ export function applyMove(
     throw new FigureError(`${where}: "pathSetOff" needs a curved "path"`);
   }
   let movement: Movement = { type: "straight", direction, distance };
-  if (move.path !== undefined) {
+  if (move.path === "around the standing foot") {
+    if (air || distance === 0) {
+      throw new FigureError(
+        `${where}: "path" needs a step that travels along the floor`,
+      );
+    }
+    if (move.pathSetOff !== undefined) {
+      throw new FigureError(
+        `${where}: "around the standing foot" sets off where the circle does; leave out "pathSetOff"`,
+      );
+    }
+    movement = aroundStandingFoot(
+      start,
+      addPoints(start, scalePoint(headingToUnitVector(direction), distance)),
+      state.position[OTHER[foot]],
+      before,
+      turnDegrees(move.turn),
+      where,
+    );
+  } else if (move.path !== undefined) {
     if (air || distance === 0) {
       throw new FigureError(
         `${where}: "path" needs a step that travels along the floor`,
@@ -568,6 +587,79 @@ function curveAround(
     curvature: (2 * Math.sin(radians)) / chord,
     arcLength: (chord * radians) / Math.sin(radians),
     ...(setOff !== 0 ? { setOff } : {}),
+  };
+}
+
+/** The shortest circle radius "around the standing foot" accepts, in
+ *  metres: closer than this the moving foot would brush the standing
+ *  foot's outline (feet are drawn 9 cm wide). */
+const MIN_ORBIT_RADIUS = 0.12;
+
+/**
+ * The arc for `path: "around the standing foot"`: a circle round the
+ * standing foot, travelled the way the body turns, through the spot the
+ * foot sets off from and the spot it lands on.
+ *
+ * Exactly one circle through two points has its centre nearest a given
+ * point: the centre is the point on the perpendicular bisector of the
+ * two spots nearest the standing foot. When the foot starts and lands
+ * the same distance from the standing foot, that centre is the standing
+ * foot itself; otherwise it's as close as a circle through both spots
+ * allows. The foot goes round that circle in the direction of the
+ * step's turn (left: anticlockwise seen from above), however far that
+ * is, so it keeps its side of the body while the body comes round.
+ *
+ * The result is an ordinary Movement arc (`setOff`, `curvature`,
+ * `arcLength`), so playback, trails and storage need nothing new.
+ */
+function aroundStandingFoot(
+  start: Point2D,
+  end: Point2D,
+  standing: Point2D,
+  facing: number,
+  turn: number,
+  where: string,
+): Movement {
+  if (turn === 0) {
+    throw new FigureError(
+      `${where}: "around the standing foot" goes round the way the body turns, so the step needs a \`turn\``,
+    );
+  }
+  const middle = scalePoint(addPoints(start, end), 0.5);
+  const chord = subPoints(end, start);
+  const length = Math.hypot(chord.x, chord.y);
+  // The bisector runs through the middle, at right angles to the chord.
+  const across = { x: -chord.y / length, y: chord.x / length };
+  const along = subPoints(standing, middle);
+  const centre = addPoints(
+    middle,
+    scalePoint(across, along.x * across.x + along.y * across.y),
+  );
+  const radius = Math.hypot(start.x - centre.x, start.y - centre.y);
+  if (radius < MIN_ORBIT_RADIUS) {
+    throw new FigureError(
+      `${where}: "around the standing foot" would pass ${radius.toFixed(2)} m from the standing foot's centre (at least ${MIN_ORBIT_RADIUS})`,
+    );
+  }
+  // Compass headings (0 = +y, clockwise) from the centre to each spot.
+  const headingOf = (p: Point2D) =>
+    Math.atan2(p.x - centre.x, p.y - centre.y) * RAD_TO_DEG;
+  const from = headingOf(start),
+    to = headingOf(end);
+  // Going round to the right (clockwise) the heading grows; to the left
+  // it shrinks. Sweep is how far round, 0-360.
+  const clockwise = turn > 0;
+  const sweep = clockwise
+    ? normalizeDegrees(to - from)
+    : normalizeDegrees(from - to);
+  // Moving clockwise round a centre, the foot heads 90° clockwise of the
+  // line out from the centre; anticlockwise, 90° the other way.
+  const heading = from + (clockwise ? 90 : -90);
+  return {
+    type: "arc",
+    curvature: (clockwise ? 1 : -1) / radius,
+    arcLength: (radius * sweep) / RAD_TO_DEG,
+    setOff: normalizeDegrees(heading - facing + 180) - 180,
   };
 }
 

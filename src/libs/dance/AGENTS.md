@@ -172,6 +172,14 @@ the owner before building more on top of them.
   `pathSetOff` can name lead and follow separately; an omitted partner
   keeps the ordinary route (Back Corté curves only the lead's third
   step). Both compile to `Movement.arc.setOff`.
+  `"around the standing foot"` (`aroundStandingFoot`) is for big turns:
+  the foot circles the standing foot in the direction of the step's
+  turn, on the circle through its start and landing spots whose centre
+  is nearest the standing foot, so it keeps its side of the body while
+  the dancer comes round. It needs a `turn` and refuses `pathSetOff` and
+  circles tighter than `MIN_ORBIT_RADIUS` (0.12 m). It compiles to an
+  ordinary arc (`setOff`, `curvature`, `arcLength`), so nothing persisted
+  changes (2026-11-20, owner's request, for big reverse turns).
   Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - A straight step's foot passes close beside the standing foot when its
   line runs past it (a walk, forward or back, or a diagonal that passes
