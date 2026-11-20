@@ -44,7 +44,6 @@ function load(file: string): Figure {
 }
 const spin = load("natural-spin-turn-second-half");
 const reverse = load("reverse-turn-4-6");
-const box = load("reverse-box-turn-backward");
 
 test("spin turn finish: the spin turn ends exactly where Reverse Turn (4–6) starts, pelvis included", () => {
   const first = placeEntry(spin, undefined);
@@ -69,30 +68,37 @@ test("spin turn finish: the spin turn ends exactly where Reverse Turn (4–6) st
   );
 });
 
-test("Reverse Turn (4–6): from count 1 on, the feet land where the Reverse Box Turn (backward half) puts them", () => {
-  for (const beat of [1, 2, 3]) {
-    const a = poseAtBeat(reverse, beat),
-      b = poseAtBeat(box, beat);
-    for (const partner of ["lead", "follow"] as const) {
-      assert.ok(
-        Math.abs(a[partner].orientation - b[partner].orientation) < 1e-6,
-      );
-      for (const foot of ["left", "right"] as const) {
-        // The standing feet of count 1 are still at the spin turn finish.
-        const standing =
-          beat === 1 &&
-          ((partner === "lead" && foot === "left") ||
-            (partner === "follow" && foot === "right"));
-        if (standing) continue;
-        const p = a[partner][foot].position,
-          q = b[partner][foot].position;
-        assert.ok(
-          Math.hypot(p.x - q.x, p.y - q.y) < 2e-3,
-          `${partner} ${foot} at ${beat}`,
-        );
-      }
-    }
-  }
+test("Reverse Turn (4–6): 165° to the left, 45° then 90° then 30°, the lead's count 2 a long stride round his right foot", () => {
+  const facing = (beat: number) => poseAtBeat(reverse, beat).lead.orientation;
+  const close = (a: number, b: number) =>
+    assert.ok(Math.abs(a - b) < 1e-6, `${a} != ${b}`);
+  close(facing(1), 315);
+  close(facing(2), 225);
+  close(facing(3), 195);
+  close(poseAtBeat(reverse, 3).follow.orientation, 15);
+  // Count 1: the body turns while the right foot keeps pointing along
+  // the line it stepped back on.
+  const one = poseAtBeat(reverse, 1).lead;
+  assert.ok(one.right.direction !== undefined);
+  close(one.right.direction!, 0);
+  // Count 2: a long stride that goes round the standing foot, then a
+  // close that brings the feet well together.
+  const lead2 = reverse.steps.find(
+    (s) => s.partner === "lead" && s.foot === "left",
+  )!;
+  assert.equal(lead2.movement.type, "arc");
+  const at2 = poseAtBeat(reverse, 2).lead,
+    at3 = reverse.endPose.lead;
+  const apart = Math.hypot(
+    at2.left.position.x - at2.right.position.x,
+    at2.left.position.y - at2.right.position.y,
+  );
+  assert.ok(apart > 0.4, `feet ${apart} apart after count 2`);
+  const closing = Math.hypot(
+    at3.right.position.x - at2.right.position.x,
+    at3.right.position.y - at2.right.position.y,
+  );
+  assert.ok(closing > 0.35, `close travels ${closing}`);
   assert.equal(reverse.endPose.lead.right.weight, 1);
   assert.equal(reverse.endPose.follow.left.weight, 1);
 });
