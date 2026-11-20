@@ -4,6 +4,7 @@
  * the standing foot (passingPoint, stepPassings).
  */
 
+import { isFreeFootFollow, bodyHeadingBefore } from "../overlap.mts";
 import {
   addPoints,
   headingToUnitVector,
@@ -290,25 +291,30 @@ export function stepPassings(
       },
     };
     for (const step of ordered) {
-      orientationBefore.set(step, orientations[step.partner]);
+      const free = isFreeFootFollow(step, figure.steps);
+      const frame = free
+        ? bodyHeadingBefore(step, figure.steps, figure.startPose)
+        : orientations[step.partner];
+      orientationBefore.set(step, frame);
       directionsBefore.set(step, { ...directions[step.partner] });
       const otherFoot: Foot = step.foot === "left" ? "right" : "left";
-      directions[step.partner][otherFoot] = swivelStandingFoot(
-        directions[step.partner][otherFoot],
-        orientations[step.partner],
-        step.orientation,
-      );
+      if (!free)
+        directions[step.partner][otherFoot] = swivelStandingFoot(
+          directions[step.partner][otherFoot],
+          orientations[step.partner],
+          step.orientation,
+        );
       directions[step.partner][step.foot] =
         step.footDirection ?? step.orientation;
       if (step.contact !== "air") {
         positions[step.partner][step.foot] = movementEndpoint(
           positions[step.partner][step.foot],
-          orientations[step.partner],
+          frame,
           step.movement,
         );
       }
       restAfter.set(step, positions[step.partner][step.foot]);
-      orientations[step.partner] = step.orientation;
+      if (!free) orientations[step.partner] = step.orientation;
     }
   }
   // Where a foot rests at `beat`: after the last of its steps that has
@@ -325,7 +331,20 @@ export function stepPassings(
 
   const result = new Map<DanceStep, Passing | undefined>();
   for (const step of ordered) {
-    if (step.contact === "air" || step.movement.type !== "straight") {
+    // Passing routes need a stationary supporting foot. With simultaneous
+    // free-foot motion, preserve the explicitly authored path instead.
+    const movingSupport = ordered.some(
+      (other) =>
+        other.partner === step.partner &&
+        other.foot !== step.foot &&
+        startOf(other) < endOf(step) - 1e-9 &&
+        endOf(other) > startOf(step) + 1e-9,
+    );
+    if (
+      movingSupport ||
+      step.contact === "air" ||
+      step.movement.type !== "straight"
+    ) {
       result.set(step, undefined);
       continue;
     }

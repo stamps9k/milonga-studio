@@ -163,9 +163,17 @@
       "pattern": "^[HTBF]+$",
       "description": "The chart's footwork: H heel, T toe, B ball, F flat, in order (\"HT\", \"T\", \"TH\"). The first letter decides how the foot lands: heel first (toes up), toe or ball first (heel up), or flat."
     },
+    "duration": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "Explicit action length in beats, with beat timing. A weightless free-foot path can overlap the other foot's supporting action."
+    },
     "weight": {
-      "type": "boolean",
-      "description": "false for a step without weight (a tap): the foot moves, the weight stays."
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "number", "minimum": 0, "maximum": 1 }
+      ],
+      "description": "Boolean full/no transfer, or an end share from 0 to 1 for a phased transfer."
     },
     "air": {
       "type": "boolean",
@@ -207,6 +215,7 @@
             "bodyOffset": { "$ref": "#/definitions/bodyOffset" },
             "footwork": { "$ref": "#/definitions/footwork" },
             "weight": { "$ref": "#/definitions/weight" },
+            "duration": { "$ref": "#/definitions/duration" },
             "air": { "$ref": "#/definitions/air" },
             "path": { "$ref": "#/definitions/path" },
             "pathSetOff": { "$ref": "#/definitions/pathSetOff" },
@@ -292,6 +301,7 @@
           ]
         },
         "weight": { "$ref": "#/definitions/weight" },
+        "duration": { "$ref": "#/definitions/duration" },
         "air": { "$ref": "#/definitions/air" },
         "path": {
           "description": "A curved route for both dancers, or only the named partners; omitted partners keep their ordinary route.",

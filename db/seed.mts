@@ -362,6 +362,14 @@ const SAMPLE_DANCES: {
     notes:
       "Six-count weave into promenade, then a three-count promenade walk and close into closed hold: nine counts altogether.",
   },
+  {
+    sequence: "Natural Spin Turn",
+    figures: ["Natural Spin Turn (1–3)", "Underturned Natural Spin Turn (4–6)"],
+    dance: "Waltz natural spin turn practice",
+    tempo: 84,
+    notes:
+      "Six-count Natural Spin Turn as two reusable halves: first a Natural Turn, then an underturned spin with a 135-degree pivot and another 90 degrees over the last two counts.",
+  },
 ];
 
 let seededSequences = 0;

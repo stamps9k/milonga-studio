@@ -1,3 +1,5 @@
+import type { DanceStep } from "./step.mts";
+import { isFreeFootFollow } from "./overlap.mts";
 import { applyTransform } from "./floor.mts";
 import { figureDurationBeats, poseAtBeat } from "./fold.mts";
 import { footHeading } from "./pose.mts";
@@ -90,9 +92,39 @@ export function sequenceFootprints(
       }
     }
 
-    const steps = [...figure.steps]
-      .filter((step) => step.contact !== "air")
-      .sort((a, b) => a.beat - b.beat);
+    // Contiguous phases of the same supporting foot within a count (for
+    // example a step and its pivot) form one footprint, arriving after the
+    // last phase. Free-foot follows are motion, not extra placements.
+    const steps: DanceStep[] = [];
+    for (const partner of PARTNERS) {
+      for (const step of [...figure.steps]
+        .filter(
+          (s) =>
+            s.partner === partner &&
+            s.contact !== "air" &&
+            !isFreeFootFollow(s, figure.steps),
+        )
+        .sort((a, b) => a.beat - b.beat)) {
+        const prior = steps.at(-1);
+        if (
+          prior &&
+          prior.partner === partner &&
+          prior.foot === step.foot &&
+          prior.weight > 0 &&
+          step.weight > 0 &&
+          Math.floor(prior.beat - 1 + 1e-9) ===
+            Math.floor(step.beat - 1 + 1e-9) &&
+          Math.abs(prior.beat + prior.duration - step.beat) < 1e-9
+        ) {
+          steps[steps.length - 1] = {
+            ...step,
+            beat: prior.beat,
+            duration: step.beat + step.duration - prior.beat,
+          };
+        } else steps.push(step);
+      }
+    }
+    steps.sort((a, b) => a.beat - b.beat);
     for (const step of steps) {
       const localEnd = step.beat - 1 + step.duration;
       // The pose at the moment the step finishes: the foot has landed

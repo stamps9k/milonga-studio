@@ -1,0 +1,358 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Underturned Natural Spin Turn (4–6)",
+  "style": "waltz",
+  "time": "3/4",
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "right": -0.012132034355964216,
+          "forward": -0.21213203435596426
+        },
+        "foot": "L",
+        "duration": 0.3,
+        "turn": {
+          "right": 0.125
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "back, toe turned in",
+        "footwork": "THT",
+        "bodyOffset": {
+          "right": 0.05656854249492381,
+          "forward": 0.056568542494923796
+        }
+      }
+    },
+    {
+      "beat": 1,
+      "follow": {
+        "go": {
+          "right": -0.46198643773709097,
+          "forward": 0.48256359683534095
+        },
+        "foot": "R",
+        "duration": 0.5,
+        "turn": {
+          "right": 0.1875
+        },
+        "weight": 0.8,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "forward into pivoting action",
+        "footwork": "HT",
+        "bodyOffset": {
+          "right": -5.551115123125783e-17,
+          "forward": 0.2
+        },
+        "path": "around the front",
+        "pathSetOff": -90
+      }
+    },
+    {
+      "beat": 1,
+      "follow": {
+        "go": {
+          "right": -0.6260884994775326,
+          "forward": -0.3373748140494496
+        },
+        "foot": "L",
+        "duration": 0.5,
+        "weight": false,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "free leg swings through",
+        "path": "around the front",
+        "pathSetOff": -157.5
+      }
+    },
+    {
+      "beat": 1.3,
+      "lead": {
+        "go": "pivot",
+        "foot": "L",
+        "duration": 0.7,
+        "turn": {
+          "right": 0.25
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "pivot three eighths right",
+        "bodyOffset": {
+          "right": 6.938893903907228e-18,
+          "forward": 0.09
+        }
+      }
+    },
+    {
+      "beat": 1.3,
+      "lead": {
+        "go": {
+          "right": 0.3,
+          "forward": 0.29999999999999993
+        },
+        "foot": "R",
+        "duration": 0.7,
+        "weight": false,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "right foot held forward in CBMP",
+        "path": "around the front",
+        "pathSetOff": 0
+      }
+    },
+    {
+      "beat": 1.5,
+      "follow": {
+        "go": {
+          "right": -0.4741184720930554,
+          "forward": 0.45043156247937643
+        },
+        "foot": "R",
+        "duration": 0.5,
+        "turn": {
+          "right": 0.1875
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "complete the underturned pivoting action",
+        "bodyOffset": {
+          "right": 2.0816681711721685e-17,
+          "forward": 0.09
+        },
+        "path": "around the front",
+        "pathSetOff": -90
+      }
+    },
+    {
+      "beat": 1.5,
+      "follow": {
+        "go": {
+          "right": -0.9056533801339903,
+          "forward": 0.17540606768600908
+        },
+        "foot": "L",
+        "duration": 0.5,
+        "weight": false,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "free leg follows the pivot",
+        "path": "around the front",
+        "pathSetOff": -187.5
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "right": 8.326672684688674e-17,
+          "forward": 0.3500000000000001
+        },
+        "foot": "R",
+        "duration": 0.65,
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "pointing": {
+          "right": 0.9583333333333334
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "forward in CBMP, continue right",
+        "footwork": "HT",
+        "bodyOffset": {
+          "right": 0.1086927936427074,
+          "forward": -0.10253813696663006
+        }
+      }
+    },
+    {
+      "beat": 2,
+      "follow": {
+        "go": {
+          "right": -0.2442640687119286,
+          "forward": -0.612842712474619
+        },
+        "foot": "L",
+        "duration": 0.65,
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "back and slightly side, prepare toe pivot",
+        "footwork": "T",
+        "bodyOffset": {
+          "right": 0.07763450823040491,
+          "forward": 0.013372962188058089
+        }
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "right": -0.4510784762249038,
+          "forward": 0.6179479765202285
+        },
+        "foot": "L",
+        "duration": 1,
+        "pointing": {
+          "right": 0.08333333333333333
+        },
+        "weight": false,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "free left leg follows the spin",
+        "path": "around the front",
+        "pathSetOff": -75
+      }
+    },
+    {
+      "beat": 2,
+      "follow": {
+        "go": "in place",
+        "foot": "R",
+        "duration": 0.65,
+        "pointing": {
+          "right": 0.9583333333333334
+        },
+        "weight": false,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "keep released right foot pointing before brush"
+      }
+    },
+    {
+      "beat": 2.65,
+      "follow": {
+        "go": {
+          "right": -0.12662983017607254,
+          "forward": -0.479745605222202
+        },
+        "foot": "R",
+        "duration": 0.35,
+        "pointing": {
+          "right": 0.08333333333333333
+        },
+        "weight": false,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "brush right to left without weight",
+        "path": "around the front",
+        "pathSetOff": -180
+      }
+    },
+    {
+      "beat": 2.65,
+      "lead": {
+        "go": "pivot",
+        "foot": "R",
+        "duration": 0.35,
+        "turn": {
+          "right": 0.08333333333333333
+        },
+        "weight": true,
+        "rise": 0.02,
+        "riseTiming": "late",
+        "label": "toe pivot right, commence rise",
+        "footwork": "T",
+        "bodyOffset": {
+          "right": 6.123233995736765e-18,
+          "forward": 0.04999999999999999
+        }
+      }
+    },
+    {
+      "beat": 2.65,
+      "follow": {
+        "go": "pivot",
+        "foot": "L",
+        "duration": 0.35,
+        "turn": {
+          "right": 0.08333333333333333
+        },
+        "weight": true,
+        "rise": 0.02,
+        "riseTiming": "late",
+        "label": "toe pivot on left, commence rise",
+        "footwork": "T",
+        "bodyOffset": {
+          "right": 0,
+          "forward": 0.04999999999999999
+        }
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": {
+          "right": -0.16000000000000003,
+          "forward": 0.09999999999999999
+        },
+        "foot": "L",
+        "duration": 1,
+        "turn": {
+          "right": 0.125
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "side and slightly back, lower",
+        "footwork": "TH",
+        "bodyOffset": {
+          "right": -0.08920826299630741,
+          "forward": 0.0023924704943649663
+        }
+      }
+    },
+    {
+      "beat": 3,
+      "follow": {
+        "go": {
+          "right": 0.15922268059114159,
+          "forward": 0.2083249660182035
+        },
+        "foot": "R",
+        "duration": 1,
+        "turn": {
+          "right": 0.125
+        },
+        "weight": true,
+        "rise": 0,
+        "riseTiming": "late",
+        "label": "diagonally forward, lower",
+        "footwork": "TH",
+        "bodyOffset": {
+          "right": -0.08920826299630741,
+          "forward": 0.0023924704943649594
+        }
+      }
+    }
+  ],
+  "expectBeats": 3,
+  "notes": "Underturned spinning half of the Natural Spin Turn, counts 4–6: a three-eighths right pivot, then another quarter turn over the last two counts. Lead RF advances in CBMP and the follow brushes RF to LF without weight; finish feet apart in closed hold. The owner confirmed the 135° pivot and 225° total turn. Reference: https://secure.ballroomdancers.com/Dances/info.asp?sid=130 . Dimensions, rise sizes, within-count timing and pelvis shaping are provisional for visual review.",
+  "expectEnd": {
+    "feet": {
+      "lead": {
+        "L": [0.7474873734152917, -0.6217514421272201],
+        "R": [0.3474873734152917, -0.6717514421272202]
+      },
+      "follow": {
+        "L": [0.24748737341529173, -1.1717514421272202],
+        "R": [0.5167100540064333, -0.9634264761090167]
+      }
+    },
+    "facing": {
+      "lead": 225,
+      "follow": 45
+    }
+  }
+}

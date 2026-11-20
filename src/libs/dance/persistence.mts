@@ -1,3 +1,4 @@
+import { stepOverlapError } from "./overlap.mts";
 import type { Dance } from "./dance.mts";
 import type { Figure, DanceStep, Movement } from "./step.mts";
 import type { Pose, PartnerPose, FootState, Point2D } from "./pose.mts";
@@ -168,20 +169,10 @@ function figure(value: unknown, path: string): Figure {
   const steps = row.steps.map((value, index) =>
     step(value, `${path}.steps[${index}]`),
   );
-  // The fold assumes at most one step per partner is in progress. Validate
-  // that structural contract without re-running provisional technique checks.
-  for (const partner of ["lead", "follow"] as const) {
-    let end = 1;
-    for (const step of steps
-      .filter((step) => step.partner === partner)
-      .sort((a, b) => a.beat - b.beat)) {
-      if (step.beat < end - 1e-9)
-        invalid(`${path}.steps overlap for ${partner}`);
-      if (step.contact === "air" && step.weight !== 0)
-        invalid(`${path}.airborne weight`);
-      end = step.beat + step.duration;
-    }
-  }
+  const overlapError = stepOverlapError(steps);
+  if (overlapError) invalid(`${path}.steps overlap: ${overlapError}`);
+  if (steps.some((s) => s.contact === "air" && s.weight !== 0))
+    invalid(`${path}.airborne weight`);
   const signature = record(row.timeSignature, `${path}.timeSignature`);
   const beatsPerMeasure = number(
     signature.beatsPerMeasure,

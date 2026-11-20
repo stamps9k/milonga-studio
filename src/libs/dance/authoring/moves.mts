@@ -201,6 +201,7 @@ interface ResolvedMove {
 export function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
   const shared: MoveOptions = {
     foot: row.foot,
+    duration: row.duration,
     by: row.by,
     turn: row.turn,
     rise: row.rise,
@@ -341,7 +342,7 @@ export function chooseFoot(
   if (foot === undefined) {
     throw new FigureError(`${where}: say which foot moves`);
   }
-  if (state.weight[foot] >= 0.5) {
+  if (state.weight[foot] >= (explicit ? 1 - 1e-9 : 0.5)) {
     throw new FigureError(
       `${where}: the ${foot} foot is carrying the weight, so it can't step${
         explicit ? "" : " (check the foot or the previous step's weight)"
@@ -365,7 +366,21 @@ export function applyMove(
   const after = normalizeDegrees(before + turnDegrees(move.turn));
   const start = state.position[foot];
   const air = move.air === true;
-  const takesWeight = !air && move.weight !== false && move.go !== "pivot";
+  if (
+    typeof move.weight === "number" &&
+    (!Number.isFinite(move.weight) || move.weight < 0 || move.weight > 1)
+  )
+    throw new FigureError(`${where}: weight must be between 0 and 1`);
+  const targetWeight = air
+    ? 0
+    : move.go === "pivot"
+      ? state.weight[foot]
+      : typeof move.weight === "number"
+        ? move.weight
+        : move.weight === false
+          ? 0
+          : 1;
+  const takesWeight = targetWeight > 0 && !air && move.go !== "pivot";
 
   if (move.go === "pivot" && move.turn === undefined) {
     throw new FigureError(`${where}: a pivot needs a \`turn\``);
@@ -438,10 +453,8 @@ export function applyMove(
       scalePoint(headingToUnitVector(direction), distance),
     );
   }
-  if (takesWeight) {
-    state.weight[foot] = 1;
-    state.weight[OTHER[foot]] = 0;
-  }
+  state.weight[foot] = targetWeight;
+  state.weight[OTHER[foot]] = 1 - targetWeight;
   state.orientation = after;
 
   return {
@@ -450,7 +463,7 @@ export function applyMove(
     movement,
     contact: air ? "air" : "floor",
     // A pivot keeps the weight on the pivoting foot.
-    weight: takesWeight || move.go === "pivot" ? 1 : 0,
+    weight: targetWeight,
     // A close brings the foot in first and changes weight once it's
     // there (agreed with the owner for every dance, 2026-11-16; other
     // steps keep the even transfer until a figure needs otherwise).

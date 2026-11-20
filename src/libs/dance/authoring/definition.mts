@@ -114,7 +114,8 @@ export const TURN_CENTRES: readonly TurnCentre[] = [
 export interface MoveOptions {
   /** Which foot. Usually left out: the free foot (or, for "pivot", the
    *  standing foot) is used. Giving a foot that contradicts the weight
-   *  is an error, not a silent correction. With `both`, this is the
+   *  is an error, not a silent correction. A partly loaded explicit foot
+   *  may continue a phased transfer. With `both`, this is the
    *  lead's foot; the follow uses the other one. */
   foot?: ShortFoot;
   /** Distance travelled in metres. Required for a direction; not used
@@ -147,9 +148,13 @@ export interface MoveOptions {
    *  "HT", "T", "TH", "BF". The first letter decides how the foot lands
    *  (DanceStep.footwork). Default: none. */
   footwork?: string;
-  /** false for a step without weight (a tap or a close without
-   *  weight): the foot moves but the weight stays on the standing foot. */
-  weight?: boolean;
+  /** false for no weight transfer, true (default) for full transfer,
+   *  or an explicit end share from 0 to 1 for a phased action. A free-foot
+   *  follow overlapping support leaves all weight changes to that support. */
+  weight?: boolean | number;
+  /** Explicit beats for this action; beat-timed rows only. A weightless
+   * free-foot path may overlap the other foot's supporting action. */
+  duration?: number;
   /** An airborne action (boleo, gancho, ...): the free leg goes out
    *  along the direction and back, carrying no weight. */
   air?: boolean;

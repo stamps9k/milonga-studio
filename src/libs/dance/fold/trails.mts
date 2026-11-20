@@ -3,6 +3,7 @@
  * sequence, for drawing.
  */
 
+import { isFreeFootFollow, bodyHeadingBefore } from "../overlap.mts";
 import { addPoints, rotatePoint } from "../heading.mts";
 import type { Point2D, Pose } from "../pose.mts";
 import type { FloorTransform } from "../sequence.mts";
@@ -65,21 +66,21 @@ function localFootTrails(figure: Figure): FootTrails {
   );
 
   for (const step of orderedSteps) {
+    const free = isFreeFootFollow(step, figure.steps);
+    const frame = free
+      ? bodyHeadingBefore(step, figure.steps, figure.startPose)
+      : orientationBefore[step.partner];
     // The step's `orientation` is the partner's frame heading as of the
     // end of this step, regardless of which foot moved -- both feet of
     // a partner share one orientation (see PartnerPose). That holds for
     // airborne steps too, which can still turn the frame.
     if (step.contact === "air") {
-      orientationBefore[step.partner] = step.orientation;
+      if (!free) orientationBefore[step.partner] = step.orientation;
       continue;
     }
 
     const start = positions[step.partner][step.foot];
-    const end = movementEndpoint(
-      start,
-      orientationBefore[step.partner],
-      step.movement,
-    );
+    const end = movementEndpoint(start, frame, step.movement);
 
     // An arc, or a step that curves past the standing foot
     // (passingPoint), is drawn as a curve, not its chord: a few points
@@ -91,7 +92,7 @@ function localFootTrails(figure: Figure): FootTrails {
         trails[step.partner][step.foot].push(
           stepPointAt(
             start,
-            orientationBefore[step.partner],
+            frame,
             step.movement,
             i / ARC_TRAIL_SAMPLES,
             passing,
@@ -100,7 +101,7 @@ function localFootTrails(figure: Figure): FootTrails {
       }
     }
     positions[step.partner][step.foot] = end;
-    orientationBefore[step.partner] = step.orientation;
+    if (!free) orientationBefore[step.partner] = step.orientation;
     trails[step.partner][step.foot].push(end);
   }
 

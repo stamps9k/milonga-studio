@@ -1171,7 +1171,7 @@ test("mistakes are reported with the figure and step, not silently corrected", (
         { lead: "forward", by: 0.3, beat: 1 },
         { lead: "forward", by: 0.3, beat: 1 },
       ],
-      /the lead has two steps starting on beat 1/,
+      /lead steps overlap on beat 1/,
     ],
   ];
   for (const [steps, pattern] of cases) {
