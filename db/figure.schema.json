@@ -188,8 +188,12 @@
       "description": "Arc departure in degrees clockwise from the dancer before the step; overrides the path preset. Requires a curved path when authored."
     },
     "path": {
-      "enum": ["around the front", "around the back"],
-      "description": "The foot curves instead of going straight, landing where the step says. \"around the front\": it sets off the way the dancer faces. \"around the back\": it sets off diagonally back towards the side it lands on, to uncross feet the way they crossed."
+      "enum": [
+        "around the front",
+        "around the back",
+        "around the standing foot"
+      ],
+      "description": "The foot curves instead of going straight, landing where the step says. \"around the front\": it sets off the way the dancer faces. \"around the back\": it sets off diagonally back towards the side it lands on, to uncross feet the way they crossed. \"around the standing foot\": on a turning step it circles the standing foot the way the body turns, keeping its side of the body through a big turn."
     },
     "label": {
       "type": "string",
