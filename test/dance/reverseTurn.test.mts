@@ -14,6 +14,7 @@ import {
   type PoseOptions,
 } from "../../src/libs/dance/fold.mts";
 import { footHeading } from "../../src/libs/dance/pose.mts";
+import { rotatePoint } from "../../src/libs/dance/heading.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
@@ -104,11 +105,24 @@ test("Reverse Turn (4–6): a quarter turn left, mostly on a long count-2 stride
     at3.right.position.y - at2.right.position.y,
   );
   assert.ok(closing > 0.2, `close travels ${closing}`);
-  // The follow, on the outside, goes round her standing foot.
-  const follow2 = reverse.steps.find(
-    (s) => s.partner === "follow" && s.foot === "right",
+  // Count 1 is straight back for the lead: no sideways movement.
+  const lead1 = reverse.steps.find(
+    (s) => s.partner === "lead" && s.foot === "right",
   )!;
-  assert.equal(follow2.movement.type, "arc");
+  assert.equal(lead1.movement.type, "straight");
+  const back = rotatePoint(
+    {
+      x: one.right.position.x - reverse.startPose.lead.right.position.x,
+      y: one.right.position.y - reverse.startPose.lead.right.position.y,
+    },
+    -reverse.startPose.lead.orientation,
+  );
+  assert.ok(
+    Math.abs(back.x) < 1e-9 && back.y < -0.45,
+    `count 1 ${back.x}, ${back.y}`,
+  );
+  // His left goes round his right foot to get past it.
+  assert.equal(lead2.movement.type, "arc");
   assert.equal(reverse.endPose.lead.right.weight, 1);
   assert.equal(reverse.endPose.follow.left.weight, 1);
 });
