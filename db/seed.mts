@@ -375,6 +375,32 @@ const SAMPLE_DANCES: {
       "Twelve counts: an Open Natural Turn into closed hold, an Outside Change backing down the line into promenade (the follow curving round to his right), then the Weave from promenade.",
   },
   {
+    sequence: "Waltz Routine 1",
+    figures: [
+      "Box Turn (forward half)",
+      "Box Turn (backward half)",
+      "RF Closed Change",
+      "Reverse Box Turn (forward half)",
+      "Reverse Box Turn (backward half)",
+      "Back Whisk",
+      "Promenade Chassé",
+      "Open Natural Turn",
+      "Outside Change ending in Promenade Position",
+      "Weave from Promenade Position",
+      "Promenade Walk and Close",
+      "Underturned Natural Spin Turn (4–6)",
+      "Reverse Turn (4–6)",
+      "Reverse Box Turn (forward half)",
+      "Reverse Box Turn (backward half)",
+      "Contra Check",
+      "Contra Check Recovery (Promenade)",
+    ],
+    dance: "Waltz Routine 1",
+    tempo: 87,
+    notes:
+      "The owner's class waltz as studied so far: 17 figures, 51 counts. Box Turn, RF Closed Change, Reverse Box Turn, Back Whisk, Promenade Chassé, Open Natural Turn, Outside Change into promenade, Weave, Promenade Walk and Close, the underturned spin turn, Reverse Turn (4–6), Reverse Box Turn, then Contra Check and recovery into promenade.",
+  },
+  {
     sequence: "Natural Spin Turn",
     figures: [
       "Natural Spin Turn (1–3)",

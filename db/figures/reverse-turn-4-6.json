@@ -59,8 +59,8 @@
       "beat": 2,
       "follow": {
         "go": {
-          "forward": 0.7924,
-          "right": 0.082
+          "forward": 0.79236771830166,
+          "right": 0.08200993023983
         },
         "foot": "R",
         "turn": {
