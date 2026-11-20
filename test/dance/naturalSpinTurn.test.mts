@@ -135,7 +135,7 @@ test("Natural Spin Turn: separate three-count halves connect exactly, with six s
       poseClose(poseAtBeat(roundTrip, beat), poseAtBeat(originalFigure, beat));
   }
 });
-test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as the pivot, RF drawn in, then forward at a right angle), then toe-pivots with an unweighted brush", () => {
+test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as the pivot, RF drawn in, then forward the same distance at a right angle), then toe-pivots with an unweighted brush", () => {
   // The lead's frame at the start: x right, y forward.
   const inStartFrame = (p: { x: number; y: number }) =>
     rotatePoint(p, -spin.startPose.lead.orientation);
@@ -197,7 +197,8 @@ test("Underturned Natural Spin Turn: a V over counts 4–5 (LF straight back as 
     r5 = poseAtBeat(spin, 2).lead.right.position,
     out = { x: r5.x - pivot.x, y: r5.y - pivot.y };
   close(stride.x * out.x + stride.y * out.y, 0);
-  assert.ok(Math.hypot(out.x, out.y) > 0.4, "The RF goes back out");
+  // The second arm mirrors the first: the same length.
+  close(Math.hypot(out.x, out.y), Math.hypot(stride.x, stride.y));
   const partial = poseAtBeat(spin, 0.5);
   close(partial.follow.right.weight, 0.8);
   close(partial.follow.left.weight, 0.2);
