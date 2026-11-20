@@ -77,12 +77,12 @@ function headingDifference(a: number, b: number): number {
   return Math.abs(((((a - b) % 360) + 540) % 360) - 180);
 }
 
-test("seed: stores every figure file, plus the 10 sample sequences and dances", () => {
+test("seed: stores every figure file, plus the 11 sample sequences and dances", () => {
   const count = (table: string) =>
     (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n;
   assert.equal(count("figures"), FIGURE_FILES.length);
-  assert.equal(count("sequences"), 10);
-  assert.equal(count("dances"), 10);
+  assert.equal(count("sequences"), 11);
+  assert.equal(count("dances"), 11);
   assert.deepEqual(
     figures.map((figure) => figure.name).sort(),
     FIGURE_FILES.map((figure) => figure.name).sort(),

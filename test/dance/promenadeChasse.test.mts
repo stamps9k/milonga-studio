@@ -163,14 +163,13 @@ test("Promenade Chassé: 1 2 & 3 rhythm, toe rise, close and foot order remain",
 test("Promenade Chassé: connects Whisk to Open Natural Turn without moving the joins", () => {
   const previous = placeEntry(load("whisk"), undefined),
     middle = placeEntry(chasse, previous);
-  // Whisk has an existing 0.4265 mm rounding gap at this stance; retain it.
-  for (const [end, next, gap] of [
-    [previous.resolvedEndPose, chasse, 0.0004264965961272196],
-    [middle.resolvedEndPose, load("open-natural-turn"), 0],
+  for (const [end, next] of [
+    [previous.resolvedEndPose, chasse],
+    [middle.resolvedEndPose, load("open-natural-turn")],
   ] as const) {
     const join = assessJoin(end, next);
     assert.equal(join.fits, true, JSON.stringify(join.issues));
-    close(join.maxFootGap, gap);
+    assert.ok(join.maxFootGap < 1e-6, `foot gap ${join.maxFootGap}`);
   }
 });
 

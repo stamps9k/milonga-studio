@@ -18,13 +18,13 @@
     },
     {
       "lead": {
-        "go": { "forward": -0.141, "right": 0.612 },
+        "go": { "forward": -0.1414213562373095, "right": 0.6121320343559643 },
         "turn": { "left": "1/8" },
         "cross": true,
         "label": "cross behind, opening to promenade"
       },
       "follow": {
-        "go": { "forward": -0.141, "right": -0.612 },
+        "go": { "forward": -0.1414213562373095, "right": -0.6121320343559643 },
         "turn": { "right": "1/8" },
         "cross": true,
         "label": "cross behind, opening to promenade"
