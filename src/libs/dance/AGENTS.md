@@ -43,6 +43,8 @@ implementation's choice, not a confirmed dance rule.
 - `tempo.mts`: the playback tempo range and the metronome's clicks for a
   sequence (`metronomeClicks`: one as each count lands, at the end of its
   beat, count 1 of each bar accented, bars running on across figures).
+- `overlap.mts`: structural timing and body frames for simultaneous free-foot
+  follows, shared by authoring, playback and snapshot validation.
 - `weight.mts`: where a partner's weight is on the floor (`centerOfWeight`)
   and which foot is the standing foot; `bodyPosition` adds the optional
   horizontal pelvis displacement for both renderers.
@@ -183,7 +185,9 @@ the owner before building more on top of them.
   lead's right foot walks between the follow's feet, so it mostly stays
   straight. Side steps, closes, airborne steps and arcs keep their own
   routes. Decided once per step from where the feet are when it starts,
-  so playback, trails and the figure checks agree. The two curve pieces
+  so playback, trails and the figure checks agree. With simultaneous own-foot
+  motion there is no fixed standing foot to pass, so each authored path is
+  retained. The two curve pieces
   share the step's time by their lengths, so the foot keeps an even
   pace. The foot also comes in only as far as keeps the two feet's
   outlines (`footprintGap`) a centimetre apart, so feet pointing
@@ -275,9 +279,16 @@ the owner before building more on top of them.
   Argentine tango practice sequences join through collected variants and a
   Weight Change, each taking its own count, rather than an automatic
   transition.
-- The free-foot rule above, and the rule that one partner never has two
-  steps in progress at once, are checked against the seed as provisional
-  rules.
+- `overlap.mts` checks timing shared by authoring and snapshot import. Each
+  dancer has one body/weight action at a time. A simultaneous zero-weight
+  path on the other foot follows that action without changing the frame,
+  rise, pelvis or weight. Its interval must be fully covered by supporting
+  actions; same-foot overlap and overlapping body actions are rejected.
+  Explicit authoring `duration` and numeric end `weight` use existing
+  persisted timing/weight fields. A phased transfer can continue on a partly
+  loaded explicit foot; a fully loaded foot only pivots in place. Free-foot
+  paths do not add numbered placements, and contiguous supporting phases of
+  one foot within a count share one footprint.
 - `defineFigure`'s closed stance (feet 20 cm apart, partners 40 cm apart,
   the follow `HOLD_OFFSET`, 10 cm, to the lead's right, so his right foot
   is in line with the gap between hers), its mirroring (the follow uses the

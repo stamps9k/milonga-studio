@@ -1,3 +1,7 @@
+import {
+  stepOverlapError,
+  isFreeFootFollow,
+} from "../../src/libs/dance/overlap.mts";
 import { after, before, test } from "node:test";
 import assert from "node:assert/strict";
 import type BetterSqlite3 from "better-sqlite3";
@@ -192,25 +196,12 @@ test("seed: the stored figures last as long as their files say", async (t) => {
   }
 });
 
-test("seed: no partner has two steps in progress at the same time", async (t) => {
-  // Provisional check, not a confirmed dance rule: a partner moving two
-  // feet at once only makes sense for actions like jumps, which the
-  // model doesn't represent yet. If the owner confirms such figures
-  // should be allowed, narrow this check rather than deleting it.
+test("seed: only a free-foot follow overlaps the other foot's supporting action", async (t) => {
+  // Each dancer has one body/weight action. A simultaneous free-foot path
+  // can follow it; same-foot or two weight-taking actions still conflict.
   for (const figure of figures) {
     await t.test(figure.name, () => {
-      for (const partner of ["lead", "follow"] as const) {
-        const intervals = figure.steps
-          .filter((step) => step.partner === partner)
-          .map((step) => [step.beat - 1, step.beat - 1 + step.duration])
-          .sort((a, b) => a[0] - b[0]);
-        for (let i = 1; i < intervals.length; i++) {
-          assert.ok(
-            intervals[i][0] >= intervals[i - 1][1] - 1e-9,
-            `${partner} step at beat ${intervals[i][0] + 1} starts before the previous one ends at ${intervals[i - 1][1] + 1}`,
-          );
-        }
-      }
+      assert.equal(stepOverlapError(figure.steps), undefined, figure.name);
     });
   }
 });
@@ -225,6 +216,7 @@ test("seed: every step moves a foot the partner isn't standing on", async (t) =>
   for (const figure of figures) {
     await t.test(figure.name, () => {
       for (const step of figure.steps) {
+        if (isFreeFootFollow(step, figure.steps)) continue;
         const travels =
           step.movement.type === "arc" || step.movement.distance > 0;
         if (!travels) continue;

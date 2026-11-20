@@ -159,6 +159,7 @@ export function parseFigureDefinition(
     "bodyOffset",
     "footwork",
     "weight",
+    "duration",
     "air",
     "path",
     "pathSetOff",
@@ -212,7 +213,15 @@ export function parseFigureDefinition(
     } else {
       checkFootwork(`${path}footwork`, object.footwork);
     }
-    checkBoolean(`${path}weight`, object.weight);
+    if (typeof object.weight === "number") {
+      if (
+        !Number.isFinite(object.weight) ||
+        object.weight < 0 ||
+        object.weight > 1
+      )
+        problem(`${path}weight`, "should be between 0 and 1");
+    } else checkBoolean(`${path}weight`, object.weight);
+    checkNumber(`${path}duration`, object.duration, { positive: true });
     checkBoolean(`${path}air`, object.air);
     if (rowLevel && isObject(object.path)) {
       checkKeys(`${path}path`, object.path, ["lead", "follow"]);

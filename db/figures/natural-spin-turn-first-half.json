@@ -1,0 +1,120 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Natural Spin Turn (1\u20133)",
+  "style": "waltz",
+  "time": "3/4",
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "right": 0.14987979933008477,
+          "forward": 0.43951157399462487
+        },
+        "foot": "R",
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "HT",
+        "label": "forward, commencing natural turn"
+      },
+      "follow": {
+        "go": {
+          "right": -0.24999999999999978,
+          "forward": -0.4000000000000002
+        },
+        "foot": "L",
+        "turn": {
+          "right": 0.041666666666666664
+        },
+        "rise": 0.02,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "back, commencing natural turn"
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "right": 0.34862984016221793,
+          "forward": 1.1634282905921531
+        },
+        "foot": "L",
+        "turn": {
+          "right": 0.2638888888888889
+        },
+        "pointing": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side, continuing turn",
+        "path": "around the front",
+        "pathSetOff": -45,
+        "bodyOffset": {
+          "right": 0.039790699037296755,
+          "forward": -0.004086596398382356
+        }
+      },
+      "follow": {
+        "go": {
+          "right": -0.651975037088095,
+          "forward": -0.4645735151878304
+        },
+        "foot": "R",
+        "turn": {
+          "right": 0.2638888888888889
+        },
+        "pointing": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0.04,
+        "footwork": "T",
+        "label": "side, continuing turn",
+        "path": "around the front",
+        "pathSetOff": 135
+      }
+    },
+    {
+      "beat": 3,
+      "lead": {
+        "go": "close",
+        "foot": "R",
+        "turn": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "close in closed hold"
+      },
+      "follow": {
+        "go": "close",
+        "foot": "L",
+        "turn": {
+          "right": 0.06944444444444445
+        },
+        "rise": 0,
+        "riseTiming": "late",
+        "footwork": "TH",
+        "label": "close in closed hold"
+      }
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "right": 0.4671572875253808,
+      "forward": 0.9628427124746192
+    },
+    "turned": {
+      "right": "3/8"
+    },
+    "leadStandingOn": "R"
+  },
+  "notes": "First three counts of the standard Natural Spin Turn: the first half of a Natural Turn, ending collected in closed hold ready for steps 4\u20136. Reference: https://dance.djurredeboer.nl/standard/waltz/spin_turn.html . Dimensions, rise sizes and within-count turn distribution are provisional for visual review."
+}

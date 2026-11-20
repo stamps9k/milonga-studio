@@ -204,7 +204,8 @@ just an action, or inside a partner object.
 | `"riseTiming"`    | `"late"`: the rise holds and changes at the end of the step, for a chart's "commence to rise at end of 1" or "lower at end of 3". Default `"even"`: it changes steadily across the step ("continue to rise on 2").                                                                                                                                                                                                                                                                                               |
 | `"bodyOffset"`    | Optional pelvis displacement in metres, e.g. `{ "forward": 0.05, "right": 0.03 }`, measured in each dancer's facing after the turn. Independent of foot mirroring, including on `both` rows. Interpolates linearly from the previous displacement; omission returns to zero. Feet and support weights are unchanged. Closed Promenade uses it to keep the hips close while the feet pass beneath them.                                                                                                           |
 | `"footwork"`      | The chart's footwork: letters for the parts of the foot that meet the floor, in order, H heel, T toe, B ball, F flat (`"HT"`, `"T"`, `"TH"`, `"BF"`). The first letter decides how the foot lands: heel first (toes up), toe or ball first (heel up), or flat. On a row it can be one each: `{ "lead": "HT", "follow": "TH" }`. Default: none, the foot travels flat.                                                                                                                                            |
-| `"weight": false` | A step without weight, such as a tap: the foot moves, the weight stays.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `"weight"`        | `false` for no transfer, `true` (default) for full transfer, or a number from 0 to 1 for the end share.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `"duration": 0.5` | Explicit length in beats with beat timing; see Timing below.                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `"air": true`     | An airborne action (boleo, gancho): the free leg goes out and back, carrying no weight.                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `"pathSetOff"`    | Optional departure angle in degrees clockwise from this dancer's facing before the step. Requires `path`; overrides its preset departure while preserving the landing point. For example, Closed Promenade uses -50 for the lead and +50 for the follow so the outer feet pass close beneath the hips.                                                                                                                                                                                                           |
 | `"cross": true`   | The step crosses the feet on purpose (a whisk's cross behind). Without it, a step may not put the left foot to the right of the right foot. See "What gets checked".                                                                                                                                                                                                                                                                                                                                             |
@@ -258,9 +259,8 @@ on his left. With no foot given at all, the lead starts standing on his right
 and the follow on her left.
 
 Give `foot` when the first step isn't the usual one (for example `"foot": "R"`
-to start a figure on the lead's right), or just to be explicit. If the foot
-you give is carrying the weight, the reset stops with an error rather than
-quietly using the other foot.
+to start a figure on the lead's right), or just to be explicit. A fully loaded
+foot cannot travel; a partly loaded explicit foot can continue a phased transfer.
 
 ### Timing
 
@@ -271,6 +271,37 @@ Use one style per figure:
   until the end of the measure. Steps must be listed in beat order.
 - **`length`**: `"S"` or `"Q"`. Steps follow one another, so S, Q, Q in 4/4
   runs 1–2, 3, 4.
+
+For beat-timed rows, optional `duration` gives the action's length in beats;
+it can be shared on the row or set per partner. Otherwise it lasts until
+that partner's next row, as usual. `weight` may also be an end share between
+0 and 1, so an explicit foot can continue through phases of a transfer. A
+fully loaded foot can only turn in place.
+
+A `weight: false` path may overlap the other foot's supporting action:
+
+```json
+[
+  {
+    "beat": 1,
+    "lead": { "go": "forward", "foot": "R", "by": 0.4, "duration": 1 }
+  },
+  {
+    "beat": 1.5,
+    "lead": { "go": "close", "foot": "L", "weight": false, "duration": 0.5 }
+  }
+]
+```
+
+The supporting action owns the frame, weight, rise and pelvis; the following
+path controls only its foot. Its entire interval must be covered by supporting
+actions on the other foot. Two body actions or two actions on the same foot
+cannot overlap. Write the supporting row first when starts coincide.
+Relative directions in the file use the preceding row's final
+frame; arcs compile to their actual start-time frame. A free-foot arc matching
+a stationary pivot follows the body's angular timing, including when playback
+eases other foot travel. These paths draw trails but add no numbered placements;
+contiguous supporting phases of one foot within a count share one footprint.
 
 ## Checking the end: `expectEnd`
 

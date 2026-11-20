@@ -3,6 +3,11 @@
  * definition's rows into the model's steps and poses and checks them.
  */
 
+import {
+  stepOverlapError,
+  isFreeFootFollow,
+  bodyHeadingBefore,
+} from "../overlap.mts";
 import { figureDurationBeats, poseAtBeat } from "../fold.mts";
 import {
   addPoints,
@@ -213,6 +218,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     step: Omit<DanceStep, "id" | "beat" | "duration">;
     start: number; // 0-based beat
     length?: number;
+    frame: number;
     /** For checkFeet: whether the step crosses the feet on purpose, and
      *  which row it came from ("step 2"). */
     cross: boolean;
@@ -223,6 +229,25 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
 
   rows.forEach((row, index) => {
     const where = `${name}, step ${index + 1}`;
+    for (const duration of [
+      row.duration,
+      typeof row.lead === "object" && "go" in row.lead
+        ? row.lead.duration
+        : undefined,
+      typeof row.follow === "object" && "go" in row.follow
+        ? row.follow.duration
+        : undefined,
+    ]) {
+      if (
+        duration !== undefined &&
+        (!(duration > 0) ||
+          !Number.isFinite(duration) ||
+          row.length !== undefined)
+      )
+        throw new FigureError(
+          `${where}: duration requires a positive number of beats and beat timing`,
+        );
+    }
     let start: number;
     let length: number | undefined;
     if (row.length !== undefined) {
@@ -383,6 +408,20 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
           };
         }
       }
+      const freeFollow =
+        partnerMove.weight === false || partnerMove.weight === 0;
+      const followsSupport =
+        freeFollow &&
+        resolved.some(
+          (e) =>
+            e.step.partner === partner &&
+            e.step.foot !== foot &&
+            e.step.weight > 0 &&
+            e.length !== undefined &&
+            e.start + e.length > start + 1e-9,
+        );
+      const savedFacing = state[partner].orientation,
+        savedWeight = { ...state[partner].weight };
       const step = applyMove(
         partner,
         partnerMove,
@@ -391,6 +430,10 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         label,
         `${where} (${partner})`,
       );
+      if (followsSupport) {
+        state[partner].orientation = savedFacing;
+        state[partner].weight = savedWeight;
+      }
       if (partnerMove !== move && !label) {
         // Describe the step in the dancer's own terms, as written (the
         // follow's as the mirror of the lead's), not as the worked-out
@@ -403,8 +446,9 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       }
       resolved.push({
         step,
+        frame: savedFacing,
         start,
-        length,
+        length: partnerMove.duration ?? length,
         cross: partnerMove.cross === true,
         where: `step ${index + 1}`,
         row: index,
@@ -429,7 +473,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
   // Beat style: each step lasts until the same partner's next step, and
   // the last one until the end of its measure.
   const bpm = timeSignature.beatsPerMeasure;
-  const steps: Omit<DanceStep, "id">[] = resolved.map((entry, index) => {
+  let steps: Omit<DanceStep, "id">[] = resolved.map((entry, index) => {
     let duration = entry.length;
     if (duration === undefined) {
       const next = resolved
@@ -446,19 +490,26 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     return { ...entry.step, beat: entry.start + 1, duration };
   });
 
-  // Two moves for the same partner starting at once is a contradiction.
-  for (let i = 0; i < resolved.length; i++) {
-    for (let j = i + 1; j < resolved.length; j++) {
-      if (
-        resolved[i].step.partner === resolved[j].step.partner &&
-        Math.abs(resolved[i].start - resolved[j].start) < 1e-9
-      ) {
-        throw new FigureError(
-          `${name}: the ${resolved[i].step.partner} has two steps starting on beat ${resolved[i].start + 1}`,
-        );
-      }
-    }
-  }
+  const overlapError = stepOverlapError(steps);
+  if (overlapError) throw new FigureError(`${name}: ${overlapError}`);
+
+  // Rows resolve relative directions in the preceding row's final frame.
+  // An overlapping arc is stored relative to its actual start-time frame,
+  // preserving Movement.arc.setOff's runtime contract.
+  steps = steps.map((step, index) =>
+    isFreeFootFollow(step, steps) && step.movement.type === "arc"
+      ? {
+          ...step,
+          movement: {
+            ...step.movement,
+            setOff:
+              (step.movement.setOff ?? 0) +
+              resolved[index].frame -
+              bodyHeadingBefore(step, steps, startPose),
+          },
+        }
+      : step,
+  );
 
   const figure: Figure = {
     id: "authored",

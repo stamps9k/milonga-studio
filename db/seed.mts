@@ -363,12 +363,12 @@ const SAMPLE_DANCES: {
       "Six-count weave into promenade, then a three-count promenade walk and close into closed hold: nine counts altogether.",
   },
   {
-    sequence: "Promenade Close and Backward Natural Turn",
-    figures: ["Promenade Walk and Close", "Natural Turn (backward half)"],
-    dance: "Waltz backward natural turn practice",
+    sequence: "Natural Spin Turn",
+    figures: ["Natural Spin Turn (1–3)", "Natural Spin Turn (4–6)"],
+    dance: "Waltz natural spin turn practice",
     tempo: 84,
     notes:
-      "Promenade walk and close, then a compact three-count right turn: LF back, RF forward, LF back, turning 90/45/90 degrees and finishing with feet apart in closed hold.",
+      "Six-count Natural Spin Turn as two reusable halves: first a Natural Turn, then the half-turn pivot and spin.",
   },
 ];
 

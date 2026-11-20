@@ -4,6 +4,7 @@
  * renderers need), and which steps are in progress.
  */
 
+import { isFreeFootFollow, bodyHeadingBefore } from "../overlap.mts";
 import { applyTransform } from "../floor.mts";
 import {
   angleBetweenDegrees,
@@ -26,10 +27,70 @@ import {
 } from "./timing.mts";
 import type { PoseOptions } from "./timing.mts";
 
+interface FollowContext {
+  free: Set<DanceStep>;
+  frames: Map<DanceStep, number>;
+  directions: Map<DanceStep, number>;
+  pivots: Set<DanceStep>;
+}
+const followContexts = new WeakMap<Figure, FollowContext>();
+
 export function poseAtBeat(
   figure: Figure,
   localBeat: number,
   options: PoseOptions = {},
+): Pose {
+  let context = followContexts.get(figure);
+  if (!context) {
+    const free = new Set(
+      figure.steps.filter((step) => isFreeFootFollow(step, figure.steps)),
+    );
+    context = {
+      free,
+      frames: new Map(),
+      directions: new Map(),
+      pivots: new Set(),
+    };
+    if (free.size) {
+      for (const step of figure.steps)
+        context.frames.set(
+          step,
+          bodyHeadingBefore(step, figure.steps, figure.startPose),
+        );
+    }
+    const frames = context.frames;
+    for (const step of free) {
+      const arc = step.movement;
+      if (arc.type !== "arc") continue;
+      const sweep = (arc.curvature * arc.arcLength * 180) / Math.PI;
+      if (
+        figure.steps.some(
+          (driver) =>
+            driver.partner === step.partner &&
+            driver.foot !== step.foot &&
+            driver.weight > 0 &&
+            driver.movement.type === "straight" &&
+            driver.movement.distance === 0 &&
+            Math.abs(driver.beat - step.beat) < 1e-9 &&
+            Math.abs(driver.duration - step.duration) < 1e-9 &&
+            Math.abs(
+              angleBetweenDegrees(frames.get(driver)!, driver.orientation) -
+                sweep,
+            ) < 1e-8,
+        )
+      )
+        context.pivots.add(step);
+    }
+    followContexts.set(figure, context);
+  }
+  return foldPoseAtBeat(figure, localBeat, options, context);
+}
+
+function foldPoseAtBeat(
+  figure: Figure,
+  localBeat: number,
+  options: PoseOptions,
+  context: FollowContext,
 ): Pose {
   const easeFoot = options.footEasing ?? ((progress: number) => progress);
   const positions: Record<Partner, Record<Foot, Point2D>> = {
@@ -88,11 +149,22 @@ export function poseAtBeat(
     (a, b) => a.beat - b.beat,
   );
   const passings = stepPassings(figure);
+  const activeFreeDirections: {
+    partner: Partner;
+    foot: Foot;
+    direction: number;
+  }[] = [];
 
   for (const step of orderedSteps) {
     const stepStart = step.beat - 1;
     const stepEnd = stepStart + step.duration;
     const otherFoot: Foot = step.foot === "left" ? "right" : "left";
+    const free = context.free.has(step);
+    // An overlapping arc uses the body frame at its own start, not the
+    // frame partway through the supporting action at the queried time.
+    const movementFrame = free
+      ? context.frames.get(step)!
+      : orientations[step.partner];
 
     if (localBeat >= stepEnd) {
       // Fully complete by the queried time -- commit its result and
@@ -103,9 +175,14 @@ export function poseAtBeat(
       if (step.contact !== "air") {
         positions[step.partner][step.foot] = movementEndpoint(
           positions[step.partner][step.foot],
-          orientations[step.partner],
+          movementFrame,
           step.movement,
         );
+      }
+      if (free) {
+        directions[step.partner][step.foot] =
+          step.footDirection ?? step.orientation;
+        continue;
       }
       weights[step.partner][step.foot] = step.weight;
       weights[step.partner][otherFoot] = 1 - step.weight;
@@ -139,22 +216,50 @@ export function poseAtBeat(
       step,
       progress,
     );
-    const footProgress = easeFoot(footPhase);
+    // A free-foot arc matching its stationary supporting pivot must turn
+    // with the body; separate foot easing would pull it out of CBMP.
+    const footProgress = context.pivots.has(step)
+      ? footPhase
+      : easeFoot(footPhase);
     positions[step.partner][step.foot] =
       step.contact === "air"
         ? airborneExcursionAt(
             positions[step.partner][step.foot],
-            orientations[step.partner],
+            movementFrame,
             step.movement,
             footProgress,
           )
         : stepPointAt(
             positions[step.partner][step.foot],
-            orientations[step.partner],
+            movementFrame,
             step.movement,
             footProgress,
             passings.get(step),
           );
+    if (free) {
+      let initial = context.directions.get(step);
+      if (initial === undefined) {
+        // The supporting foot may already be turning when the free foot
+        // sets off. Resolve its actual direction at that instant once.
+        // Recursive lookbacks strictly decrease the action's start time.
+        initial = footHeading(
+          foldPoseAtBeat(figure, stepStart, options, context)[step.partner],
+          step.foot,
+        );
+        context.directions.set(step, initial);
+      }
+      activeFreeDirections.push({
+        partner: step.partner,
+        foot: step.foot,
+        direction: lerpAngleDegrees(
+          initial,
+          step.footDirection ?? step.orientation,
+          footProgress,
+        ),
+      });
+      pitches[step.partner][step.foot] = footPitchAt(step, footProgress);
+      continue;
+    }
     weights[step.partner][step.foot] = lerp(
       weights[step.partner][step.foot],
       step.weight,
@@ -191,6 +296,11 @@ export function poseAtBeat(
     );
     pitches[step.partner][step.foot] = footPitchAt(step, footProgress);
   }
+
+  // Later-starting supporting actions must not swivel a free foot which
+  // is already following its own path. They still own all body motion.
+  for (const free of activeFreeDirections)
+    directions[free.partner][free.foot] = free.direction;
 
   // A foot's direction is only given when it differs from the body's
   // facing (see FootState.direction), so poses of figures that never
