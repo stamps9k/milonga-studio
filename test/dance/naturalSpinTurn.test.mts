@@ -89,7 +89,7 @@ test("Natural Spin Turn: separate three-count halves connect exactly, with six s
     stancePose("closed", { lead: "right", follow: "left" }),
   );
   close(firstHalf.endPose.lead.orientation, 135);
-  close(spin.endPose.lead.orientation, 315);
+  close(spin.endPose.lead.orientation, 225);
   const first = placeEntry(firstHalf, undefined),
     second = placeEntry(spin, first);
   assert.equal(assessJoin(first.resolvedEndPose, spin).fits, true);
@@ -105,7 +105,7 @@ test("Natural Spin Turn: separate three-count halves connect exactly, with six s
     total += normalizeDegrees(p.lead.orientation - previous);
     previous = p.lead.orientation;
   }
-  close(total, 450);
+  close(total, 360);
   const prints = sequenceFootprints([first, second]);
   for (const partner of ["lead", "follow"] as const) {
     const placements = prints.filter(
@@ -135,7 +135,7 @@ test("Natural Spin Turn: separate three-count halves connect exactly, with six s
       poseClose(poseAtBeat(roundTrip, beat), poseAtBeat(originalFigure, beat));
   }
 });
-test("Natural Spin Turn: half-turn pivot keeps RF forward in CBMP, then toe-pivots with an unweighted brush", () => {
+test("Underturned Natural Spin Turn: 135-degree pivot keeps RF forward in CBMP, then toe-pivots with an unweighted brush", () => {
   for (const options of [{}, { footEasing: footEase }]) {
     let previous = 0,
       total = 0;
@@ -166,11 +166,11 @@ test("Natural Spin Turn: half-turn pivot keeps RF forward in CBMP, then toe-pivo
         assert.equal(p.lead.left.weight, 1);
       }
     }
-    close(total, 315);
+    close(total, 225);
   }
-  close(poseAtBeat(spin, 1).lead.orientation, 180);
-  close(poseAtBeat(spin, 2).lead.orientation, 270);
-  close(spin.endPose.lead.orientation, 315);
+  close(poseAtBeat(spin, 1).lead.orientation, 135);
+  close(poseAtBeat(spin, 2).lead.orientation, 180);
+  close(spin.endPose.lead.orientation, 225);
   const partial = poseAtBeat(spin, 0.5);
   close(partial.follow.right.weight, 0.8);
   close(partial.follow.left.weight, 0.2);
@@ -186,7 +186,7 @@ test("Natural Spin Turn: half-turn pivot keeps RF forward in CBMP, then toe-pivo
       x: after.lead.right.position.x - before.lead.right.position.x,
       y: after.lead.right.position.y - before.lead.right.position.y,
     },
-    -180,
+    -135,
   );
   assert.ok(forward.y > 0.3);
   close(forward.x, 0);
@@ -233,7 +233,7 @@ test("Natural Spin Turn: side/back exit for lead, diagonal forward for follow, f
       x: end.lead.left.position.x - before.lead.right.position.x,
       y: end.lead.left.position.y - before.lead.right.position.y,
     },
-    -270,
+    -180,
   );
   assert.ok(l.x < -0.3 && l.y < 0 && l.y > -0.1);
   const f = rotatePoint(
@@ -241,7 +241,7 @@ test("Natural Spin Turn: side/back exit for lead, diagonal forward for follow, f
       x: end.follow.right.position.x - before.follow.left.position.x,
       y: end.follow.right.position.y - before.follow.left.position.y,
     },
-    -90,
+    0,
   );
   assert.ok(f.x > 0 && f.y > 0);
   assert.equal(end.lead.left.weight, 1);
@@ -257,7 +257,7 @@ test("Natural Spin Turn: side/back exit for lead, diagonal forward for follow, f
   }
   const lead = bodyPosition(end.lead),
     follow = bodyPosition(end.follow),
-    hold = rotatePoint({ x: follow.x - lead.x, y: follow.y - lead.y }, -315);
+    hold = rotatePoint({ x: follow.x - lead.x, y: follow.y - lead.y }, -225);
   close(hold.x, 0.1);
   close(hold.y, 0.4);
 });

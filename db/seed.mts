@@ -364,11 +364,11 @@ const SAMPLE_DANCES: {
   },
   {
     sequence: "Natural Spin Turn",
-    figures: ["Natural Spin Turn (1–3)", "Natural Spin Turn (4–6)"],
+    figures: ["Natural Spin Turn (1–3)", "Underturned Natural Spin Turn (4–6)"],
     dance: "Waltz natural spin turn practice",
     tempo: 84,
     notes:
-      "Six-count Natural Spin Turn as two reusable halves: first a Natural Turn, then the half-turn pivot and spin.",
+      "Six-count Natural Spin Turn as two reusable halves: first a Natural Turn, then an underturned spin with a 135-degree pivot and another 90 degrees over the last two counts.",
   },
 ];
 
