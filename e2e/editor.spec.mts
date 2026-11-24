@@ -132,7 +132,7 @@ test("failed additions recover and removals during a fetch are respected", async
   );
 });
 
-test("local saves survive reload, reopen independently and support save a copy", async ({
+test("local saves survive reload, reopen independently and support Save As", async ({
   page,
 }) => {
   await addFigure(page);
@@ -141,14 +141,14 @@ test("local saves survive reload, reopen independently and support save a copy",
   await expect(page.locator(".seq-item")).toHaveCount(0);
   await menu(page, "Open", /^Original practice/);
   await expect(page.locator(".seq-item")).toHaveCount(1);
-  await menu(page, "File", "Save a copy…");
+  await menu(page, "File", "Save As…");
   await page
     .getByRole("dialog")
     .getByLabel("Dance name", { exact: true })
     .fill("Practice copy");
   await page
     .getByRole("dialog")
-    .getByRole("button", { name: "Save a copy", exact: true })
+    .getByRole("button", { name: "Save As", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toBeHidden();
   await addFigure(page, "Side Step and Collect");

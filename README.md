@@ -6,9 +6,10 @@ A web app for planning and reviewing ballroom dance steps in 2D and 3D.
 
 The application menu bar keeps the canvas clear:
 
-- **File**: start a new dance, save locally, save a copy, import/export JSON,
-  or manage local saves. **Save** on the toolbar is the quick save action;
-  Ctrl/Cmd+S saves and Ctrl/Cmd+Shift+S opens Save a copy.
+- **File**: start a new dance, save it in this browser (**Save**, **Save
+  As…**), import/export JSON, or manage local saves. **Save** on the toolbar
+  is the quick save action; Ctrl/Cmd+S saves and Ctrl/Cmd+Shift+S opens Save
+  As.
 - **Open**: choose a personal local save or a pre-created server preset from
   the dropdown. Presets always open as editable working copies.
 - **Dance → Dance details…**: edit the name and notes in a dialog. Clicking
@@ -17,7 +18,7 @@ The application menu bar keeps the canvas clear:
 - **Share**: copy a preload link or export JSON. The 2D/3D buttons switch views.
 
 The first **Save** opens a name/notes dialog, then stores a snapshot in this
-browser's IndexedDB. Further saves update that record. **Save a copy…** asks
+browser's IndexedDB. Further saves update that record. **Save As…** asks
 for a new name and creates a separate identity, even if names match. Text is
 applied only after a successful save; failures keep the dialog open for retry.
 No user dance is uploaded to the server.

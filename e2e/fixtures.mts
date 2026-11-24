@@ -93,9 +93,7 @@ export async function save(page: Page, name: string) {
   await page.getByRole("button", { name: "Save", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Dance name", { exact: true }).fill(name);
-  await dialog
-    .getByRole("button", { name: "Save locally", exact: true })
-    .click();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(page.locator(".dance-document")).toContainText(name);
 }

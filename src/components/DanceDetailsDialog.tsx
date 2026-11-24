@@ -31,7 +31,7 @@ const DanceDetailsDialog = ({
     mode === "details"
       ? "Dance details"
       : mode === "copy"
-        ? "Save a copy"
+        ? "Save As"
         : "Save dance locally";
   return (
     <AppDialog title={title} busy={busy} onClose={onClose}>
@@ -98,8 +98,8 @@ const DanceDetailsDialog = ({
               : mode === "details"
                 ? "Apply changes"
                 : mode === "copy"
-                  ? "Save a copy"
-                  : "Save locally"}
+                  ? "Save As"
+                  : "Save"}
           </button>
         </div>
       </form>
