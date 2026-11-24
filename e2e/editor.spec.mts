@@ -175,6 +175,21 @@ test("local saves survive reload, reopen independently and support save a copy",
   await expect(page.locator(".seq-item")).toHaveCount(2);
 });
 
+test("the status reads saved after saving waltz figures, and unsaved after an edit", async ({
+  page,
+}) => {
+  const status = page.locator(".app-toolbar .badge[role='status']");
+  await addFigure(page, "Whisk");
+  await addFigure(page, "Promenade Chassé");
+  await expect(status).toHaveText("Unsaved changes");
+  await save(page, "Whisk practice");
+  await expect(status).toHaveText("Saved locally");
+  await addFigure(page, "Open Natural Turn");
+  await expect(status).toHaveText("Unsaved changes");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(status).toHaveText("Saved locally");
+});
+
 test("unsaved changes can cancel or confirm replacing the editor", async ({
   page,
 }) => {
