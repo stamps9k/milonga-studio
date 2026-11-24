@@ -140,7 +140,7 @@ export function useDanceLibrary({
     confirmation.ask({
       title: "Discard unsaved changes?",
       message:
-        "Save locally or export JSON first to keep your changes. Opening another dance will replace the current working copy.",
+        "Save or export JSON first to keep your changes. Opening another dance will replace the current working copy.",
       confirmLabel: "Discard changes",
       danger: true,
     });

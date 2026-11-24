@@ -135,7 +135,7 @@ const DanceControls = ({
                 type="button"
                 className="dropdown-item d-flex justify-content-between gap-4"
                 onClick={saveDance}>
-                Save locally{" "}
+                Save{" "}
                 <span className="small text-body-secondary" aria-hidden="true">
                   ⌘ / Ctrl S
                 </span>
@@ -146,7 +146,7 @@ const DanceControls = ({
                 type="button"
                 className="dropdown-item"
                 onClick={() => openDialog("copy")}>
-                Save a copy…
+                Save As…
               </button>
             </li>
             <li>
