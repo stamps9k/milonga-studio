@@ -518,28 +518,75 @@ const DanceControls = ({
         </AppDialog>
       )}
       {feedback && !dialog && !confirmation && (
-        <div className="toast-container position-fixed bottom-0 end-0 p-3">
-          <div
-            className="toast show"
-            role={error || exportError ? "alert" : "status"}
-            aria-live={error || exportError ? "assertive" : "polite"}>
-            <div className="toast-header">
-              <strong className="me-auto">Milonga Studio</strong>
-              <button
-                type="button"
-                className="btn-close"
-                aria-label="Dismiss notification"
-                onClick={() => {
-                  clearFeedback();
-                  onDismissExportFeedback();
-                }}
-              />
-            </div>
-            <div className="toast-body">{feedback}</div>
-          </div>
-        </div>
+        <FeedbackToast
+          // A new message is a new toast, with its own timer.
+          key={feedback}
+          text={feedback}
+          isError={Boolean(error || exportError)}
+          onDismiss={() => {
+            clearFeedback();
+            onDismissExportFeedback();
+          }}
+        />
       )}
     </>
   );
 };
+
+/** How long a confirmation toast stays up before fading, and the fade. */
+const TOAST_VISIBLE_MS = 5000;
+const TOAST_FADE_MS = 500;
+
+/** The notification in the corner. Confirmations ("Saved on this
+ *  browser.", "Share link copied…") fade out after TOAST_VISIBLE_MS and
+ *  then dismiss themselves; errors stay until dismissed, so they can be
+ *  read. Bootstrap hides a toast without `show` at once, so the fade is
+ *  an opacity transition on a toast that keeps `show`. */
+function FeedbackToast({
+  text,
+  isError,
+  onDismiss,
+}: {
+  text: string;
+  isError: boolean;
+  onDismiss: () => void;
+}) {
+  const [fading, setFading] = useState(false);
+  const dismiss = useEffectEvent(onDismiss);
+  useEffect(() => {
+    if (isError) return;
+    const fade = window.setTimeout(() => setFading(true), TOAST_VISIBLE_MS);
+    const gone = window.setTimeout(
+      () => dismiss(),
+      TOAST_VISIBLE_MS + TOAST_FADE_MS,
+    );
+    return () => {
+      window.clearTimeout(fade);
+      window.clearTimeout(gone);
+    };
+  }, [isError]);
+  return (
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        className="toast show"
+        style={{
+          opacity: fading ? 0 : 1,
+          transition: `opacity ${TOAST_FADE_MS}ms ease`,
+        }}
+        role={isError ? "alert" : "status"}
+        aria-live={isError ? "assertive" : "polite"}>
+        <div className="toast-header">
+          <strong className="me-auto">Milonga Studio</strong>
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Dismiss notification"
+            onClick={onDismiss}
+          />
+        </div>
+        <div className="toast-body">{text}</div>
+      </div>
+    </div>
+  );
+}
 export default DanceControls;
