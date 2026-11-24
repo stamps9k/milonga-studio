@@ -4,6 +4,7 @@ import { useDanceLibrary } from "../hooks/useDanceLibrary.mts";
 import type { ShareStatus } from "./Toolbar";
 import AppDialog from "./AppDialog";
 import DanceDetailsDialog from "./DanceDetailsDialog";
+import { capitalize, groupByStyle } from "./styleGroups.mts";
 
 interface Props {
   dance: Dance;
@@ -282,14 +283,25 @@ const DanceControls = ({
                 </span>
               </li>
             )}
-            {presets.map((item) => (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  className="dropdown-item text-wrap"
-                  onClick={() => void openPreset(item.id)}>
-                  {item.name}
-                </button>
+            {/* Grouped by dance style, like the figure library, with the
+                groups and the presets in them in alphabetical order. */}
+            {groupByStyle(presets).map(([style, group]) => (
+              <li key={style}>
+                <h3 className="dropdown-header small text-uppercase pt-1 pb-0">
+                  {capitalize(style)}
+                </h3>
+                <ul className="list-unstyled" aria-label={capitalize(style)}>
+                  {group.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className="dropdown-item text-wrap ps-4"
+                        onClick={() => void openPreset(item.id)}>
+                        {item.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
             <li>

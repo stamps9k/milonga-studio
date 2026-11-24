@@ -99,22 +99,38 @@ interface DanceSummaryRow {
   name: string;
   tempo: number;
   updatedAt: string;
+  /** Comma-separated distinct styles of the dance's figures, or null. */
+  styles: string | null;
 }
 
 dance_routes.get("/api/dances", (req: Request, res: Response) => {
   try {
     const rows = db
       .prepare(
-        "SELECT id, name, tempo, updated_at AS updatedAt FROM dances ORDER BY updated_at DESC",
+        `SELECT d.id, d.name, d.tempo, d.updated_at AS updatedAt,
+           (SELECT GROUP_CONCAT(DISTINCT f.style)
+              FROM sequence_entries se JOIN figures f ON f.id = se.figure_id
+             WHERE se.sequence_id = d.sequence_id) AS styles
+         FROM dances d ORDER BY d.updated_at DESC`,
       )
       .all() as DanceSummaryRow[];
     // Stringify ids for the same reason as /api/figures: Dance.id is a
     // string everywhere else, so a client listing dances and then
     // opening one shouldn't see the id change type between endpoints.
-    const dances: DanceSummary[] = rows.map((row) => ({
-      ...row,
-      id: String(row.id),
-    }));
+    // A dance's style is its figures' style; see DanceSummary.style.
+    const dances: DanceSummary[] = rows.map(({ styles, ...row }) => {
+      const distinct = styles ? styles.split(",") : [];
+      return {
+        ...row,
+        id: String(row.id),
+        style:
+          distinct.length === 1
+            ? distinct[0]
+            : distinct.length === 0
+              ? "other"
+              : "mixed",
+      };
+    });
     res.json({ success: true, message: dances });
   } catch (err) {
     sendApiError(req, res, err);
