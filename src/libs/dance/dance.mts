@@ -39,4 +39,9 @@ export interface DanceSummary {
   name: string;
   tempo: number;
   updatedAt: string;
+  /** The dance style of its figures, for grouping lists of dances the
+   *  way the figure library groups figures: their shared `style`, or
+   *  "mixed" when the figures span several styles, or "other" for a
+   *  dance with no figures. Derived when listing, not stored. */
+  style: string;
 }

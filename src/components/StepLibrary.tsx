@@ -4,8 +4,8 @@ import { useFigures } from "../hooks/useFigures.mts";
 import { useFigureDetails } from "../hooks/useFigureDetails.mts";
 import { assessJoin } from "../libs/dance/join.mts";
 import type { Pose } from "../libs/dance/pose.mts";
-import type { FigureSummary } from "../libs/dance/step.mts";
 import { describeJoin } from "./joinIssues.mts";
+import { capitalize, groupByStyle } from "./styleGroups.mts";
 
 interface StepLibraryProps {
   onSelectFigure?: (figureId: string) => void;
@@ -20,10 +20,6 @@ interface StepLibraryProps {
  *  reasons it doesn't. Undefined while the figure's details are still
  *  loading, or when the sequence is empty (anything can start it). */
 type FigureFit = { fits: true } | { fits: false; reasons: string[] };
-
-function capitalize(value: string): string {
-  return value.length === 0 ? value : value[0].toUpperCase() + value.slice(1);
-}
 
 const StepLibrary = ({
   onSelectFigure,
@@ -75,7 +71,8 @@ const StepLibrary = ({
   }, [details, sequenceEnd]);
 
   // Grouped by style (tango/waltz/blues/...) -- the only categorical
-  // field the data model actually has for figures.
+  // field the data model actually has for figures -- with groups and the
+  // figures in them in alphabetical order.
   const groups = useMemo(() => {
     // The search matches a figure's name or its style, case-insensitively,
     // so typing a dance ("waltz") lists every figure of that dance even
@@ -89,17 +86,7 @@ const StepLibrary = ({
         !(hideMisfits && fitById.get(figure.id)?.fits === false),
     );
 
-    const byStyle = new Map<string, FigureSummary[]>();
-    for (const figure of filtered) {
-      const group = byStyle.get(figure.style);
-      if (group) {
-        group.push(figure);
-      } else {
-        byStyle.set(figure.style, [figure]);
-      }
-    }
-
-    return [...byStyle.entries()].sort(([a], [b]) => a.localeCompare(b));
+    return groupByStyle(filtered);
   }, [figures, query, hideMisfits, fitById]);
 
   const misfitCount = [...fitById.values()].filter((fit) => !fit.fits).length;

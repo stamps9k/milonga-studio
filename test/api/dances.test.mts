@@ -121,6 +121,18 @@ test("GET /api/dances: lists dances, most recently updated first", async () => {
   }
 });
 
+test("GET /api/dances: each dance carries its figures' style for grouping", async () => {
+  const { body } = await get("/api/dances");
+  const dances = body.message as { name: string; style: string }[];
+  const style = (name: string) =>
+    dances.find((dance) => dance.name === name)?.style;
+  assert.equal(style("Waltz Routine 1"), "waltz");
+  // Every seeded dance keeps to one style.
+  for (const dance of dances) {
+    assert.ok(!["mixed", "other"].includes(dance.style), dance.name);
+  }
+});
+
 test("GET /api/dances: ids are strings, like every other endpoint", async () => {
   const { body } = await get("/api/dances");
   for (const dance of body.message as { id: unknown }[]) {
