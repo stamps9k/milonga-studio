@@ -537,7 +537,8 @@ const DanceControls = ({
 const TOAST_VISIBLE_MS = 5000;
 const TOAST_FADE_MS = 500;
 
-/** The notification in the corner. Confirmations ("Saved on this
+/** The notification in the corner, green for a confirmation and red for
+ *  an error. Confirmations ("Saved on this
  *  browser.", "Share link copied…") fade out after TOAST_VISIBLE_MS and
  *  then dismiss themselves; errors stay until dismissed, so they can be
  *  read. Bootstrap hides a toast without `show` at once, so the fade is
@@ -568,14 +569,21 @@ function FeedbackToast({
   return (
     <div className="toast-container position-fixed bottom-0 end-0 p-3">
       <div
-        className="toast show"
+        // Tinted by outcome: green for a confirmation, red for an error,
+        // using Bootstrap's subtle theme colours (they follow dark mode).
+        className={
+          "toast show " +
+          (isError
+            ? "bg-danger-subtle border-danger-subtle text-danger-emphasis"
+            : "bg-success-subtle border-success-subtle text-success-emphasis")
+        }
         style={{
           opacity: fading ? 0 : 1,
           transition: `opacity ${TOAST_FADE_MS}ms ease`,
         }}
         role={isError ? "alert" : "status"}
         aria-live={isError ? "assertive" : "polite"}>
-        <div className="toast-header">
+        <div className="toast-header bg-transparent text-reset">
           <strong className="me-auto">Milonga Studio</strong>
           <button
             type="button"
