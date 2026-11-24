@@ -382,7 +382,7 @@ const SAMPLE_DANCES: {
       "RF Closed Change",
       "Reverse Box Turn (forward half)",
       "Reverse Box Turn (backward half)",
-      "Back Whisk",
+      "Whisk",
       "Promenade Chassé",
       "Open Natural Turn",
       "Outside Change ending in Promenade Position",
@@ -398,7 +398,7 @@ const SAMPLE_DANCES: {
     dance: "Waltz Routine 1",
     tempo: 87,
     notes:
-      "The owner's class waltz as studied so far: 17 figures, 51 counts. Box Turn, RF Closed Change, Reverse Box Turn, Back Whisk, Promenade Chassé, Open Natural Turn, Outside Change into promenade, Weave, Promenade Walk and Close, the underturned spin turn, Reverse Turn (4–6), Reverse Box Turn, then Contra Check and recovery into promenade.",
+      "The owner's class waltz as studied so far: 17 figures, 51 counts. Box Turn, RF Closed Change, Reverse Box Turn, Whisk, Promenade Chassé, Open Natural Turn, Outside Change into promenade, Weave, Promenade Walk and Close, the underturned spin turn, Reverse Turn (4–6), Reverse Box Turn, then Contra Check and recovery into promenade.",
   },
   {
     sequence: "Natural Spin Turn",
