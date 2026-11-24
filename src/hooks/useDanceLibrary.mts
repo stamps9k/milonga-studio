@@ -18,13 +18,28 @@ export interface DanceDetails {
   notes: string;
 }
 
-function fingerprintOf(dance: Dance): string {
+export function fingerprintOf(dance: Dance): string {
   return JSON.stringify({
     name: dance.name,
     notes: dance.notes ?? "",
     music: dance.music,
     tempo: dance.tempo,
     entries: dance.sequence.entries,
+  });
+}
+
+/** The fingerprint the editor will have once a save of `working` as
+ *  `snapshot` lands: the editor keeps its own entries, tempo and music and
+ *  takes only the saved name and notes (see the editor's `onSaved`). The
+ *  snapshot itself can't be the baseline: `parseDance` rebuilds its
+ *  entries, which changes key order and normalises angles (a path's
+ *  set-off of -65 comes back as 295), so its fingerprint differs from the
+ *  editor's for many figures even though nothing was edited. */
+export function savedFingerprint(working: Dance, snapshot: Dance): string {
+  return fingerprintOf({
+    ...working,
+    name: snapshot.name,
+    notes: snapshot.notes ?? "",
   });
 }
 
@@ -169,7 +184,7 @@ export function useDanceLibrary({
       ]);
       setLocalId(id);
       onSaved(snapshot);
-      setBaseline(fingerprintOf(snapshot));
+      setBaseline(savedFingerprint(dance, snapshot));
       setMessage("Saved on this browser.");
     });
   const openLocal = (item: Dance) =>
