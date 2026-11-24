@@ -175,7 +175,7 @@ test("local saves survive reload, reopen independently and support save a copy",
   await expect(page.locator(".seq-item")).toHaveCount(2);
 });
 
-test("the status reads saved after saving waltz figures, and unsaved after an edit", async ({
+test("the status reads saved after saving waltz figures, and unsaved after an edit; the save toast dismisses itself", async ({
   page,
 }) => {
   const status = page.locator(".app-toolbar .badge[role='status']");
@@ -184,6 +184,10 @@ test("the status reads saved after saving waltz figures, and unsaved after an ed
   await expect(status).toHaveText("Unsaved changes");
   await save(page, "Whisk practice");
   await expect(status).toHaveText("Saved locally");
+  // The confirmation toast fades and dismisses itself after 5 s.
+  const toast = page.locator(".toast");
+  await expect(toast).toContainText("Saved on this browser.");
+  await expect(toast).toBeHidden({ timeout: 8000 });
   await addFigure(page, "Open Natural Turn");
   await expect(status).toHaveText("Unsaved changes");
   await page.getByRole("button", { name: "Save", exact: true }).click();
