@@ -2,6 +2,7 @@ import { footHeading } from "../dance/pose.mts";
 import type { HoldKind } from "../dance/authoring.mts";
 import type { PartnerPose, Pose } from "../dance/pose.mts";
 import { legContactFor, slideKnees } from "./legContact.mts";
+import { openUpperBodies } from "./shaping.mts";
 import type { Foot, Partner } from "../dance/step.mts";
 import { bodyPosition } from "../dance/weight.mts";
 import { DEFAULT_PROPORTIONS } from "./proportions.mts";
@@ -36,8 +37,10 @@ import type { Point3D } from "./vector3.mts";
  * - the knees bend forwards to join hip and ankle (two-bone IK, keeping
  *   the thigh and shin lengths), swinging a little sideways where a leg
  *   would pass through the partner's (slideKnees, in solveSkeleton);
- * - the spine, neck and head stack straight up from the hips: no sway,
- *   CBM or shaping yet, since the model can't describe them;
+ * - the spine, neck and head stack straight up from the hips, except
+ *   that where the partners' shoulders come close (promenade) the upper
+ *   bodies tilt apart (openUpperBodies, in solveSkeleton); no sway or
+ *   CBM yet, since the model can't describe them;
  * - the arms take hold of the partner (connectHold, in solveSkeleton):
  *   the joined hands meet out beyond the couple, the lead's right hand
  *   is on the follow's left shoulder blade and her left hand on his right
@@ -812,5 +815,6 @@ export function solveSkeleton(
     },
     legContactFor(hold),
   );
-  return connectHold(legs.lead, legs.follow, bodies, hold);
+  const opened = openUpperBodies(legs);
+  return connectHold(opened.lead, opened.follow, bodies, hold);
 }

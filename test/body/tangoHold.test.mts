@@ -69,11 +69,37 @@ test("tango hold: elbows and hands move smoothly relative to the body", () => {
   }
 });
 
-test("tango hold: her left upper arm stays out of his right upper arm", () => {
-  // Arm capsules with the mannequin's radii (4 cm each). Provisional
-  // limit: the near shoulders still come within about 10 cm of each other
-  // in tango promenade, which needs promenade shaping of the upper bodies
-  // to open; until then the upper arms may press in up to 5 cm.
+test("tango hold: his right arm passes clear of her left shoulder", () => {
+  // His upper arm (4 cm round) against her shoulder joint (the
+  // mannequin's shoulder bar, 5 cm round): the upper bodies open apart in
+  // promenade (openUpperBodies), so his arm passes under her arm rather
+  // than through her shoulder.
+  for (const figure of tango) {
+    for (let beat = 0; beat <= figureDurationBeats(figure); beat += 1 / 64) {
+      const { lead, follow } = solveSkeleton(
+        poseAtBeat(figure, beat),
+        DEFAULT_PROPORTIONS,
+        holdForStyle(figure.style),
+      );
+      const gap =
+        segmentDistance(
+          lead.joints.rightUpperArm,
+          lead.joints.rightLowerArm,
+          follow.joints.leftUpperArm,
+          follow.joints.leftUpperArm,
+        ) - 0.09;
+      assert.ok(
+        gap >= 0,
+        `${figure.name}: his arm presses ${-gap} m into her shoulder at beat ${beat}`,
+      );
+    }
+  }
+});
+
+test("tango hold: her left upper arm lies along his right upper arm, not through it", () => {
+  // Arm capsules with the mannequin's radii (4 cm each). Her arm lies on
+  // his, so they touch along their length; where her elbow rests on his
+  // they press in a few centimetres. Provisional limit.
   for (const figure of tango) {
     for (let beat = 0; beat <= figureDurationBeats(figure); beat += 1 / 64) {
       const { lead, follow } = solveSkeleton(
