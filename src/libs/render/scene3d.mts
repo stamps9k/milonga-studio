@@ -4,6 +4,7 @@ import { headingToUnitVector } from "../dance/heading.mts";
 import type { Point2D } from "../dance/pose.mts";
 import type { Figure, Foot } from "../dance/step.mts";
 import type { FloorTransform } from "../dance/sequence.mts";
+import { LEG_RADII } from "../body/legContact.mts";
 import type { JointName } from "../body/skeleton.mts";
 import type { Point3D } from "../body/vector3.mts";
 import { FOOT_OUTLINES } from "./figureShapes.mts";
@@ -43,7 +44,9 @@ export interface Bone {
  * The mannequin: a simple jointed figure, with every joint the body
  * solver places visible as a ball and every bone a rod between two of
  * them. Thicknesses are rough real sizes (a thigh about 12 cm across),
- * chosen so the body reads at a glance and the joints stay visible.
+ * chosen so the body reads at a glance and the joints stay visible. The
+ * legs use the body solver's LEG_RADII, which it keeps the partners'
+ * legs from passing through (slideKnees).
  * The head, the nose and the feet are drawn separately (Renderer3D).
  */
 export const MANNEQUIN_BONES: readonly Bone[] = [
@@ -54,8 +57,18 @@ export const MANNEQUIN_BONES: readonly Bone[] = [
   { from: "leftUpperLeg", to: "rightUpperLeg", radius: 0.08, side: "middle" },
   { from: "leftUpperArm", to: "rightUpperArm", radius: 0.05, side: "middle" },
   ...(["left", "right"] as const).flatMap((side): Bone[] => [
-    { from: `${side}UpperLeg`, to: `${side}LowerLeg`, radius: 0.06, side },
-    { from: `${side}LowerLeg`, to: `${side}Foot`, radius: 0.045, side },
+    {
+      from: `${side}UpperLeg`,
+      to: `${side}LowerLeg`,
+      radius: LEG_RADII.thigh,
+      side,
+    },
+    {
+      from: `${side}LowerLeg`,
+      to: `${side}Foot`,
+      radius: LEG_RADII.shin,
+      side,
+    },
     { from: `${side}UpperArm`, to: `${side}LowerArm`, radius: 0.04, side },
     { from: `${side}LowerArm`, to: `${side}Hand`, radius: 0.033, side },
   ]),
