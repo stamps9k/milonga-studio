@@ -147,6 +147,26 @@ test("solvePartnerSkeleton: in a long stride the back heel releases and the hips
   assertBoneLengths(skeleton);
 });
 
+test("solvePartnerSkeleton: the back heel releases gradually as the weight leaves it, so the hips don't jump", () => {
+  // A long stride with the weight moving forward off the back (right)
+  // foot. Sampled finely through the weight change, the hips may move
+  // only a little between neighbouring samples: no snap as the back
+  // foot's weight passes half.
+  let previous: number | null = null;
+  let biggest = 0;
+  for (let back = 0.7; back >= 0.1 - 1e-9; back -= 0.005) {
+    const skeleton = solvePartnerSkeleton(
+      lead([-0.1, 0.55], [0.1, 0], 1 - back),
+      LEAD,
+      "lead",
+    );
+    if (previous !== null)
+      biggest = Math.max(biggest, Math.abs(skeleton.joints.hips.z - previous));
+    previous = skeleton.joints.hips.z;
+  }
+  assert.ok(biggest < 0.005, `hips moved ${biggest} m in one step of weight`);
+});
+
 test("solvePartnerSkeleton: a foot no leg can reach is reported, not hidden", () => {
   const skeleton = solvePartnerSkeleton(
     lead([-0.1, 0], [3, 0], 1),
