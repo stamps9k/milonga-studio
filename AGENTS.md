@@ -58,7 +58,10 @@ frontend and a small Express + SQLite API.
   figure. `solveSkeleton` takes the figure's hold (`holdForStyle`; the 3D
   renderer passes the style of the figure at the current beat): ballroom
   tango's has its own arm placement, keeps the knees flexed 4 cm and allows
-  2 cm of leg contact, where the right thighs meet.
+  2 cm of leg contact, where the right thighs meet. `shaping.mts` tilts the
+  upper bodies apart from the hips wherever the partners' shoulders come
+  closer than 20 cm (promenade), so the hips stay together and the V opens
+  at the top.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;
