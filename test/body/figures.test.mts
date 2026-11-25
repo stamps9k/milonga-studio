@@ -9,7 +9,9 @@ import {
 } from "../../src/libs/dance/fold.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import { assessLateralBalance } from "../../src/libs/body/balance.mts";
+import { DEFAULT_PROPORTIONS } from "../../src/libs/body/proportions.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
+import { holdForStyle } from "../../src/libs/dance/authoring.mts";
 
 // Every figure file, danced by the mannequins' bodies (lead 1.75 m,
 // follow 1.70 m), sampled every sixteenth of a beat. A failure here
@@ -37,7 +39,11 @@ function worstAlong(figure: Figure) {
   let shortfall = 0;
   const duration = figureDurationBeats(figure);
   for (let beat = 0; beat <= duration + 1e-9; beat += SAMPLE) {
-    const skeleton = solveSkeleton(poseAtBeat(figure, beat));
+    const skeleton = solveSkeleton(
+      poseAtBeat(figure, beat),
+      DEFAULT_PROPORTIONS,
+      holdForStyle(figure.style),
+    );
     for (const partner of ["lead", "follow"] as const) {
       const { hipDrop, legShortfall } = skeleton[partner];
       shortfall = Math.max(shortfall, legShortfall.left, legShortfall.right);
@@ -78,7 +84,11 @@ test("figures: pelvis and loaded legs remain within lateral balance limits", asy
         for (let sample = 0; sample <= Math.ceil(duration * 128); sample++) {
           const beat = Math.min(sample / 128, duration);
           const pose = poseAtBeat(figure, beat, options);
-          const skeleton = solveSkeleton(pose);
+          const skeleton = solveSkeleton(
+            pose,
+            DEFAULT_PROPORTIONS,
+            holdForStyle(figure.style),
+          );
           for (const partner of ["lead", "follow"] as const) {
             const balance = assessLateralBalance(
               pose[partner],

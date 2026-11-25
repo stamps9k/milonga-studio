@@ -1,6 +1,7 @@
 import { footHeading } from "../dance/pose.mts";
+import type { HoldKind } from "../dance/authoring.mts";
 import type { PartnerPose, Pose } from "../dance/pose.mts";
-import { slideKnees } from "./legContact.mts";
+import { legContactFor, slideKnees } from "./legContact.mts";
 import type { Foot, Partner } from "../dance/step.mts";
 import { bodyPosition } from "../dance/weight.mts";
 import { DEFAULT_PROPORTIONS } from "./proportions.mts";
@@ -252,6 +253,7 @@ export function solvePartnerSkeleton(
   pose: PartnerPose,
   body: BodyProportions,
   partner: Partner,
+  hold: HoldKind = "standard",
 ): PartnerSkeleton {
   const forward = headingVector(pose.orientation);
   const right = headingVector(pose.orientation + 90);
@@ -259,13 +261,17 @@ export function solvePartnerSkeleton(
     add(from, add(scale(forward, f), add(scale(right, r), scale(UP, u))));
 
   // Hips: at the authored horizontal body position, at standing height
-  // plus rise unless the legs can't reach their feet from there.
+  // plus rise (less tango's knee flex) unless the legs can't reach their
+  // feet from there.
   const weight = bodyPosition(pose);
   const pelvisFloor = vec(weight.x, weight.y, 0);
   const leg = body.thigh + body.shin - KNEE_SLACK;
   const hipJointFloor = (side: Foot) =>
     along(pelvisFloor, 0, (side === "left" ? -1 : 1) * (body.hipWidth / 2), 0);
-  const standing = standingHipHeight(body) + pose.rise;
+  const standing =
+    standingHipHeight(body) +
+    pose.rise -
+    (hold === "tango" ? TANGO_KNEE_FLEX : 0);
 
   // Feet: the model's foot position is the middle of the foot (as the
   // 2D view draws it). With a rise the heel lifts and the ball stays on
@@ -456,35 +462,79 @@ export function solvePartnerSkeleton(
  * How the couple's hold is shaped (metres). Standard ballroom closed
  * hold, as commonly taught; the exact distances are provisional
  * judgement calls (2026-11-17):
- * - JOINED_OUT: how far the joined hands (his left, her right) are out
+ * - joinedOut: how far the joined hands (his left, her right) are out
  *   beyond the point between those two shoulders, away from the middle of
  *   the couple. In closed hold that is out to his left; in promenade it
  *   is towards the open side of the V, the way the couple travels.
- * - JOINED_ABOVE_HEAD: the joined hands' height above the base of the
+ * - joinedAboveHead: the joined hands' height above the base of the
  *   follow's skull, about her eye level.
  * - PALM: how far each wrist stops short of the point where the hands
  *   meet, so the two hands sit palm to palm rather than inside each other.
  *   2.5 cm each: about half a hand's thickness, so the palms touch.
- * - The lead's right hand on her left shoulder blade: BLADE_BEHIND behind
- *   her left shoulder joint, BLADE_IN towards her spine, BLADE_DOWN below
+ * - The lead's right hand on her left shoulder blade: bladeBehind behind
+ *   her left shoulder joint, bladeIn towards her spine, bladeDown below
  *   it. That is the wrist, at the outer edge of the blade, so the hand
  *   laid across her back (HAND_DOWN) ends near her spine.
- * - The follow's left hand on his right upper arm: UPPER_ARM_ALONG of the
- *   way from his shoulder to his elbow, resting on top (UPPER_ARM_ABOVE).
+ * - The follow's left hand on his right upper arm: upperArmAlong of the
+ *   way from his shoulder to his elbow, resting on top (upperArmAbove).
  *   That is her wrist; her hand lies on along his arm from there, so the
  *   fingers reach his shoulder, not past it.
  *
  * These place the wrists; which way each hand then points is set in
  * connectHold (and HAND_DOWN, OVER_HIS_ARM below).
+ *
+ * Ballroom tango's hold (HoldKind "tango") is more compact, as commonly
+ * taught: the joined hands lower (about her chin) and drawn in, so his
+ * left elbow bends more; his right hand further round her back and a
+ * little lower; and her left hand under his upper arm, nearer his
+ * armpit, palm down with the fingers along the back of his arm
+ * (`underArm`), not resting on top of it. Provisional judgement calls,
+ * for the owner to judge from pictures.
  */
-const JOINED_OUT = 0.2;
-const JOINED_ABOVE_HEAD = 0.06;
+interface HoldPlacement {
+  joinedOut: number;
+  joinedAboveHead: number;
+  bladeBehind: number;
+  bladeIn: number;
+  bladeDown: number;
+  upperArmAlong: number;
+  upperArmAbove: number;
+  /** Her left hand under his upper arm, behind it by this much (tango),
+   *  rather than on top of it (0). */
+  underArm: number;
+}
+const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
+  standard: {
+    joinedOut: 0.2,
+    joinedAboveHead: 0.06,
+    bladeBehind: 0.06,
+    bladeIn: 0.02,
+    bladeDown: 0.12,
+    upperArmAlong: 0.6,
+    upperArmAbove: 0.05,
+    underArm: 0,
+  },
+  tango: {
+    joinedOut: 0.12,
+    joinedAboveHead: -0.03,
+    bladeBehind: 0.07,
+    bladeIn: 0.08,
+    bladeDown: 0.16,
+    upperArmAlong: 0.4,
+    upperArmAbove: -0.03,
+    underArm: 0.05,
+  },
+};
 const PALM = 0.025;
-const BLADE_BEHIND = 0.06;
-const BLADE_IN = 0.02;
-const BLADE_DOWN = 0.12;
-const UPPER_ARM_ALONG = 0.6;
-const UPPER_ARM_ABOVE = 0.05;
+
+/**
+ * How far ballroom tango's posture lowers the hips below standing
+ * height, in metres: the knees stay slightly flexed throughout, with no
+ * rise. Owner's choice of a slight flex (about 4 cm). It moves the
+ * standing height itself, so hipDrop still measures only the extra
+ * lowering a leg needs to reach its foot.
+ */
+export const TANGO_KNEE_FLEX = 0.04;
 /**
  * Which way the lead's right hand points on her back: across it towards
  * her spine (her right, level with her back), tilted HAND_DOWN downwards
@@ -496,7 +546,7 @@ const UPPER_ARM_ABOVE = 0.05;
 const HAND_DOWN = 0.3;
 /** How far the follow's left hand tips out to his right and down, over
  *  the outside of his arm, for each metre it points along his upper arm
- *  towards his shoulder. With her wrist UPPER_ARM_ALONG down his arm,
+ *  towards his shoulder. With her wrist upperArmAlong down his arm,
  *  this puts her fingertips about 5 cm from the line of his upper arm
  *  (on its surface) at his shoulder, in closed hold and promenade.
  *  Provisional (2026-11-17). */
@@ -596,8 +646,10 @@ function connectHold(
   lead: PartnerSkeleton,
   follow: PartnerSkeleton,
   bodies: Record<Partner, BodyProportions>,
+  hold: HoldKind = "standard",
 ): CoupleSkeleton {
   const UP = vec(0, 0, 1);
+  const place = HOLD_PLACEMENT[hold];
   const middle = scale(add(lead.joints.hips, follow.joints.hips), 0.5);
 
   // The joined hands: out beyond the point between his left shoulder and
@@ -609,8 +661,8 @@ function connectHold(
     normalize(vec(between.x - middle.x, between.y - middle.y, 0)) ??
     scale(headingVector(lead.facing + 90), -1);
   const joined = {
-    ...add(between, scale(outward, JOINED_OUT)),
-    z: follow.joints.head.z + JOINED_ABOVE_HEAD,
+    ...add(between, scale(outward, place.joinedOut)),
+    z: follow.joints.head.z + place.joinedAboveHead,
   };
   const palmShort = (shoulder: Point3D) =>
     add(joined, scale(normalize(sub(shoulder, joined)) ?? UP, PALM));
@@ -621,8 +673,8 @@ function connectHold(
   const blade = add(
     follow.joints.leftUpperArm,
     add(
-      scale(herForward, -BLADE_BEHIND),
-      add(scale(herRight, BLADE_IN), scale(UP, -BLADE_DOWN)),
+      scale(herForward, -place.bladeBehind),
+      add(scale(herRight, place.bladeIn), scale(UP, -place.bladeDown)),
     ),
   );
 
@@ -665,17 +717,27 @@ function connectHold(
     bodies.lead,
   );
 
-  // Her left hand on his right upper arm, where his arm now is.
+  // Her left hand on his right upper arm, where his arm now is: on top
+  // of it, or in tango under it, behind the arm with the fingers along
+  // its back towards his shoulder and the palm down.
+  const hisBack = scale(headingVector(him.facing), -1);
   const onHisArm = add(
-    lerp3(him.joints.rightUpperArm, him.joints.rightLowerArm, UPPER_ARM_ALONG),
-    scale(UP, UPPER_ARM_ABOVE),
+    lerp3(
+      him.joints.rightUpperArm,
+      him.joints.rightLowerArm,
+      place.upperArmAlong,
+    ),
+    add(scale(UP, place.upperArmAbove), scale(hisBack, place.underArm)),
   );
   const upHisArm =
     normalize(sub(him.joints.rightUpperArm, him.joints.rightLowerArm)) ?? UP;
-  const overHisArm = add(
-    upHisArm,
-    scale(sub(headingVector(him.facing + 90), UP), OVER_HIS_ARM),
-  );
+  const overHisArm =
+    place.underArm > 0
+      ? add(upHisArm, scale(hisBack, 0.5))
+      : add(
+          upHisArm,
+          scale(sub(headingVector(him.facing + 90), UP), OVER_HIS_ARM),
+        );
   let her = reachFor(
     follow,
     "right",
@@ -696,14 +758,19 @@ function connectHold(
 
 /** Both dancers' skeletons at one instant (for example a Pose from
  *  sequencePoseAtBeat), with the knees sliding past each other where
- *  the legs meet (slideKnees), in hold (connectHold). */
+ *  the legs meet (slideKnees), in hold (connectHold), shaped for the
+ *  given hold: ballroom tango's has its own arms and knee flex. */
 export function solveSkeleton(
   pose: Pose,
   bodies: Record<Partner, BodyProportions> = DEFAULT_PROPORTIONS,
+  hold: HoldKind = "standard",
 ): CoupleSkeleton {
-  const legs = slideKnees({
-    lead: solvePartnerSkeleton(pose.lead, bodies.lead, "lead"),
-    follow: solvePartnerSkeleton(pose.follow, bodies.follow, "follow"),
-  });
-  return connectHold(legs.lead, legs.follow, bodies);
+  const legs = slideKnees(
+    {
+      lead: solvePartnerSkeleton(pose.lead, bodies.lead, "lead", hold),
+      follow: solvePartnerSkeleton(pose.follow, bodies.follow, "follow", hold),
+    },
+    legContactFor(hold),
+  );
+  return connectHold(legs.lead, legs.follow, bodies, hold);
 }

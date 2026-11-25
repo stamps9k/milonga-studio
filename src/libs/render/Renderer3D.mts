@@ -6,8 +6,10 @@ import { DEFAULT_PROPORTIONS } from "../body/proportions.mts";
 import { solveSkeleton } from "../body/skeleton.mts";
 import type { PartnerSkeleton } from "../body/skeleton.mts";
 import type { Point3D } from "../body/vector3.mts";
+import { holdForStyle } from "../dance/authoring.mts";
 import {
   footEase,
+  sequenceEntryIndexAtBeat,
   sequencePoseAtBeat,
   sequenceTrailSegments,
 } from "../dance/fold.mts";
@@ -695,7 +697,13 @@ export class Renderer3D implements SceneRenderer {
       footEasing: footEase,
     });
     if (pose !== null) {
-      const skeletons = solveSkeleton(pose);
+      // The hold's shape (ballroom tango's arms and knee flex) follows
+      // the style of the figure being danced.
+      const index = sequenceEntryIndexAtBeat(scene.entries, beat);
+      const hold = holdForStyle(
+        index === null ? "" : scene.entries[index].figure.style,
+      );
+      const skeletons = solveSkeleton(pose, DEFAULT_PROPORTIONS, hold);
       for (const partner of PARTNERS) {
         this.mannequins[partner].update(skeletons[partner]);
         this.characters?.[partner].pose(skeletons[partner]);

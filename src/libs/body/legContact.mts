@@ -1,3 +1,4 @@
+import type { HoldKind } from "../dance/authoring.mts";
 import type { Foot, Partner } from "../dance/step.mts";
 import type { CoupleSkeleton, PartnerSkeleton } from "./skeleton.mts";
 import { add, distance, dot, normalize, scale, sub, vec } from "./vector3.mts";
@@ -39,6 +40,21 @@ export const MAX_KNEE_SWING = 30;
  * a rigid tube is a rough outline of a leg anyway. Provisional.
  */
 export const LEG_CONTACT = 0.01;
+
+/**
+ * The contact allowed in ballroom tango's hold, in metres. Its compact,
+ * staggered hold puts her right leg in the lane beside his right leg,
+ * and the right thighs pressing together is tango's real point of
+ * contact, so they may press in further before a knee swings. Owner's
+ * choice over leaning the hips apart, which tango technique doesn't do.
+ * Provisional.
+ */
+export const TANGO_LEG_CONTACT = 0.02;
+
+/** The contact allowed in a hold of the given kind. */
+export function legContactFor(hold: HoldKind): number {
+  return hold === "tango" ? TANGO_LEG_CONTACT : LEG_CONTACT;
+}
 
 /** Closest distance between two line segments p1-q1 and p2-q2: the
  *  closest points of the infinite lines, clamped to the segments, with
@@ -142,7 +158,7 @@ function swungKnee(
 
 /**
  * How far to swing one knee, in degrees, so the leg clears `obstacles`:
- * 0 if the legs at most touch (pressing in no more than LEG_CONTACT);
+ * 0 if the legs at most touch (pressing in no more than `contact`);
  * otherwise the smallest swing, towards whichever side opens the gap
  * faster, that brings them back to that, found by stepping
  * out a degree at a time and then bisecting, so the swing grows smoothly
@@ -154,21 +170,22 @@ function kneeSwing(
   knee: Point3D,
   ankle: Point3D,
   obstacles: readonly Capsule[],
+  contact: number,
 ): number {
   const gapAt = (degrees: number) =>
     legGap(hip, swungKnee(hip, knee, ankle, degrees), ankle, obstacles);
-  if (gapAt(0) >= -LEG_CONTACT) return 0;
+  if (gapAt(0) >= -contact) return 0;
   const sign = gapAt(1) >= gapAt(-1) ? 1 : -1;
   let best = { degrees: 0, gap: gapAt(0) };
   let previous = 0;
   for (let degrees = 1; degrees <= MAX_KNEE_SWING; degrees += 1) {
     const gap = gapAt(sign * degrees);
-    if (gap >= -LEG_CONTACT) {
+    if (gap >= -contact) {
       let low = previous;
       let high = degrees;
       for (let i = 0; i < 20; i++) {
         const middle = (low + high) / 2;
-        if (gapAt(sign * middle) >= -LEG_CONTACT) high = middle;
+        if (gapAt(sign * middle) >= -contact) high = middle;
         else low = middle;
       }
       return sign * high;
@@ -196,14 +213,18 @@ function withKnee(
 }
 
 /**
- * Swings the knees where a leg would pass through the partner's legs, so
- * the legs slide past each other (see the
+ * Swings the knees where a leg would press into the partner's legs by
+ * more than `contact` (LEG_CONTACT, or legContactFor the hold), so the
+ * legs slide past each other (see the
  * top of this file). The lead's legs give way first, against the
  * follow's legs as solved; then the follow's against the lead's new
  * ones, which clears whatever his swing limit left. Only the knees move,
  * and only where the legs would overlap.
  */
-export function slideKnees(couple: CoupleSkeleton): CoupleSkeleton {
+export function slideKnees(
+  couple: CoupleSkeleton,
+  contact: number = LEG_CONTACT,
+): CoupleSkeleton {
   const result: Record<Partner, PartnerSkeleton> = { ...couple };
   for (const partner of ["lead", "follow"] as const) {
     const other = partner === "lead" ? "follow" : "lead";
@@ -217,7 +238,7 @@ export function slideKnees(couple: CoupleSkeleton): CoupleSkeleton {
         ...legCapsules(result[other], "left"),
         ...legCapsules(result[other], "right"),
       ];
-      const degrees = kneeSwing(hip, knee, ankle, obstacles);
+      const degrees = kneeSwing(hip, knee, ankle, obstacles, contact);
       if (degrees !== 0)
         result[partner] = withKnee(
           self,

@@ -51,11 +51,14 @@ export {
   TURN_CENTRES,
   FigureError,
 } from "./authoring/definition.mts";
-export type { StanceName } from "./authoring/stances.mts";
+export type { HoldKind, HoldShape, StanceName } from "./authoring/stances.mts";
 export {
   STANCE_WIDTH,
   PARTNER_DISTANCE,
   HOLD_OFFSET,
+  HOLD_SHAPES,
+  TANGO_HOLD,
+  holdForStyle,
   CROSS_BEHIND,
   CROSS_ACROSS,
   PROMENADE_SIDE_STEP,

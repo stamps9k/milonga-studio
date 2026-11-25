@@ -22,14 +22,12 @@ export const PARTNER_DISTANCE = 0.4;
  * metres, measured across his facing between the centres of the two
  * partners' feet. Standard closed hold is offset, each partner a little
  * to the other's right, and "never toes to toes": when the lead walks
- * forward his right foot goes between her feet (owner's request,
- * 2026-11-17; Smooth and Standard references put it at up to half a
- * body width).
+ * forward his right foot goes between her feet (owner's request; Smooth
+ * and Standard references put it at up to half a body width).
  *
  * Half the stance width is exactly the shift that puts the lead's right
  * foot in line with the gap between her feet, so that's the value used.
- * Provisional: tango's offset is larger in real technique, but the
- * model has no style-specific stances, so every dance uses this one.
+ * Ballroom tango uses the same offset (see TANGO_HOLD).
  *
  * The promenade stances keep the same offset in the closed frame they
  * opened from. Because their line of travel runs towards -x, the
@@ -39,11 +37,85 @@ export const PARTNER_DISTANCE = 0.4;
 export const HOLD_OFFSET = STANCE_WIDTH / 2;
 
 /**
+ * The shape of a closed hold on the floor, in metres:
+ * - `offset`: how far the follow stands to the lead's right, as
+ *   HOLD_OFFSET;
+ * - `distance`: how far she stands in front of him, as PARTNER_DISTANCE;
+ * - `promenadeDistance`: how far she is from him in the promenade
+ *   stances, measured the same way in the closed frame they opened from;
+ * - `drawBack`: how far the lead's right foot is drawn back behind his
+ *   left in closed position, and the follow's left behind her right (her
+ *   right foot is forward, towards him), measured along each dancer's
+ *   facing. A close in this hold keeps that stagger (see applyMove).
+ *
+ * With a stagger the closed stance is measured from the drawn-back
+ * feet, the ones the tango figures stand on in closed position: her
+ * left foot is `offset` to the right of his right foot and `distance`
+ * in front of it, so the bodies keep the hold's spacing while each
+ * stands on that foot. Without one (drawBack 0) this is the same as
+ * measuring from the middle of the feet.
+ */
+export interface HoldShape {
+  offset: number;
+  distance: number;
+  promenadeDistance: number;
+  drawBack: number;
+}
+
+/** Which closed hold a figure dances in: ballroom tango's compact hold,
+ *  or the standard one every other style uses (including Argentine
+ *  tango, whose figures are written with it). */
+export type HoldKind = "standard" | "tango";
+
+/**
+ * Ballroom tango's closed hold: more compact than the standard hold,
+ * with the lead's right foot drawn slightly back. Owner's choice: 0.35
+ * in front (bodies about 0.36 apart, against 0.41 in the standard hold)
+ * and a draw-back of 0.08. The offset stays HOLD_OFFSET: real tango's is
+ * larger, but with feet STANCE_WIDTH apart her right foot only passes
+ * between his feet (a walk, the Back Corté) at an offset up to half the
+ * stance width, and a larger one would need every such step angled. The
+ * book's toe-level-with-heel draw-back (a whole foot length) would put
+ * her right foot on his toes. Provisional: judgement calls the owner
+ * agreed from sketches, not measurements.
+ */
+export const TANGO_HOLD: HoldShape = {
+  offset: HOLD_OFFSET,
+  distance: 0.35,
+  promenadeDistance: 0.38,
+  drawBack: 0.08,
+};
+
+export const HOLD_SHAPES: Record<HoldKind, HoldShape> = {
+  standard: {
+    offset: HOLD_OFFSET,
+    distance: PARTNER_DISTANCE,
+    promenadeDistance: PARTNER_DISTANCE,
+    drawBack: 0,
+  },
+  tango: TANGO_HOLD,
+};
+
+/** The hold a figure of `style` dances in: only ballroom tango ("tango")
+ *  has its own. */
+export function holdForStyle(style: string): HoldKind {
+  return style === "tango" ? "tango" : "standard";
+}
+
+/** Whether `foot` is the one a hold draws back: the lead's right, the
+ *  follow's left. */
+export function isDrawnBack(partner: Partner, foot: Foot): boolean {
+  return partner === "lead" ? foot === "right" : foot === "left";
+}
+
+/**
  * Named positions a figure can start or end in (`start`, and
  * `expectEnd.stance`):
  * - "closed": closed hold. The midpoint of the lead's feet is at the
  *   origin, the lead faces line of dance (0) and the follow faces him
- *   (180), PARTNER_DISTANCE in front and HOLD_OFFSET to his right.
+ *   (180), the hold's `distance` in front and `offset` to his right
+ *   (see HoldShape; in ballroom tango his right foot and her left are
+ *   drawn back).
  * - "crossed promenade": the position a whisk ends in. Each partner has
  *   opened an eighth from closed hold (the lead to his left, the follow
  *   to her right) into a V that opens to the lead's left, and has the
@@ -156,21 +228,23 @@ export const FOOT: Record<ShortFoot, Foot> = { L: "left", R: "right" };
 export const OTHER: Record<Foot, Foot> = { left: "right", right: "left" };
 
 /** Feet positions of a named stance, with each partner standing on the
- *  given foot. */
+ *  given foot, in the given hold. */
 export function stancePose(
   stance: StanceName,
   standing: Record<Partner, Foot>,
+  hold: HoldKind = "standard",
 ): Pose {
   const half = STANCE_WIDTH / 2;
+  const shape = HOLD_SHAPES[hold];
   const weight = (partner: Partner, foot: Foot) =>
     standing[partner] === foot ? 1 : 0;
   switch (stance) {
     case "crossed promenade":
-      return crossedPromenadePose(weight);
+      return crossedPromenadePose(weight, shape);
     case "promenade apart":
-      return promenadeApartPose(weight);
+      return promenadeApartPose(weight, shape);
     case "tango promenade":
-      return tangoPromenadePose(weight);
+      return tangoPromenadePose(weight, shape);
     case "contra check":
       // A compact CBMP check. Feet retain their forward/back line while the bodies turn 15° left.
       // This is also the recovery's exact entry: no boundary repositioning.
@@ -193,13 +267,13 @@ export function stancePose(
         },
         follow: {
           left: {
-            position: { x: HOLD_OFFSET + half, y: PARTNER_DISTANCE },
+            position: { x: shape.offset + half, y: shape.distance },
             weight: weight("follow", "left"),
           },
           right: {
             position: {
-              x: HOLD_OFFSET - half + CONTRA_CHECK_INWARD,
-              y: PARTNER_DISTANCE + CONTRA_CHECK_ADVANCE,
+              x: shape.offset - half + CONTRA_CHECK_INWARD,
+              y: shape.distance + CONTRA_CHECK_ADVANCE,
             },
             weight: weight("follow", "right"),
             direction: 180,
@@ -221,37 +295,46 @@ export function stancePose(
       };
       return { lead: partner("lead", 0), follow: partner("follow", 180) };
     }
-    case "closed":
+    case "closed": {
+      // The lead's feet straddle the origin, his right foot drawn back
+      // (shape.drawBack, 0 outside tango). Her left foot is `offset` to
+      // the right of his right foot and `distance` in front of it, and
+      // her right foot is STANCE_WIDTH to her right and drawBack nearer
+      // him. In the standard hold she is HOLD_OFFSET to his right: her
+      // right foot is straight in front of the middle of his feet, so his
+      // right foot is in line with the gap between hers.
+      const back = shape.drawBack / 2;
+      const followLeft = {
+        x: half + shape.offset,
+        y: shape.distance - back,
+      };
       return {
         lead: {
           left: {
-            position: { x: -half, y: 0 },
+            position: { x: -half, y: back },
             weight: weight("lead", "left"),
           },
           right: {
-            position: { x: half, y: 0 },
+            position: { x: half, y: 0 - back },
             weight: weight("lead", "right"),
           },
           orientation: 0,
           rise: 0,
         },
-        // Facing the lead, so her left foot is on the east (+x) side,
-        // and HOLD_OFFSET to his right: her right foot is straight in
-        // front of the middle of his feet, so his right foot is in
-        // line with the gap between hers.
         follow: {
-          left: {
-            position: { x: HOLD_OFFSET + half, y: PARTNER_DISTANCE },
-            weight: weight("follow", "left"),
-          },
+          left: { position: followLeft, weight: weight("follow", "left") },
           right: {
-            position: { x: HOLD_OFFSET - half, y: PARTNER_DISTANCE },
+            position: {
+              x: followLeft.x - STANCE_WIDTH,
+              y: followLeft.y - shape.drawBack,
+            },
             weight: weight("follow", "right"),
           },
           orientation: 180,
           rise: 0,
         },
       };
+    }
   }
 }
 
@@ -277,6 +360,7 @@ export function stancePose(
  */
 function crossedPromenadePose(
   weight: (partner: Partner, foot: Foot) => number,
+  shape: HoldShape,
 ): Pose {
   const crossed = (standingFoot: Point2D, facing: number, across: number) =>
     addPoints(
@@ -287,7 +371,7 @@ function crossedPromenadePose(
       scalePoint(headingToUnitVector(facing + 90), across),
     );
   const leadRight = { x: 0, y: 0 };
-  const followLeft = { x: HOLD_OFFSET, y: PARTNER_DISTANCE };
+  const followLeft = { x: shape.offset, y: shape.distance };
   return {
     lead: {
       left: {
@@ -332,6 +416,7 @@ function crossedPromenadePose(
  */
 function promenadeApartPose(
   weight: (partner: Partner, foot: Foot) => number,
+  shape: HoldShape,
 ): Pose {
   // Back along the line of travel (-x) is +x.
   const back = { x: PROMENADE_SIDE_STEP, y: 0 };
@@ -342,8 +427,8 @@ function promenadeApartPose(
     );
   const leadLeft = { x: 0, y: 0 };
   const followRight = {
-    x: HOLD_OFFSET,
-    y: PARTNER_DISTANCE + 2 * PROMENADE_SEPARATION,
+    x: shape.offset,
+    y: shape.distance + 2 * PROMENADE_SEPARATION,
   };
   return {
     lead: {
@@ -375,20 +460,23 @@ function promenadeApartPose(
  *
  * - Lead: right foot at (0, 0); left foot TANGO_PROMENADE_WIDTH along
  *   the line of travel, at (-0.6, 0).
- * - Follow: left foot PARTNER_DISTANCE across the line and HOLD_OFFSET
- *   behind along it, at (0.1, 0.4), where it was in closed hold; right
- *   foot TANGO_PROMENADE_WIDTH along the line, at (-0.5, 0.4).
+ * - Follow: left foot the hold's `distance` across the line and its
+ *   `offset` behind along it, where it was in closed hold (at (0.1, 0.38) in the tango hold); right foot TANGO_PROMENADE_WIDTH along
+ *   the line.
  *
- * Unlike "promenade apart", the partners
- * keep closed hold's distance. The weights come from `weight`, normally
- * on the inside feet.
+ * Unlike "promenade apart", the partners stand about closed hold's
+ * distance apart. In the tango hold it is a little more than the compact
+ * closed distance: at 0.35 the inside legs (his right, her left) touch as
+ * the hips open into the V. The weights come from `weight`, normally on
+ * the inside feet.
  */
 function tangoPromenadePose(
   weight: (partner: Partner, foot: Foot) => number,
+  shape: HoldShape,
 ): Pose {
   const out = { x: -TANGO_PROMENADE_WIDTH, y: 0 };
   const leadRight = { x: 0, y: 0 };
-  const followLeft = { x: HOLD_OFFSET, y: PARTNER_DISTANCE };
+  const followLeft = { x: shape.offset, y: shape.promenadeDistance };
   return {
     lead: {
       left: {

@@ -8,7 +8,11 @@ import type BetterSqlite3 from "better-sqlite3";
 
 import { openTestDatabase } from "../support/database.mts";
 import { loadFigures } from "../../db/figures/index.mts";
-import { STANCE_NAMES, stancePose } from "../../src/libs/dance/authoring.mts";
+import {
+  STANCE_NAMES,
+  holdForStyle,
+  stancePose,
+} from "../../src/libs/dance/authoring.mts";
 import { applyTransform, fitTransform } from "../../src/libs/dance/floor.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
@@ -124,12 +128,17 @@ test("seed: every figure starts exactly in a named stance's own frame", () => {
   // Figures are authored in the frame of the stance they start in (closed
   // hold facing 0, crossed promenade facing 315; see stancePose and the
   // dance AGENTS.md); placement belongs to the sequence's transform. The
-  // feet and facings must match one stance; weights may differ.
-  const stances = STANCE_NAMES.map((name) => ({
-    name,
-    pose: stancePose(name, { lead: "left", follow: "right" }),
-  }));
+  // feet and facings must match one stance, in the figure's hold;
+  // weights may differ.
   for (const figure of figures) {
+    const stances = STANCE_NAMES.map((name) => ({
+      name,
+      pose: stancePose(
+        name,
+        { lead: "left", follow: "right" },
+        holdForStyle(figure.style),
+      ),
+    }));
     const match = stances.find(
       ({ pose }) =>
         maxFootDistance(figure.startPose, pose) < POSITION_EPSILON &&
