@@ -20,6 +20,13 @@ import type { Pose } from "../../src/libs/dance/pose.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
+import { DEFAULT_PROPORTIONS } from "../../src/libs/body/proportions.mts";
+import { TANGO_LEG_CONTACT } from "../../src/libs/body/legContact.mts";
+
+/** Solves the couple in ballroom tango's hold, as the 3D view does. */
+function solveTango(pose: Pose) {
+  return solveSkeleton(pose, DEFAULT_PROPORTIONS, "tango");
+}
 
 function definition(file: string) {
   return parseFigureDefinition(
@@ -70,19 +77,19 @@ function assertPoseClose(actual: Pose, expected: Pose) {
 test("Closed Promenade: retains the original connection poses and S Q Q S phrasing", () => {
   assertPoseClose(
     promenade.startPose,
-    stancePose("tango promenade", { lead: "right", follow: "left" }),
+    stancePose("tango promenade", { lead: "right", follow: "left" }, "tango"),
   );
-  // Actual resolved endpoint before the adjustment, including the historical
-  // rounded third-step offsets. Pin the world positions, not just a fitted
-  // closed stance, so shortening a stride cannot silently shorten the chain.
+  // The resolved endpoint in tango hold, including the historical rounded
+  // third-step offsets. Pin the world positions, not just a fitted closed
+  // stance, so shortening a stride cannot silently shorten the chain.
   const originalEnd: Pose = {
     lead: {
       left: {
-        position: { x: -1.6994398256692884, y: 0.14990663761154827 },
+        position: { x: -1.6994398256836465, y: 0.14990663761154654 },
         weight: 0,
       },
       right: {
-        position: { x: -1.4994398256692885, y: 0.14990663761154802 },
+        position: { x: -1.4994398256836468, y: 0.06990663761154604 },
         weight: 1,
       },
       orientation: 0,
@@ -90,11 +97,11 @@ test("Closed Promenade: retains the original connection poses and S Q Q S phrasi
     },
     follow: {
       left: {
-        position: { x: -1.3994398256692884, y: 0.549906637611548 },
+        position: { x: -1.3994398256836469, y: 0.4199066376115471 },
         weight: 1,
       },
       right: {
-        position: { x: -1.5994398256692883, y: 0.549906637611548 },
+        position: { x: -1.599439825683647, y: 0.33990663761154694 },
         weight: 0,
       },
       orientation: 180,
@@ -165,7 +172,7 @@ test("Closed Promenade: default bodies reach every foot with at most 16 cm of hi
   // Keep the shared comfort limit, without changing body sizes or the solver.
   for (const options of [{}, { footEasing: footEase }]) {
     for (let beat = 0; beat <= 3; beat += 1 / 128) {
-      const skeleton = solveSkeleton(poseAtBeat(promenade, beat, options));
+      const skeleton = solveTango(poseAtBeat(promenade, beat, options));
       for (const partner of ["lead", "follow"] as const) {
         assert.deepEqual(skeleton[partner].legShortfall, { left: 0, right: 0 });
         assert.ok(
@@ -179,11 +186,13 @@ test("Closed Promenade: default bodies reach every foot with at most 16 cm of hi
 
 // Match the visible mannequin thigh/shin radii. Test every pair of distinct
 // legs, including each dancer's own legs: footprint centres missed this.
+// A dancer's own legs must stay clear; the partners' may touch, pressing
+// in up to TANGO_LEG_CONTACT as the body solver allows in tango.
 test("Closed Promenade: thighs and shins clear while hips nearly touch", () => {
   for (const options of [{}, { footEasing: footEase }]) {
     let nearestHips = Infinity;
     for (let beat = 0; beat <= 3; beat += 1 / 256) {
-      const bodies = solveSkeleton(poseAtBeat(promenade, beat, options));
+      const bodies = solveTango(poseAtBeat(promenade, beat, options));
       const bones = [];
       for (const partner of ["lead", "follow"] as const)
         for (const side of ["left", "right"] as const) {
@@ -211,8 +220,10 @@ test("Closed Promenade: thighs and shins clear while hips nearly touch", () => {
             b = bones[k];
           if (a.partner === b.partner && a.side === b.side) continue;
           const gap = segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r;
+          const allowed =
+            a.partner === b.partner ? 0 : TANGO_LEG_CONTACT + 1e-6;
           assert.ok(
-            gap >= 0,
+            gap >= -allowed,
             `Leg overlap ${gap} m at beat ${beat}: ${a.partner} ${a.side} / ${b.partner} ${b.side}`,
           );
         }
@@ -237,7 +248,7 @@ test("Closed Promenade: thighs and shins clear while hips nearly touch", () => {
   }
   const first = poseAtBeat(promenade, 1);
   assert.ok(Math.abs(first.lead.left.position.y + 0.06) < 1e-8);
-  assert.ok(Math.abs(first.follow.right.position.y - 0.46) < 1e-8);
+  assert.ok(Math.abs(first.follow.right.position.y - 0.44) < 1e-8);
 });
 
 test("Closed Promenade: the outer feet pass under the hips without a wide side swing", () => {
@@ -245,7 +256,7 @@ test("Closed Promenade: the outer feet pass under the hips without a wide side s
     const nearest = { lead: Infinity, follow: Infinity };
     for (let beat = 1.5; beat <= 2; beat += 1 / 256) {
       const pose = poseAtBeat(promenade, beat, options);
-      const skeleton = solveSkeleton(pose);
+      const skeleton = solveTango(pose);
       for (const partner of ["lead", "follow"] as const) {
         const foot =
           pose[partner][partner === "lead" ? "left" : "right"].position;

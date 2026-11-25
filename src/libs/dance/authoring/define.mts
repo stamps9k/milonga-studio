@@ -44,7 +44,13 @@ import {
   turnDegrees,
 } from "./moves.mts";
 import type { PartnerState } from "./moves.mts";
-import { FOOT, OTHER, stancePose } from "./stances.mts";
+import {
+  FOOT,
+  HOLD_SHAPES,
+  OTHER,
+  holdForStyle,
+  stancePose,
+} from "./stances.mts";
 import type { StanceName } from "./stances.mts";
 
 function parseTime(time: string, name: string): TimeSignature {
@@ -129,7 +135,11 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
   });
 
   const start = definition.start ?? "closed";
-  const startPose = stancePose(start, inferStanding(rows, name, start));
+  // Ballroom tango dances in its own, more compact hold (see TANGO_HOLD):
+  // its stances, closes and hold check use that hold's shape.
+  const hold = holdForStyle(definition.style);
+  const holdShape = HOLD_SHAPES[hold];
+  const startPose = stancePose(start, inferStanding(rows, name, start), hold);
   const state: Record<Partner, PartnerState> = {
     lead: {
       position: {
@@ -353,7 +363,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         // Where the written step would put his foot, without changing
         // his state yet.
         const scratch = structuredClone(state.lead);
-        applyMove("lead", move, foot, scratch, label, where);
+        applyMove("lead", move, foot, scratch, label, where, holdShape);
         const displacement = subPoints(scratch.position[foot], leadFrom);
         const centre = row.turnCentre ?? defaultTurnCentre(move);
         const t = TURN_CENTRE_FRACTION[centre];
@@ -430,6 +440,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         state[partner],
         label,
         `${where} (${partner})`,
+        holdShape,
       );
       if (followsSupport) {
         state[partner].orientation = savedFacing;
@@ -545,11 +556,12 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       rowEnds,
       carriedTurn,
       rows.map((row) => row.hold),
+      hold,
     );
   }
 
   if (definition.expectEnd) {
-    checkExpectedEnd(name, definition.expectEnd, endPose);
+    checkExpectedEnd(name, definition.expectEnd, endPose, hold);
   }
   if (definition.expectBeats !== undefined) {
     const beats = figureDurationBeats(figure);

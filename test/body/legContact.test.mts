@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   LEG_CONTACT,
   LEG_RADII,
+  legContactFor,
   MAX_KNEE_SWING,
   segmentDistance,
   slideKnees,
@@ -17,6 +18,7 @@ import type { CoupleSkeleton } from "../../src/libs/body/skeleton.mts";
 import { distance } from "../../src/libs/body/vector3.mts";
 import {
   defineFigure,
+  holdForStyle,
   parseFigureDefinition,
   stancePose,
 } from "../../src/libs/dance/authoring.mts";
@@ -127,35 +129,50 @@ test("slideKnees swings a pressing knee round its hip-ankle line until the legs 
   );
 });
 
-test("every figure: partners' legs at most touch, with knees swinging smoothly", () => {
-  // 1/128 beat is under 10 ms at the fastest default tempo; a swing
-  // changing more than a few degrees in that time would show as a jump.
+test("every figure: partners' legs at most touch, with knees sliding smoothly", () => {
+  // How far a knee is moved from its natural bend may change by at most
+  // KNEE_STEP between samples 1/128 beat apart (under 10 ms at the
+  // fastest default tempo): faster than that, the slide would show as a
+  // flick. Distance, not swing angle: a big swing of a nearly straight
+  // leg moves the knee only millimetres. Provisional, set just above the
+  // largest current step (about 7 mm in the Back Corté).
+  const KNEE_STEP = 0.008;
   const step = 1 / 128;
   for (const figure of loadFigures()) {
+    const hold = holdForStyle(figure.style);
+    const contact = legContactFor(hold);
     const beats = Math.max(...figure.steps.map((s) => s.beat - 1 + s.duration));
     for (const options of [{}, { footEasing: footEase }]) {
       let previous: number[] | null = null;
       for (let beat = 0; beat <= beats + 1e-9; beat += step) {
-        const couple = solveSkeleton(poseAtBeat(figure, beat, options));
+        const pose = poseAtBeat(figure, beat, options);
+        const couple = solveSkeleton(pose, DEFAULT_PROPORTIONS, hold);
         const gap = partnerLegGap(couple);
         assert.ok(
-          gap >= -LEG_CONTACT - 1e-6,
+          gap >= -contact - 1e-6,
           `${figure.name}: legs press in ${gap} m at beat ${beat}`,
         );
-        const swings = [
-          couple.lead.kneeSwing.left,
-          couple.lead.kneeSwing.right,
-          couple.follow.kneeSwing.left,
-          couple.follow.kneeSwing.right,
-        ];
+        const shifts = (["lead", "follow"] as const).flatMap((partner) => {
+          const natural = solvePartnerSkeleton(
+            pose[partner],
+            DEFAULT_PROPORTIONS[partner],
+            partner,
+            hold,
+          ).joints;
+          const slid = couple[partner].joints;
+          return [
+            distance(slid.leftLowerLeg, natural.leftLowerLeg),
+            distance(slid.rightLowerLeg, natural.rightLowerLeg),
+          ];
+        });
         if (previous !== null)
-          swings.forEach((swing, i) =>
+          shifts.forEach((shift, i) =>
             assert.ok(
-              Math.abs(swing - previous![i]) <= 5,
-              `${figure.name}: a knee swings ${swing - previous![i]} degrees in one frame at beat ${beat}`,
+              Math.abs(shift - previous![i]) <= KNEE_STEP,
+              `${figure.name}: a knee slides ${shift - previous![i]} m in one sample at beat ${beat}`,
             ),
           );
-        previous = swings;
+        previous = shifts;
       }
     }
   }

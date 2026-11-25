@@ -26,49 +26,50 @@ import { bodyPosition } from "../weight.mts";
 import { FigureError } from "./definition.mts";
 import type { ExpectedEnd, FootCheck, StepRow } from "./definition.mts";
 import { turnDegrees } from "./moves.mts";
-import {
-  FOOT,
-  HOLD_OFFSET,
-  OTHER,
-  PARTNER_DISTANCE,
-  stancePose,
-} from "./stances.mts";
+import { FOOT, HOLD_SHAPES, OTHER, stancePose } from "./stances.mts";
+import type { HoldKind } from "./stances.mts";
 
 /**
- * The hold positions checkHold recognises, as where the follow's centre
- * of weight is from the lead's (centerOfWeight) and how she faces
- * relative to him, at the end of a row:
- * - closed hold: facing him (follow's facing minus lead's = 180),
- *   HOLD_OFFSET to his right and PARTNER_DISTANCE in front, in his
- *   facing;
+ * The hold positions checkHold recognises in a hold of the given kind,
+ * as where the follow's centre of weight is from the lead's
+ * (centerOfWeight) and how she faces relative to him, at the end of a
+ * row:
+ * - closed hold: facing him (follow's facing minus lead's = 180), the
+ *   hold's `offset` to his right and `distance` in front, in his facing
+ *   (in ballroom tango, where the closed stance is measured from the
+ *   drawn-back feet, that's where she is while each stands on that foot);
  * - promenade: the V (270, as the promenade stances have it: him 315,
  *   her 225), measured in the closed hold the couple opened from (his
- *   facing + 45): HOLD_OFFSET to the right and 0.55 in front. Where the
- *   promenade stances put the weighted feet she is 0.40 to 0.68 in front
- *   in that frame (tango promenade, promenade apart, crossed promenade),
- *   so the middle of that range is used.
+ *   facing + 45): `offset` to the right and `promenadeDistance` + 0.15
+ *   in front.
+ *   In the standard hold the promenade stances put the weighted feet
+ *   0.40 to 0.68 in front in that frame (tango promenade, promenade
+ *   apart, crossed promenade), so the middle of that range is used.
  */
-const HOLD_POSITIONS: readonly {
+function holdPositions(hold: HoldKind): {
   name: string;
   /** The follow's facing minus the lead's, degrees. */
   facing: number;
   /** Turn from the lead's facing to the frame `at` is measured in. */
   frame: number;
   at: Point2D;
-}[] = [
-  {
-    name: "closed hold",
-    facing: 180,
-    frame: 0,
-    at: { x: HOLD_OFFSET, y: PARTNER_DISTANCE },
-  },
-  {
-    name: "promenade",
-    facing: 270,
-    frame: 45,
-    at: { x: HOLD_OFFSET, y: 0.55 },
-  },
-];
+}[] {
+  const { offset, distance, promenadeDistance } = HOLD_SHAPES[hold];
+  return [
+    {
+      name: "closed hold",
+      facing: 180,
+      frame: 0,
+      at: { x: offset, y: distance },
+    },
+    {
+      name: "promenade",
+      facing: 270,
+      frame: 45,
+      at: { x: offset, y: promenadeDistance + 0.15 },
+    },
+  ];
+}
 
 /** How far the follow's horizontal body position may be from a hold position at
  *  the end of a row, in metres, and how far her facing may be from it,
@@ -82,7 +83,7 @@ export const HOLD_FACING_TOLERANCE = 30;
 /**
  * The "hold" check: at the end of every row, once all of its steps have
  * finished, the partners must be in a recognised hold position. Unmarked
- * rows use HOLD_POSITIONS; an explicit row hold selects its own reference
+ * rows use holdPositions; an explicit row hold selects its own reference
  * with the same tolerances, without granting it to other rows. The model has no arms, so this stands in for them:
  * it catches a figure whose separately written steps leave one partner
  * out of reach of the other mid-figure. Mirrored (`both`) steps keep the
@@ -99,7 +100,10 @@ export function checkHold(
   rowEnds: Map<number, number>,
   carriedTurn: readonly number[],
   rowHolds: readonly StepRow["hold"][],
+  hold: HoldKind = "standard",
 ): void {
+  const positions = holdPositions(hold);
+  const { offset, distance } = HOLD_SHAPES[hold];
   for (const [row, beat] of [...rowEnds].sort((a, b) => a[0] - b[0])) {
     const pose = poseAtBeat(figure, beat);
     const lead = bodyPosition(pose.lead);
@@ -126,15 +130,15 @@ export function checkHold(
           ]
         : pose.lead.bodyOffset || pose.follow.bodyOffset
           ? [
-              ...HOLD_POSITIONS,
+              ...positions,
               {
                 name: "contact promenade",
                 facing: 270,
                 frame: 45,
-                at: { x: HOLD_OFFSET, y: 0.27 },
+                at: { x: offset, y: distance - 0.13 },
               },
             ]
-          : HOLD_POSITIONS;
+          : positions;
     const misses = holds.map((hold) => {
       // Smallest angle between her facing and the hold's, 0-180.
       const turnedBy = Math.abs(
@@ -335,6 +339,7 @@ export function checkExpectedEnd(
   name: string,
   expected: ExpectedEnd,
   actual: Pose,
+  hold: HoldKind = "standard",
 ): void {
   const problems: string[] = [];
   const feet: [Partner, Foot][] = [
@@ -361,7 +366,11 @@ export function checkExpectedEnd(
         },
         rotation: turnDegrees(expected.turned),
       },
-      stancePose(expected.stance, { lead: leadFoot, follow: OTHER[leadFoot] }),
+      stancePose(
+        expected.stance,
+        { lead: leadFoot, follow: OTHER[leadFoot] },
+        hold,
+      ),
     );
     for (const [partner, foot] of feet) {
       const a = actual[partner][foot].position;

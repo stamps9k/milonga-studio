@@ -18,8 +18,16 @@ import type { Pose } from "../../src/libs/dance/pose.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
+import { DEFAULT_PROPORTIONS } from "../../src/libs/body/proportions.mts";
+
 import { assessLateralBalance } from "../../src/libs/body/balance.mts";
 import { segmentDistance } from "../support/legClearance.mts";
+import { TANGO_LEG_CONTACT } from "../../src/libs/body/legContact.mts";
+
+/** Solves the couple in ballroom tango's hold, as the 3D view does. */
+function solveTango(pose: Pose) {
+  return solveSkeleton(pose, DEFAULT_PROPORTIONS, "tango");
+}
 
 function definition(file: string) {
   return parseFigureDefinition(
@@ -65,14 +73,15 @@ function connection(actual: Pose, expected: Pose) {
 function endPose(): Pose {
   return {
     lead: {
-      left: { position: { x: 0.2, y: -1.2 }, weight: 0 },
-      right: { position: { x: 0.2, y: -1 }, weight: 1 },
+      left: { position: { x: 0.2, y: -1.24 }, weight: 0 },
+      // Closed in tango hold: his right foot 0.08 behind his left.
+      right: { position: { x: 0.28, y: -1.04 }, weight: 1 },
       orientation: 270,
       rise: 0,
     },
     follow: {
-      left: { position: { x: -0.2, y: -0.9 }, weight: 1 },
-      right: { position: { x: -0.2, y: -1.1 }, weight: 0 },
+      left: { position: { x: -0.07, y: -0.94 }, weight: 1 },
+      right: { position: { x: 0.01, y: -1.14 }, weight: 0 },
       orientation: 90,
       rise: 0,
     },
@@ -82,7 +91,7 @@ function endPose(): Pose {
 test("Back Corté: original entry/exit poses, phrasing and foot order are preserved", () => {
   connection(
     corte.startPose,
-    stancePose("closed", { lead: "right", follow: "left" }),
+    stancePose("closed", { lead: "right", follow: "left" }, "tango"),
   );
   connection(corte.endPose, endPose());
   connection(poseAtBeat(corte, 3), endPose());
@@ -103,27 +112,29 @@ test("Back Corté: original entry/exit poses, phrasing and foot order are preser
       steps.map((s) => s.orientation),
       partner === "lead" ? [0, 0, 315, 270] : [180, 180, 135, 90],
     );
-    assert.deepEqual(
-      steps.slice(0, 2).map((s) => s.movement),
-      [
-        { type: "straight", direction: 180, distance: 0.5 },
-        { type: "straight", direction: 180, distance: 1 },
-      ],
-    );
+    // Straight back; the second step is shorter than the first because
+    // it starts from the drawn-back right foot.
+    steps.slice(0, 2).forEach((s, i) => {
+      assert.equal(s.movement.type, "straight");
+      if (s.movement.type === "straight") {
+        close(s.movement.direction, 180);
+        close(s.movement.distance, [0.5, 0.92][i]);
+      }
+    });
   }
-  // Every original landing remains fixed, including the third step before
-  // the close. The lead's foot points earlier; body facing and travel do not.
+  // Every landing is pinned, including the third step before the close.
+  // The lead's foot points earlier; body facing and travel do not.
   const third = poseAtBeat(corte, 2);
   close(third.lead.left.position.x, 0.2);
-  close(third.lead.left.position.y, -1.2);
-  close(third.follow.right.position.x, -0.2);
-  close(third.follow.right.position.y, -1.1);
+  close(third.lead.left.position.y, -1.24);
+  close(third.follow.right.position.x, 0.01);
+  close(third.follow.right.position.y, -1.14);
+  // Her third step curves round the front, away from his standing right
+  // foot, so her right leg passes beside his rather than through it, and
+  // lands pointing where she will face after the close, like his left.
   const follow = corte.steps.filter((s) => s.partner === "follow")[2];
-  assert.equal(follow.movement.type, "straight");
-  if (follow.movement.type === "straight") {
-    close(follow.movement.direction, 191.30993247402012);
-    close(follow.movement.distance, 1.0198039027185564);
-  }
+  assert.equal(follow.movement.type, "arc");
+  if (follow.movement.type === "arc") assert.equal(follow.movement.setOff, 45);
   const lead = corte.steps.filter((s) => s.partner === "lead")[2];
   assert.equal(lead.footDirection, 270);
   assert.equal(lead.movement.type, "arc");
@@ -171,7 +182,7 @@ test("Back Corté: reach, hip lowering and lateral balance hold throughout", () 
   for (const options of [{}, { footEasing: footEase }])
     for (let beat = 0; beat <= 3; beat += 1 / 256) {
       const p = poseAtBeat(corte, beat, options),
-        s = solveSkeleton(p);
+        s = solveTango(p);
       for (const partner of ["lead", "follow"] as const) {
         assert.deepEqual(s[partner].legShortfall, { left: 0, right: 0 });
         assert.ok(s[partner].hipDrop <= 0.13);
@@ -184,12 +195,13 @@ test("Back Corté: reach, hip lowering and lateral balance hold throughout", () 
 });
 
 test("Back Corté: the repaired turn and close clear full thigh/shin capsules", () => {
-  // Scope this extra proxy check to the repaired turn/close. The unchanged
-  // first walking phase has an existing ~1 cm inter-partner capsule overlap;
-  // it is not a foot-outline failure and would need separate technique review.
+  // Scope this extra proxy check to the turn and close. A dancer's own legs
+  // keep 5 mm clear; the partners' may touch, pressing in up to
+  // TANGO_LEG_CONTACT as the body solver allows in tango (the whole figure
+  // is covered by test/body/legContact.test.mts).
   for (const options of [{}, { footEasing: footEase }])
     for (let beat = 1.5; beat <= 3; beat += 1 / 256) {
-      const s = solveSkeleton(poseAtBeat(corte, beat, options));
+      const s = solveTango(poseAtBeat(corte, beat, options));
       const bones = [];
       for (const partner of ["lead", "follow"] as const)
         for (const side of ["left", "right"] as const) {
@@ -216,8 +228,10 @@ test("Back Corté: the repaired turn and close clear full thigh/shin capsules", 
           const a = bones[i],
             b = bones[k];
           if (a.partner === b.partner && a.side === b.side) continue;
+          const needed =
+            a.partner === b.partner ? 0.005 : -TANGO_LEG_CONTACT - 1e-6;
           assert.ok(
-            segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
+            segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= needed,
             `Leg clearance at ${beat}: ${a.partner} ${a.side} / ${b.partner} ${b.side}`,
           );
         }

@@ -55,7 +55,10 @@ frontend and a small Express + SQLite API.
   `legContact.mts` keeps the partners' legs from passing through each
   other: where they would, a knee swings sideways round its hip-ankle line
   (hips and feet stay put), and `test/body/legContact.test.mts` checks every
-  figure.
+  figure. `solveSkeleton` takes the figure's hold (`holdForStyle`; the 3D
+  renderer passes the style of the figure at the current beat): ballroom
+  tango's has its own arm placement, keeps the knees flexed 4 cm and allows
+  2 cm of leg contact, where the right thighs meet.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;

@@ -4,11 +4,11 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description: walk forward slow, slow; then quick, quick into promenade. Named after the standard Walks and Progressive Link. In the book the link's first quick is a small step forward and its second side and slightly back; the owner steps wide on the first quick and changes weight back on the second, ending in the same place. Walks are straight (real tango walks curve gradually left), with no rise. The tango hold is the waltz closed hold; real tango's offset is larger. 2/4: a slow is one beat. Reviewed by the owner (2026-11-19).",
+  "notes": "Owner's description: walk forward slow, slow; then quick, quick into promenade. Named after the standard Walks and Progressive Link. In the book the link's first quick is a small step forward and its second side and slightly back; the owner steps wide on the first quick and changes weight back on the second, ending in the same place. Walks are straight (real tango walks curve gradually left), with no rise. From the tango hold's staggered closed position the follow's second walk and link step are her own. 2/4: a slow is one beat. Reviewed by the owner (2026-11-19).",
   "steps": [
     {
       "both": "forward",
-      "by": 0.5,
+      "by": 0.46,
       "foot": "L",
       "length": "S",
       "label": {
@@ -17,13 +17,17 @@
       }
     },
     {
-      "both": "forward",
-      "by": 1.0,
-      "length": "S",
-      "label": {
-        "lead": "walk forward",
-        "follow": "walk back"
-      }
+      "lead": {
+        "go": "forward",
+        "by": 1.04,
+        "label": "walk forward"
+      },
+      "follow": {
+        "go": "back",
+        "by": 1.07,
+        "label": "walk back"
+      },
+      "length": "S"
     },
     {
       "lead": {
@@ -38,7 +42,7 @@
       },
       "follow": {
         "go": {
-          "forward": -0.5,
+          "forward": -0.69,
           "right": 0.4
         },
         "turn": {

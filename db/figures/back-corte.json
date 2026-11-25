@@ -4,7 +4,7 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description: slow, quick, quick, slow, the lead stepping straight back and closing on the last slow, turning a quarter to the left over the last two steps; from the end of Closed Promenade into closed hold. Standard name; the owner's version differs from the book, which starts on the lead's right and has a side step on 3: here the lead starts on his left (Closed Promenade leaves him on his right), every travelling step goes back, and the third is slightly to the side. His third step curves round outside his standing foot. 2/4: a slow is one beat. Reviewed by the owner (2026-11-19).",
+  "notes": "Owner's description: slow, quick, quick, slow, the lead stepping straight back and closing on the last slow, turning a quarter left over the last two steps; from Closed Promenade into closed hold. Standard name; the book starts on the lead's right with a side step on 3, the owner starts on his left (where Closed Promenade leaves him) and every travelling step goes back, the third slightly to the side, curving round outside his standing foot. Her third curves round the front of his right leg and points, like his, the way they face after the close. 2/4. Reviewed by the owner (2026-11-19).",
   "steps": [
     {
       "both": "back",
@@ -18,7 +18,7 @@
     },
     {
       "both": "back",
-      "by": 1,
+      "by": 0.92,
       "length": "Q",
       "label": {
         "lead": "back",
@@ -27,7 +27,7 @@
     },
     {
       "both": {
-        "forward": -0.7,
+        "forward": -0.78,
         "right": 0.3
       },
       "turn": {
@@ -39,13 +39,18 @@
         "follow": "forward, turning"
       },
       "path": {
-        "lead": "around the back"
+        "lead": "around the back",
+        "follow": "around the front"
       },
       "pathSetOff": {
-        "lead": -144
+        "lead": -144,
+        "follow": 45
       },
       "pointing": {
         "lead": {
+          "left": "1/8"
+        },
+        "follow": {
           "left": "1/8"
         }
       }
@@ -63,8 +68,8 @@
   "expectEnd": {
     "stance": "closed",
     "moved": {
-      "forward": -1.1,
-      "right": 0.2
+      "forward": -1.14,
+      "right": 0.24
     },
     "turned": {
       "left": "1/4"

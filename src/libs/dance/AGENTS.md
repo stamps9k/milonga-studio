@@ -160,6 +160,16 @@ These are implementation choices that have not been checked against real
 technique. Keep them labelled as provisional in comments, and raise them with
 the owner before building more on top of them.
 
+- Ballroom tango has its own hold (`HoldShape`, `TANGO_HOLD` in
+  `authoring/stances.mts`; `holdForStyle` picks it for style `"tango"`): 35 cm
+  apart in closed position, 38 cm in tango promenade (at 35 the inside legs
+  meet as the hips open into the V), the lead's right foot and the follow's
+  left drawn 8 cm back, and the waltz's 10 cm offset. The owner chose the
+  numbers from sketches. The book's toe-level-with-heel draw-back put her right
+  foot on his toes, and a larger offset makes her right foot track along his
+  right foot, so every step passing it would need angling. The stances, closes
+  (`applyMove`), hold check and `expectEnd` all take the figure's hold.
+
 - An arc sets off along the partner's frame orientation immediately
   before the step, turned by the arc's optional `setOff` (degrees, 0 when
   left out; `arcHeading` in `fold/paths.mts`). `defineFigure` builds arcs only
@@ -170,8 +180,8 @@ the owner before building more on top of them.
   clockwise from the dancer's facing before the step), as Closed
   Promenade does for shallow arcs almost along travel. Row `path` and
   `pathSetOff` can name lead and follow separately; an omitted partner
-  keeps the ordinary route (Back Corté curves only the lead's third
-  step). Both compile to `Movement.arc.setOff`.
+  keeps the ordinary route (Back Corté curves both partners' third
+  steps, each its own way). Both compile to `Movement.arc.setOff`.
   `"around the standing foot"` (`aroundStandingFoot`) is for big turns:
   the foot circles the standing foot in the direction of the step's
   turn, on the circle through its start and landing spots whose centre

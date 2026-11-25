@@ -365,6 +365,16 @@ origin facing +y (line of dance), with +x to his right.
 A stance is a named position for both partners, used by `start` and by
 `expectEnd`'s `stance`.
 
+Figures with style `"tango"` (ballroom tango) dance in tango's own, more
+compact hold, and their stances change to match: in `"closed"` the follow is
+35 cm in front instead of 40, the lead's right foot is drawn 8 cm back behind
+his left and the follow's left 8 cm behind her right (measured from those two
+feet, the ones the tango figures stand on), and in `"tango promenade"` she is
+38 cm across the line. A `close` in that hold keeps the stagger: the lead's
+right foot (the follow's left) closes 8 cm behind the standing foot, the other
+foot 8 cm in front. The offset to his right stays 10 cm. Every other style,
+Argentine tango included, uses the hold described below.
+
 - **`"closed"`**: closed hold. The midpoint of the lead's feet is at the origin,
   feet 20 cm apart. The lead faces line of dance and the follow faces him, 40 cm
   in front and 10 cm to his right (as in real closed hold, where the partners

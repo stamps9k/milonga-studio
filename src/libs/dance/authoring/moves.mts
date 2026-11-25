@@ -29,7 +29,8 @@ import type {
   TurnAmount,
   TurnCentre,
 } from "./definition.mts";
-import { OTHER, STANCE_WIDTH } from "./stances.mts";
+import { HOLD_SHAPES, OTHER, STANCE_WIDTH, isDrawnBack } from "./stances.mts";
+import type { HoldShape } from "./stances.mts";
 
 /** An action other than an offset: what a move holds once any offset
  *  has been turned into a direction and distance (resolveOffset). */
@@ -361,6 +362,7 @@ export function applyMove(
   state: PartnerState,
   label: string,
   where: string,
+  hold: HoldShape = HOLD_SHAPES.standard,
 ): Omit<DanceStep, "id" | "beat" | "duration"> {
   const before = state.orientation;
   const after = normalizeDegrees(before + turnDegrees(move.turn));
@@ -394,13 +396,26 @@ export function applyMove(
     // a right foot to its right (facing + 90). The feet end STANCE_WIDTH
     // apart, centre to centre, unless `by` gives the gap: in promenade a
     // close is narrower (0.1), or the closing foot would reach towards
-    // the partner's feet.
+    // the partner's feet. In a hold with a stagger (ballroom tango) the
+    // close keeps it: the drawn-back foot (the lead's right, the
+    // follow's left) closes hold.drawBack behind the standing foot along
+    // the facing, the other foot that much in front of it.
     const standingFoot = OTHER[foot];
     const side = headingToUnitVector(after + (foot === "left" ? -90 : 90));
-    const target = addPoints(
+    const beside = addPoints(
       state.position[standingFoot],
       scalePoint(side, move.by ?? STANCE_WIDTH),
     );
+    const target =
+      hold.drawBack === 0
+        ? beside
+        : addPoints(
+            beside,
+            scalePoint(
+              headingToUnitVector(after),
+              isDrawnBack(partner, foot) ? -hold.drawBack : hold.drawBack,
+            ),
+          );
     const delta = subPoints(target, start);
     distance = Math.hypot(delta.x, delta.y);
     // Compass heading of the delta (0 = +y, clockwise), see heading.mts.
