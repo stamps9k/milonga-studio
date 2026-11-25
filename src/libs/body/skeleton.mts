@@ -207,6 +207,8 @@ function solveArm(
   body: BodyProportions,
   facing: number,
   side: Foot,
+  /** A point the elbow bends towards, in place of out and down. */
+  elbowTowards?: Point3D,
 ): {
   elbow: Point3D;
   hand: Point3D;
@@ -219,7 +221,9 @@ function solveArm(
     wrist,
     body.upperArm,
     body.forearm,
-    add(outwards, vec(0, 0, -1)),
+    elbowTowards === undefined
+      ? add(outwards, vec(0, 0, -1))
+      : sub(elbowTowards, lerp3(shoulder, wrist, 0.5)),
   );
   const toWrist = sub(wrist, elbow);
   const reach = Math.hypot(toWrist.x, toWrist.y, toWrist.z);
@@ -275,8 +279,9 @@ export function solvePartnerSkeleton(
 
   // Feet: the model's foot position is the middle of the foot (as the
   // 2D view draws it). With a rise the heel lifts and the ball stays on
-  // the floor. A free foot (carrying less than half the weight) may also
-  // peel to reach further: beside or behind the body its heel lifts,
+  // the floor. A foot losing its weight may also peel to reach further
+  // (gradually as its weight falls from half to a quarter, fully below
+  // that, so the hips don't jump as the weight passes): beside or behind the body its heel lifts,
   // rolling over the ball (a back foot released as the weight goes
   // forward, or a free foot resting on its ball); well in front (more
   // than half a foot ahead of the hips) its toes lift, rolling back on
@@ -332,7 +337,12 @@ export function solvePartnerSkeleton(
       pitch === 0
         ? { ankle, ball, ends: { heel, toeTip } }
         : roll(overBallForPitch, Math.abs(pitch));
-    if (pose[side].weight >= 0.5) return landing;
+    // How far this foot may peel grows as its weight goes: not at all
+    // while it carries half the weight or more (so a foot shared evenly
+    // stays flat), fully once it carries a quarter or less, and
+    // gradually between, so the hips don't jump as the weight passes.
+    const freedom = smoothstep(0.5, 0.25, pose[side].weight);
+    if (freedom <= 0) return landing;
 
     const hip = add(hipJointFloor(side), vec(0, 0, standing));
     const reaches = (point: Point3D) =>
@@ -347,7 +357,7 @@ export function solvePartnerSkeleton(
       body.footLength / 2;
     const overBall = pitch === 0 ? behind : overBallForPitch;
     let low = Math.abs(pitch);
-    let high = Math.max(MAX_PEEL_DEGREES, low);
+    let high = Math.max(MAX_PEEL_DEGREES * freedom, low);
     if (!reaches(roll(overBall, high).ankle)) low = high;
     else {
       for (let i = 0; i < 30; i++) {
@@ -486,10 +496,12 @@ export function solvePartnerSkeleton(
  * Ballroom tango's hold (HoldKind "tango") is more compact, as commonly
  * taught: the joined hands lower (about her chin) and drawn in, so his
  * left elbow bends more; his right hand further round her back and a
- * little lower; and her left hand under his upper arm, nearer his
- * armpit, palm down with the fingers along the back of his arm
- * (`underArm`), not resting on top of it. Provisional judgement calls,
- * for the owner to judge from pictures.
+ * little lower; his right arm passing under her left arm; and her left
+ * arm lying along the top of his, her hand round the back of his upper
+ * arm (`underArm`), palm down, rather than resting on top of it
+ * (`arms`). The owner confirmed the arms against published
+ * descriptions of the tango hold. The distances are provisional
+ * judgement calls.
  */
 interface HoldPlacement {
   joinedOut: number;
@@ -502,6 +514,16 @@ interface HoldPlacement {
   /** Her left hand under his upper arm, behind it by this much (tango),
    *  rather than on top of it (0). */
   underArm: number;
+  /**
+   * Where the elbows of his right arm and her left arm bend to, or
+   * undefined for the usual out-and-down bend. In tango his right elbow
+   * aims `armpitOut` out to her left of her left shoulder joint and
+   * `armpitDown` below it, so his upper arm wraps round her side under
+   * her arm; her left elbow aims `herElbowAbove` above his, so her arm
+   * lies along the top of his. Without this both elbows bent out to the
+   * side, which on the closed side of a promenade is the same spot.
+   */
+  arms?: { armpitOut: number; armpitDown: number; herElbowAbove: number };
 }
 const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
   standard: {
@@ -520,9 +542,10 @@ const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
     bladeBehind: 0.07,
     bladeIn: 0.08,
     bladeDown: 0.16,
-    upperArmAlong: 0.4,
-    upperArmAbove: -0.03,
-    underArm: 0.05,
+    upperArmAlong: 0.5,
+    upperArmAbove: 0.02,
+    underArm: 0.07,
+    arms: { armpitOut: 0.15, armpitDown: 0.14, herElbowAbove: 0.06 },
   },
 };
 const PALM = 0.025;
@@ -597,6 +620,7 @@ function reachFor(
   target: Point3D,
   shape: HandShape,
   body: BodyProportions,
+  elbowTowards?: Point3D,
 ): PartnerSkeleton {
   const shoulder = skeleton.joints[`${side}UpperArm`];
   const solo = skeleton.joints[`${side}Hand`];
@@ -611,6 +635,7 @@ function reachFor(
     body,
     skeleton.facing,
     side,
+    elbowTowards,
   );
   const free = sub(fingertip, hand);
   const held = scale(normalize(shape.fingers) ?? free, body.hand);
@@ -709,12 +734,25 @@ function connectHold(
     { fingers: lean(1), palm: towardsHer, grip: JOINED_GRIP },
     bodies.lead,
   );
+  // In tango his right elbow goes out beside her left armpit, so the
+  // upper arm wraps round her side under her arm (place.arms).
+  const herLeft = headingVector(follow.facing - 90);
+  const besideHerArmpit =
+    place.arms &&
+    add(
+      follow.joints.leftUpperArm,
+      add(
+        scale(herLeft, place.arms.armpitOut),
+        scale(UP, -place.arms.armpitDown),
+      ),
+    );
   him = reachFor(
     him,
     "right",
     blade,
     { fingers: acrossHerBack, palm: herForward, grip: RESTING_GRIP },
     bodies.lead,
+    besideHerArmpit,
   );
 
   // Her left hand on his right upper arm, where his arm now is: on top
@@ -751,6 +789,8 @@ function connectHold(
     onHisArm,
     { fingers: overHisArm, palm: scale(UP, -1), grip: RESTING_GRIP },
     bodies.follow,
+    place.arms &&
+      add(him.joints.rightLowerArm, scale(UP, place.arms.herElbowAbove)),
   );
 
   return { lead: him, follow: her };
