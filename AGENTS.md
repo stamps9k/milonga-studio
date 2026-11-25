@@ -52,6 +52,10 @@ frontend and a small Express + SQLite API.
   it and fails if a leg can't reach its foot or the hips sink too far.
   `balance.mts` adds pure lateral support/loaded-leg diagnostics, with
   provisional limits enforced by dense catalogue tests (no playback clamping).
+  `legContact.mts` keeps the partners' legs from passing through each
+  other: where they would, a knee swings sideways round its hip-ankle line
+  (hips and feet stay put), and `test/body/legContact.test.mts` checks every
+  figure.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;

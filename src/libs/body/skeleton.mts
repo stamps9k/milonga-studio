@@ -1,5 +1,6 @@
 import { footHeading } from "../dance/pose.mts";
 import type { PartnerPose, Pose } from "../dance/pose.mts";
+import { slideKnees } from "./legContact.mts";
 import type { Foot, Partner } from "../dance/step.mts";
 import { bodyPosition } from "../dance/weight.mts";
 import { DEFAULT_PROPORTIONS } from "./proportions.mts";
@@ -32,7 +33,8 @@ import type { Point3D } from "./vector3.mts";
  *   height plus the rise -- lowered just enough for both legs to reach their feet
  *   when the feet are far apart (a long stride sinks the hips);
  * - the knees bend forwards to join hip and ankle (two-bone IK, keeping
- *   the thigh and shin lengths);
+ *   the thigh and shin lengths), swinging a little sideways where a leg
+ *   would pass through the partner's (slideKnees, in solveSkeleton);
  * - the spine, neck and head stack straight up from the hips: no sway,
  *   CBM or shaping yet, since the model can't describe them;
  * - the arms take hold of the partner (connectHold, in solveSkeleton):
@@ -102,6 +104,10 @@ export interface PartnerSkeleton {
    *  hips lowered to the ankles' height: 0 when the leg reaches. More
    *  than 0 means the figure's data puts a foot where no leg could. */
   legShortfall: Record<Foot, number>;
+  /** How far each knee is swung sideways from its natural bend, in
+   *  degrees round the hip-ankle line, to slide past the partner's legs
+   *  (slideKnees, in solveSkeleton): 0 when the legs don't meet. */
+  kneeSwing: Record<Foot, number>;
   /** Where the tip of each hand's middle finger is (BodyProportions.hand
    *  from the wrist), which says which way the hand points: straight on
    *  from the forearm when the arm is free, laid along the partner's
@@ -439,6 +445,7 @@ export function solvePartnerSkeleton(
     facing: pose.orientation,
     hipDrop: standing - hipZ,
     legShortfall,
+    kneeSwing: { left: 0, right: 0 },
     fingertips: { left: leftArm.fingertip, right: rightArm.fingertip },
     palms: { left: leftArm.palm, right: rightArm.palm },
     grips: { left: 0, right: 0 },
@@ -688,14 +695,15 @@ function connectHold(
 }
 
 /** Both dancers' skeletons at one instant (for example a Pose from
- *  sequencePoseAtBeat), in hold (connectHold). */
+ *  sequencePoseAtBeat), with the knees sliding past each other where
+ *  the legs meet (slideKnees), in hold (connectHold). */
 export function solveSkeleton(
   pose: Pose,
   bodies: Record<Partner, BodyProportions> = DEFAULT_PROPORTIONS,
 ): CoupleSkeleton {
-  return connectHold(
-    solvePartnerSkeleton(pose.lead, bodies.lead, "lead"),
-    solvePartnerSkeleton(pose.follow, bodies.follow, "follow"),
-    bodies,
-  );
+  const legs = slideKnees({
+    lead: solvePartnerSkeleton(pose.lead, bodies.lead, "lead"),
+    follow: solvePartnerSkeleton(pose.follow, bodies.follow, "follow"),
+  });
+  return connectHold(legs.lead, legs.follow, bodies);
 }
