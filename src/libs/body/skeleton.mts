@@ -43,12 +43,13 @@ import type { Point3D } from "./vector3.mts";
  *   CBM yet, since the model can't describe them;
  * - the arms take hold of the partner (connectHold, in solveSkeleton):
  *   the joined hands meet out beyond the couple, the lead's right hand
- *   is on the follow's left shoulder blade and her left hand on his right
- *   upper arm, each hand pointing the way it lies (fingertips), its palm
- *   facing the partner (palms) and the joined hands clasped (grips). A
- *   dancer solved alone (solvePartnerSkeleton) holds the same shape
- *   relative to their own chest (a placeholder until the model has a
- *   hold).
+ *   is on the follow's left shoulder blade, his arm wrapping round her
+ *   side under her left arm, and her left hand on his right upper arm,
+ *   her arm lying along his; each hand points the way it lies
+ *   (fingertips), its palm facing the partner (palms), and the joined
+ *   hands are clasped (grips). A dancer solved alone
+ *   (solvePartnerSkeleton) holds the same shape relative to their own
+ *   chest (a placeholder until the model has a hold).
  *
  * Plain data and pure functions, no 3D library: any renderer (the
  * mannequin now, a character model later) draws from the same skeleton,
@@ -151,6 +152,12 @@ const UP = vec(0, 0, 1);
  *  in degrees. Provisional: about as far as a foot points in a released
  *  back step. */
 const MAX_PEEL_DEGREES = 50;
+/** Half the width, in metres, of the band around "half a foot ahead of
+ *  the hips" over which a free foot without footwork changes from
+ *  rolling over its ball to rolling back on its heel. Provisional: wide
+ *  enough that a foot carried across it by the body's turn changes over
+ *  several frames. */
+const PEEL_BLEND = 0.08;
 
 /**
  * The legs are never quite straight: the hips stop this far below the
@@ -158,6 +165,29 @@ const MAX_PEEL_DEGREES = 50;
  * between straight and bent as the leg crosses full length.
  */
 const KNEE_SLACK = 0.005;
+
+/**
+ * The arms are never quite straight either: a wrist target further than
+ * this short of the arm's full length (upper arm plus forearm) is drawn
+ * in to it, and the hand stops that much short. Near full length the
+ * elbow's sideways offset changes very fast with the reach (as the
+ * square root of how far short it is), so an arm stretched to reach the
+ * partner (his right arm round her back in a spin turn) would make the
+ * elbow jump between frames as the reach comes and goes. Provisional
+ * judgement call: 2 cm, enough to keep it smooth, too little to see.
+ */
+const ARM_SLACK = 0.02;
+
+/**
+ * How far, in metres, the elbow's aim is pushed out to the arm's own side
+ * when it bends towards a point on the partner (the hold's `arms`). Where
+ * that point lies on or near the line from the shoulder to the wrist, it
+ * says little about which way the elbow should go, and the elbow could
+ * swing round the line between frames; this small push out decides it
+ * the natural way. Provisional: the smallest push that kept every figure
+ * smooth while pressing the partners' arms together least.
+ */
+const ELBOW_BIAS = 0.02;
 
 /**
  * The arms of a dancer solved without their partner, in metres from each
@@ -201,8 +231,9 @@ export function standingHipHeight(body: BodyProportions): number {
 /**
  * The elbow and hand for an arm from `shoulder` reaching for `wrist`,
  * with the elbow bending down and out to the arm's own side (two-bone
- * IK). The hand ends where the forearm reaches, which is the wrist
- * target unless it's out of reach.
+ * IK), or towards a point on the partner (`bend`). The hand ends where
+ * the forearm reaches, which is the wrist target unless it's out of
+ * reach (or within ARM_SLACK of it).
  */
 function solveArm(
   shoulder: Point3D,
@@ -210,8 +241,9 @@ function solveArm(
   body: BodyProportions,
   facing: number,
   side: Foot,
-  /** A point the elbow bends towards, in place of out and down. */
-  elbowTowards?: Point3D,
+  /** A point the elbow bends towards, in place of out and down, by
+   *  `amount` (1: fully; 0: the usual out and down). */
+  bend?: { towards: Point3D; amount: number },
 ): {
   elbow: Point3D;
   hand: Point3D;
@@ -219,14 +251,29 @@ function solveArm(
   palm: Point3D;
 } {
   const outwards = scale(headingVector(facing + 90), side === "left" ? -1 : 1);
+  const full = body.upperArm + body.forearm - ARM_SLACK;
+  const toTarget = sub(wrist, shoulder);
+  const away = Math.hypot(toTarget.x, toTarget.y, toTarget.z);
+  const reachable =
+    away <= full ? wrist : add(shoulder, scale(toTarget, full / away));
+  const outAndDown = add(outwards, vec(0, 0, -1));
+  const pole =
+    bend === undefined
+      ? outAndDown
+      : lerp3(
+          outAndDown,
+          add(
+            sub(bend.towards, lerp3(shoulder, wrist, 0.5)),
+            scale(outwards, ELBOW_BIAS),
+          ),
+          bend.amount,
+        );
   const elbow = twoBoneJoint(
     shoulder,
-    wrist,
+    reachable,
     body.upperArm,
     body.forearm,
-    elbowTowards === undefined
-      ? add(outwards, vec(0, 0, -1))
-      : sub(elbowTowards, lerp3(shoulder, wrist, 0.5)),
+    pole,
   );
   const toWrist = sub(wrist, elbow);
   const reach = Math.hypot(toWrist.x, toWrist.y, toWrist.z);
@@ -353,24 +400,43 @@ export function solvePartnerSkeleton(
     if (reaches(landing.ankle)) return landing;
     // Which end the foot rolls over to reach further: the one its
     // footwork tips it over, or without footwork the heel if the foot is
-    // well in front of the hips, otherwise the ball.
-    const behind =
-      (middle.x - pelvisFloor.x) * forward.x +
-        (middle.y - pelvisFloor.y) * forward.y <
-      body.footLength / 2;
-    const overBall = pitch === 0 ? behind : overBallForPitch;
-    let low = Math.abs(pitch);
-    let high = Math.max(MAX_PEEL_DEGREES * freedom, low);
-    if (!reaches(roll(overBall, high).ankle)) low = high;
-    else {
+    // well in front of the hips (a heel lead), otherwise the ball. Near
+    // that boundary (within PEEL_BLEND of half a foot ahead) the foot is
+    // a blend of the two rolls, so a free foot out to the side, which the
+    // body's turn carries across the boundary, doesn't flip from heel up
+    // to toes up in one frame (and the hips with it).
+    const peel = (overBall: boolean) => {
+      let low = Math.abs(pitch);
+      let high = Math.max(MAX_PEEL_DEGREES * freedom, low);
+      if (!reaches(roll(overBall, high).ankle)) return roll(overBall, high);
       for (let i = 0; i < 30; i++) {
         const mid = (low + high) / 2;
         if (reaches(roll(overBall, mid).ankle)) high = mid;
         else low = mid;
       }
-      low = high;
-    }
-    return roll(overBall, low);
+      return roll(overBall, high);
+    };
+    if (pitch !== 0) return peel(overBallForPitch);
+    const ahead =
+      (middle.x - pelvisFloor.x) * forward.x +
+      (middle.y - pelvisFloor.y) * forward.y;
+    const onHeel = smoothstep(
+      body.footLength / 2 - PEEL_BLEND,
+      body.footLength / 2 + PEEL_BLEND,
+      ahead,
+    );
+    if (onHeel <= 0) return peel(true);
+    if (onHeel >= 1) return peel(false);
+    const ballRoll = peel(true);
+    const heelRoll = peel(false);
+    return {
+      ankle: lerp3(ballRoll.ankle, heelRoll.ankle, onHeel),
+      ball: lerp3(ballRoll.ball, heelRoll.ball, onHeel),
+      ends: {
+        heel: lerp3(ballRoll.ends.heel, heelRoll.ends.heel, onHeel),
+        toeTip: lerp3(ballRoll.ends.toeTip, heelRoll.ends.toeTip, onHeel),
+      },
+    };
   };
   const feet = { left: foot("left"), right: foot("right") };
 
@@ -492,19 +558,25 @@ export function solvePartnerSkeleton(
  *   way from his shoulder to his elbow, resting on top (upperArmAbove).
  *   That is her wrist; her hand lies on along his arm from there, so the
  *   fingers reach his shoulder, not past it.
+ * - His right elbow and her left elbow (`arms`): his upper arm wraps
+ *   round her side under her left arm, and her left arm lies along the
+ *   top of his, her elbow resting above his, as the closed hold is
+ *   commonly taught. The standard hold carries his elbow higher than
+ *   tango's, for its wider frame. Bent out and down to their own side
+ *   instead, both elbows would aim at the same spot on the closed side
+ *   of a promenade, and his arm would pass into her chest.
  *
- * These place the wrists; which way each hand then points is set in
- * connectHold (and HAND_DOWN, OVER_HIS_ARM below).
+ * These place the wrists and aim the elbows; which way each hand then
+ * points is set in connectHold (and HAND_DOWN, OVER_HIS_ARM below).
  *
  * Ballroom tango's hold (HoldKind "tango") is more compact, as commonly
  * taught: the joined hands lower (about her chin) and drawn in, so his
  * left elbow bends more; his right hand further round her back and a
  * little lower; his right arm passing under her left arm; and her left
  * arm lying along the top of his, her hand round the back of his upper
- * arm (`underArm`), palm down, rather than resting on top of it
- * (`arms`). The owner confirmed the arms against published
- * descriptions of the tango hold. The distances are provisional
- * judgement calls.
+ * arm (`underArm`), palm down, rather than resting on top of it. The
+ * owner confirmed the arms against published descriptions of the tango
+ * hold. The distances are provisional judgement calls.
  */
 interface HoldPlacement {
   joinedOut: number;
@@ -518,15 +590,14 @@ interface HoldPlacement {
    *  rather than on top of it (0). */
   underArm: number;
   /**
-   * Where the elbows of his right arm and her left arm bend to, or
-   * undefined for the usual out-and-down bend. In tango his right elbow
-   * aims `armpitOut` out to her left of her left shoulder joint and
-   * `armpitDown` below it, so his upper arm wraps round her side under
-   * her arm; her left elbow aims `herElbowAbove` above his, so her arm
-   * lies along the top of his. Without this both elbows bent out to the
-   * side, which on the closed side of a promenade is the same spot.
+   * Where the elbows of his right arm and her left arm bend to: his
+   * right elbow aims `armpitOut` out to her left of her left shoulder
+   * joint and `armpitDown` below it, beside her armpit; her left elbow
+   * aims `herElbowAbove` above his. These aim the elbows (solveArm's
+   * `bend`) rather than place them: each elbow still lies where the arm
+   * reaches its hand.
    */
-  arms?: { armpitOut: number; armpitDown: number; herElbowAbove: number };
+  arms: { armpitOut: number; armpitDown: number; herElbowAbove: number };
 }
 const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
   standard: {
@@ -538,6 +609,7 @@ const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
     upperArmAlong: 0.6,
     upperArmAbove: 0.05,
     underArm: 0,
+    arms: { armpitOut: 0.15, armpitDown: 0.1, herElbowAbove: 0.07 },
   },
   tango: {
     joinedOut: 0.12,
@@ -616,7 +688,9 @@ function lerp3(a: Point3D, b: Point3D, t: number): Point3D {
  *  reach. `shape` is how the hand is held while it holds: the way it
  *  points, the way its palm faces and its grip. As the arm lets go the
  *  hand turns back to the free hand's shape (pointing straight on from
- *  the forearm, palm in, open), by the same amount as the wrist. */
+ *  the forearm, palm in, open), by the same amount as the wrist, and an
+ *  elbow aimed at the partner (`elbowTowards`) back to bending out and
+ *  down. */
 function reachFor(
   skeleton: PartnerSkeleton,
   side: Foot,
@@ -638,7 +712,7 @@ function reachFor(
     body,
     skeleton.facing,
     side,
-    elbowTowards,
+    elbowTowards && { towards: elbowTowards, amount: holding },
   );
   const free = sub(fingertip, hand);
   const held = scale(normalize(shape.fingers) ?? free, body.hand);
@@ -737,18 +811,16 @@ function connectHold(
     { fingers: lean(1), palm: towardsHer, grip: JOINED_GRIP },
     bodies.lead,
   );
-  // In tango his right elbow goes out beside her left armpit, so the
-  // upper arm wraps round her side under her arm (place.arms).
+  // His right elbow goes out beside her left armpit, so the upper arm
+  // wraps round her side under her arm (place.arms).
   const herLeft = headingVector(follow.facing - 90);
-  const besideHerArmpit =
-    place.arms &&
+  const besideHerArmpit = add(
+    follow.joints.leftUpperArm,
     add(
-      follow.joints.leftUpperArm,
-      add(
-        scale(herLeft, place.arms.armpitOut),
-        scale(UP, -place.arms.armpitDown),
-      ),
-    );
+      scale(herLeft, place.arms.armpitOut),
+      scale(UP, -place.arms.armpitDown),
+    ),
+  );
   him = reachFor(
     him,
     "right",
@@ -792,8 +864,7 @@ function connectHold(
     onHisArm,
     { fingers: overHisArm, palm: scale(UP, -1), grip: RESTING_GRIP },
     bodies.follow,
-    place.arms &&
-      add(him.joints.rightLowerArm, scale(UP, place.arms.herElbowAbove)),
+    add(him.joints.rightLowerArm, scale(UP, place.arms.herElbowAbove)),
   );
 
   return { lead: him, follow: her };

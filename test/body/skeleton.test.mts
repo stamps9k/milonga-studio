@@ -167,6 +167,26 @@ test("solvePartnerSkeleton: the back heel releases gradually as the weight leave
   assert.ok(biggest < 0.005, `hips moved ${biggest} m in one step of weight`);
 });
 
+test("solvePartnerSkeleton: a free foot out to the side changes from ball to heel gradually, so the hips don't jump", () => {
+  // The weight almost all on the left foot and the free right foot well
+  // out to the side, moved from a little behind the hips to well in
+  // front. Behind, it rolls over its ball; well in front, back on its
+  // heel. Crossing between the two must not drop the hips in a step.
+  let previous: number | null = null;
+  let biggest = 0;
+  for (let ahead = -0.1; ahead <= 0.35 + 1e-9; ahead += 0.005) {
+    const skeleton = solvePartnerSkeleton(
+      lead([0, 0], [0.55, ahead], 0.9),
+      LEAD,
+      "lead",
+    );
+    if (previous !== null)
+      biggest = Math.max(biggest, Math.abs(skeleton.joints.hips.z - previous));
+    previous = skeleton.joints.hips.z;
+  }
+  assert.ok(biggest < 0.005, `hips moved ${biggest} m in one 5 mm step`);
+});
+
 test("solvePartnerSkeleton: a foot no leg can reach is reported, not hidden", () => {
   const skeleton = solvePartnerSkeleton(
     lead([-0.1, 0], [3, 0], 1),
@@ -212,15 +232,20 @@ test("solveSkeleton: in closed hold the partners face each other, in hold", () =
   // Each partner's joined hand is on the same side of the couple: his
   // left and her right are both west of the couple's middle.
   assert.ok(him.joints.leftHand.x < 0 && her.joints.rightHand.x < 0);
-  // The elbows bend down, below the line from shoulder to hand.
-  for (const skeleton of [him, her]) {
-    for (const side of ["left", "right"] as const) {
-      const shoulder = skeleton.joints[`${side}UpperArm`];
-      const hand = skeleton.joints[`${side}Hand`];
-      const elbow = skeleton.joints[`${side}LowerArm`];
-      assert.ok(elbow.z < (shoulder.z + hand.z) / 2);
-    }
+  // The elbows bend down, below the line from shoulder to hand, except
+  // her left: her arm lies along the top of his right arm, so her elbow
+  // rests above his.
+  for (const [skeleton, side] of [
+    [him, "left"],
+    [him, "right"],
+    [her, "right"],
+  ] as const) {
+    const shoulder = skeleton.joints[`${side}UpperArm`];
+    const hand = skeleton.joints[`${side}Hand`];
+    const elbow = skeleton.joints[`${side}LowerArm`];
+    assert.ok(elbow.z < (shoulder.z + hand.z) / 2);
   }
+  assert.ok(her.joints.leftLowerArm.z > him.joints.rightLowerArm.z + 0.03);
   // Her bones are her own (1.70 m), not his.
   const herThigh = sub(her.joints.leftUpperLeg, her.joints.leftLowerLeg);
   close(
