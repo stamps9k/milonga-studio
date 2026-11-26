@@ -112,6 +112,25 @@ export const TURN_CENTRES: readonly TurnCentre[] = [
   "between",
 ];
 
+/**
+ * Holds a row can name for the check at its end (`StepRow.hold`):
+ *
+ * - "opposed promenade": opposite-facing and side by side, the follow
+ *   nominally 35 cm to the lead's right and 10 cm in front, so the
+ *   backward-travelling lead is slightly ahead along shared travel.
+ * - "closed, follow turned 1/8 right": closed hold's position with the
+ *   follow facing 1/8 to the right of square. The book's Natural Twist
+ *   Turn charts steps 3 and 4 as "Closed" with her 45° off square: he
+ *   backs diagonal centre while she faces down the line of dance, then he
+ *   backs the line of dance while she faces diagonal wall. The ordinary
+ *   30° facing tolerance would refuse that.
+ */
+export type RowHold = "opposed promenade" | "closed, follow turned 1/8 right";
+export const ROW_HOLDS: readonly RowHold[] = [
+  "opposed promenade",
+  "closed, follow turned 1/8 right",
+];
+
 /** Options that can be given for both partners on a row, or per
  *  partner. */
 export interface MoveOptions {
@@ -233,12 +252,11 @@ export interface StepRow extends Omit<
    *  TurnCentre). Default: whoever the step sends backward. Only
    *  allowed with `both` and a `turn`. */
   turnCentre?: TurnCentre;
-  /** Explicit opposite-facing, side-by-side formation at this row's end.
-   * The follow is nominally 35 cm to the lead's right and 10 cm in front,
-   * so the backward-travelling lead is slightly ahead along shared travel.
-   * Descriptive authoring label, not a new persisted stance or a check bypass.
-   * Omission retains the ordinary closed/promenade checks on every other row. */
-  hold?: "opposed promenade";
+  /** The hold to check at this row's end instead of closed hold or
+   *  promenade (see RowHold). Authoring only, not a persisted stance or
+   *  a check bypass: the usual tolerances apply, and every other row
+   *  keeps the ordinary checks. */
+  hold?: RowHold;
   lead?: Action | PartnerMove;
   follow?: Action | PartnerMove;
   beat?: number;

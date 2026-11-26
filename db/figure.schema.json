@@ -242,8 +242,8 @@
           "description": "With \"both\" and a \"turn\": what the couple turns around. \"lead\": he takes the step as written and she goes round him; \"follow\": she takes the mirror of it and he goes round her; \"between\": the point halfway between them takes it. Default: whoever the step sends backward (between them for a step straight to the side)."
         },
         "hold": {
-          "enum": ["opposed promenade"],
-          "description": "Explicit opposite-facing side-by-side formation at this row's end: follow nominally 35 cm right and 10 cm forward of lead. Descriptive authoring label; ordinary hold tolerances remain. Omit for the existing closed/promenade checks."
+          "enum": ["opposed promenade", "closed, follow turned 1/8 right"],
+          "description": "The hold to check at this row's end instead of closed hold or promenade, with the ordinary tolerances. \"opposed promenade\": opposite-facing and side by side, follow nominally 35 cm right and 10 cm forward of lead. \"closed, follow turned 1/8 right\": closed hold's position with the follow facing 1/8 right of square (the Natural Twist Turn's steps 3 and 4). Omit for the ordinary closed/promenade checks."
         },
         "lead": { "$ref": "#/definitions/partner" },
         "follow": { "$ref": "#/definitions/partner" },

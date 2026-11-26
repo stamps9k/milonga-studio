@@ -9,6 +9,7 @@ import {
   FOOT_CHECKS,
   FigureError,
   TURN_CENTRES,
+  ROW_HOLDS,
 } from "./definition.mts";
 import type { FigureDefinition } from "./definition.mts";
 import { STANCE_NAMES } from "./stances.mts";
@@ -373,7 +374,7 @@ export function parseFigureDefinition(
       ]);
       if (row.both !== undefined) checkAction(`${path}.both`, row.both);
       checkOneOf(`${path}.turnCentre`, row.turnCentre, TURN_CENTRES);
-      checkOneOf(`${path}.hold`, row.hold, ["opposed promenade"]);
+      checkOneOf(`${path}.hold`, row.hold, ROW_HOLDS);
       checkPartner(`${path}.lead`, row.lead);
       checkPartner(`${path}.follow`, row.follow);
       checkMoveOptions(`${path}.`, row, true);

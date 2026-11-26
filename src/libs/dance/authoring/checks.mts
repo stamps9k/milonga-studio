@@ -111,15 +111,15 @@ export function checkHold(
     const facing = normalizeDegrees(
       pose.follow.orientation - pose.lead.orientation,
     );
-    // The opposed side-by-side formation is opt-in for this row. It is a
-    // geometric constraint, not a hold exemption: ordinary distance/facing
-    // limits still apply, and closed hold alone no longer satisfies the row.
-    // An explicitly shaped body may keep close promenade contact while the
-    // supporting feet open a passing channel. This provisional 27 cm centre
-    // separation accounts for hip widths; the usual hold/facing tolerances
-    // still apply. Unshaped figures retain their existing hold checks.
+    // A row that names its hold (StepRow.hold) is checked against that
+    // hold alone, with the ordinary distance and facing tolerances, so
+    // closed hold no longer satisfies it. An explicitly shaped body may
+    // keep close promenade contact while the supporting feet open a
+    // passing channel: this provisional 27 cm centre separation accounts
+    // for hip widths. Unshaped figures retain their existing hold checks.
+    const named = rowHolds[row];
     const holds =
-      rowHolds[row] === "opposed promenade"
+      named === "opposed promenade"
         ? [
             {
               name: "opposed promenade",
@@ -128,17 +128,19 @@ export function checkHold(
               at: { x: 0.35, y: 0.1 },
             },
           ]
-        : pose.lead.bodyOffset || pose.follow.bodyOffset
-          ? [
-              ...positions,
-              {
-                name: "contact promenade",
-                facing: 270,
-                frame: 45,
-                at: { x: offset, y: distance - 0.13 },
-              },
-            ]
-          : positions;
+        : named === "closed, follow turned 1/8 right"
+          ? [{ ...positions[0], name: named, facing: 225 }]
+          : pose.lead.bodyOffset || pose.follow.bodyOffset
+            ? [
+                ...positions,
+                {
+                  name: "contact promenade",
+                  facing: 270,
+                  frame: 45,
+                  at: { x: offset, y: distance - 0.13 },
+                },
+              ]
+            : positions;
     const misses = holds.map((hold) => {
       // Smallest angle between her facing and the hold's, 0-180.
       const turnedBy = Math.abs(

@@ -388,10 +388,13 @@ the owner before building more on top of them.
   `CONTRA_CHECK_LOWERING` (3 cm). The moving feet keep pointing 0/180, so
   the feet are crossed in the body frame (CBMP), and like crossed
   promenade this stance may start crossed.
-- A row may set `hold: "opposed promenade"` (authoring only): after that
-  row the hold check expects the follow side by side and facing the other
-  way, 35 cm to the lead's right and 10 cm ahead in his frame, with the
-  usual tolerances.
+- A row may name its hold (authoring only, `RowHold`), and after that row
+  the hold check expects that hold alone, with the usual tolerances:
+  `"opposed promenade"` puts the follow side by side and facing the other
+  way, 35 cm to the lead's right and 10 cm ahead in his frame;
+  `"closed, follow turned 1/8 right"` keeps closed hold's position with her
+  facing 1/8 right of square (provisional: the book's Natural Twist Turn
+  charts steps 3 and 4 as "Closed" with her 45° off square).
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

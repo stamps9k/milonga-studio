@@ -43,12 +43,14 @@ export type {
   PartnerMove,
   StepRow,
   ExpectedEnd,
+  RowHold,
   FigureDefinition,
   AuthoredFigure,
 } from "./authoring/definition.mts";
 export {
   CURVED_PATHS,
   FOOT_CHECKS,
+  ROW_HOLDS,
   TURN_CENTRES,
   FigureError,
 } from "./authoring/definition.mts";

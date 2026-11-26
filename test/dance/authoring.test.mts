@@ -1571,6 +1571,48 @@ test("per-partner paths: row options apply to plain actions, with independent de
   pointClose(authored.endPose.follow.right.position, [0, 0.7]);
 });
 
+test("hold: closed with the follow turned 1/8 right is explicit and uses the ordinary limits", () => {
+  // Isolate hold recognition, as above: she pivots on the spot in closed
+  // hold, so only her facing changes.
+  const checks: Partial<FigureDefinition> = {
+    skipChecks: ["crossed feet", "own feet", "partner spacing"],
+  };
+  const turned = (eighths: number): StepRow => ({
+    lead: "in place",
+    follow: { go: "pivot", turn: { right: `${eighths}/8` } },
+    hold: "closed, follow turned 1/8 right",
+    length: "Q",
+  });
+  // 45° right of square is the hold's own facing; 1/16 either side of it
+  // is within the ordinary 30° tolerance.
+  assert.doesNotThrow(() => figure([turned(1)], checks));
+  const unmarked = turned(1);
+  delete unmarked.hold;
+  assert.throws(
+    () => figure([unmarked], checks),
+    /nearest is closed hold.*facing is 45° off/,
+  );
+  // Square closed hold no longer satisfies a row that names this hold.
+  assert.throws(
+    () => figure([{ ...turned(1), follow: "in place" }], checks),
+    /nearest is closed, follow turned 1\/8 right.*facing is 45° off/,
+  );
+  assert.throws(
+    () => figure([turned(2)], checks),
+    /nearest is closed, follow turned 1\/8 right.*facing is 45° off/,
+  );
+  // Only the marked row: a later unmarked row is checked as usual, so
+  // her staying turned is refused there.
+  assert.throws(
+    () =>
+      figure(
+        [turned(1), { lead: "in place", follow: "in place", length: "Q" }],
+        checks,
+      ),
+    /after step 2.*partners aren't in hold/,
+  );
+});
+
 test("hold: opposed promenade is explicit and uses the ordinary distance/facing limits", () => {
   // Isolate hold recognition; these artificial foot placements are not a
   // catalogue figure. Other dedicated suites cover full movement geometry.
