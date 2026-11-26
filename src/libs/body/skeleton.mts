@@ -1,10 +1,11 @@
 import { footHeading } from "../dance/pose.mts";
 import type { HoldKind } from "../dance/authoring.mts";
 import type { PartnerPose, Pose } from "../dance/pose.mts";
-import { legContactFor, slideKnees } from "./legContact.mts";
+import { legContactFor, segmentDistance, slideKnees } from "./legContact.mts";
 import { openUpperBodies } from "./shaping.mts";
 import type { Foot, Partner } from "../dance/step.mts";
 import { bodyPosition } from "../dance/weight.mts";
+import { normalizeDegrees } from "../dance/heading.mts";
 import { DEFAULT_PROPORTIONS } from "./proportions.mts";
 import type { BodyProportions } from "./proportions.mts";
 import {
@@ -101,6 +102,10 @@ export interface PartnerSkeleton {
   feet: Record<Foot, FootEnds>;
   /** Compass heading the body faces (the model's orientation). */
   facing: number;
+  /** Compass heading the pelvis faces: the body's facing turned by
+   *  contra body movement (cbmTurn) where a leg crosses the body. The
+   *  chest, shoulders and arms keep the body's facing. */
+  hipFacing: number;
   /** How far the hips are below standing height plus the rise, because
    *  the feet are too far apart for straight legs: 0 with the feet under
    *  the body, about 0.1 in a long stride. */
@@ -302,12 +307,63 @@ function fingersOn(
   return add(wrist, scale(along, body.hand));
 }
 
+/** Contra body movement, provisional: the feet start to count as
+ *  crossed once they are closer than this across the body, in metres
+ *  (in an ordinary walk they track about a stance width apart). */
+export const CBM_TRACK = 0.1;
+/** How far one foot must be ahead of the other for the full turn, in
+ *  metres; with the feet nearer level the turn shrinks to nothing, so it
+ *  changes smoothly as a crossed foot passes the other. About half a
+ *  foot. */
+export const CBM_REACH = 0.15;
+/** The most the pelvis turns from the body's facing, in degrees. */
+export const MAX_CBM_DEGREES = 25;
+
+/**
+ * Contra body movement (CBM), in degrees clockwise: how far the pelvis
+ * turns from the body's facing because the feet are placed across the
+ * body (contra body movement position, CBMP). The hips follow the legs
+ * while the upper body keeps the hold, so the two turn against each
+ * other: with the right foot forward across the left's track, the pelvis
+ * turns left, towards it, and the leg runs straight from its hip instead
+ * of cutting across in front of the body (and into a partner standing
+ * outside). The left foot forward across turns it right; a foot back
+ * across, the other way.
+ *
+ * Worked out from the feet alone, in the body's frame: how far the right
+ * foot is short of CBM_TRACK to the right of the left (0 for feet apart
+ * as usual), and which is ahead by how much. The pelvis turns by the
+ * angle that crossing makes over the distance between the feet
+ * (atan2(crossing, ahead)), towards the foot that is ahead, scaled down
+ * to nothing as the feet come level (within CBM_REACH), and capped at
+ * MAX_CBM_DEGREES. Only the pelvis turns: the hold (chest, shoulders,
+ * arms) keeps the body's facing, and nothing in the dance model or its
+ * checks changes. Provisional: the amounts are judgement calls, not
+ * measurements.
+ */
+export function cbmTurn(pose: PartnerPose): number {
+  const forward = headingVector(pose.orientation);
+  const right = headingVector(pose.orientation + 90);
+  const dx = pose.right.position.x - pose.left.position.x;
+  const dy = pose.right.position.y - pose.left.position.y;
+  const apart = dx * right.x + dy * right.y;
+  const ahead = dx * forward.x + dy * forward.y;
+  const crossing = Math.max(0, CBM_TRACK - apart);
+  if (crossing === 0) return 0;
+  const angle =
+    (Math.atan2(crossing, Math.max(Math.abs(ahead), CBM_REACH)) * 180) /
+    Math.PI;
+  const reach = Math.max(-1, Math.min(1, ahead / CBM_REACH));
+  return Math.max(-MAX_CBM_DEGREES, Math.min(MAX_CBM_DEGREES, -reach * angle));
+}
+
 /** The skeleton of one dancer at one instant. */
 export function solvePartnerSkeleton(
   pose: PartnerPose,
   body: BodyProportions,
   partner: Partner,
   hold: HoldKind = "standard",
+  cbmShare = 1,
 ): PartnerSkeleton {
   const forward = headingVector(pose.orientation);
   const right = headingVector(pose.orientation + 90);
@@ -320,8 +376,15 @@ export function solvePartnerSkeleton(
   const weight = bodyPosition(pose);
   const pelvisFloor = vec(weight.x, weight.y, 0);
   const leg = body.thigh + body.shin - KNEE_SLACK;
+  // The pelvis turns with contra body movement (cbmTurn): the hip joints
+  // lie across the pelvis's own facing, not the body's.
+  const hipFacing = pose.orientation + cbmShare * cbmTurn(pose);
+  const hipAcross = headingVector(hipFacing + 90);
   const hipJointFloor = (side: Foot) =>
-    along(pelvisFloor, 0, (side === "left" ? -1 : 1) * (body.hipWidth / 2), 0);
+    add(
+      pelvisFloor,
+      scale(hipAcross, (side === "left" ? -1 : 1) * (body.hipWidth / 2)),
+    );
   const standing =
     standingHipHeight(body) +
     pose.rise -
@@ -528,6 +591,7 @@ export function solvePartnerSkeleton(
     },
     feet: { left: feet.left.ends, right: feet.right.ends },
     facing: pose.orientation,
+    hipFacing: normalizeDegrees(hipFacing),
     hipDrop: standing - hipZ,
     legShortfall,
     kneeSwing: { left: 0, right: 0 },
@@ -870,6 +934,26 @@ function connectHold(
   return { lead: him, follow: her };
 }
 
+/** The mannequin's pelvis capsule radius (the bar between the hip
+ *  joints in scene3d.mts), in metres. */
+export const PELVIS_RADIUS = 0.08;
+
+/** The room between the partners' pelvis capsules, in metres: negative
+ *  where they press into each other. */
+function pelvisGap(couple: CoupleSkeleton): number {
+  const his = couple.lead.joints,
+    hers = couple.follow.joints;
+  return (
+    segmentDistance(
+      his.leftUpperLeg,
+      his.rightUpperLeg,
+      hers.leftUpperLeg,
+      hers.rightUpperLeg,
+    ) -
+    2 * PELVIS_RADIUS
+  );
+}
+
 /** Both dancers' skeletons at one instant (for example a Pose from
  *  sequencePoseAtBeat), with the knees sliding past each other where
  *  the legs meet (slideKnees), in hold (connectHold), shaped for the
@@ -879,13 +963,38 @@ export function solveSkeleton(
   bodies: Record<Partner, BodyProportions> = DEFAULT_PROPORTIONS,
   hold: HoldKind = "standard",
 ): CoupleSkeleton {
-  const legs = slideKnees(
-    {
-      lead: solvePartnerSkeleton(pose.lead, bodies.lead, "lead", hold),
-      follow: solvePartnerSkeleton(pose.follow, bodies.follow, "follow", hold),
-    },
-    legContactFor(hold),
-  );
+  const solve = (cbmShare: number): CoupleSkeleton => ({
+    lead: solvePartnerSkeleton(pose.lead, bodies.lead, "lead", hold, cbmShare),
+    follow: solvePartnerSkeleton(
+      pose.follow,
+      bodies.follow,
+      "follow",
+      hold,
+      cbmShare,
+    ),
+  });
+  // Contra body movement turns each pelvis (cbmTurn), which can swing a
+  // hip into the partner's where the hips are close, as in promenade.
+  // Then both turns are scaled back, as little as needed, until the
+  // pelvises are no deeper into each other than without it.
+  let couple = solve(1);
+  if (cbmTurn(pose.lead) !== 0 || cbmTurn(pose.follow) !== 0) {
+    const pressed = pelvisGap(couple);
+    if (pressed < 0) {
+      const floor = Math.min(0, pelvisGap(solve(0)));
+      if (pressed < floor) {
+        let low = 0,
+          high = 1;
+        for (let i = 0; i < 12; i++) {
+          const mid = (low + high) / 2;
+          if (pelvisGap(solve(mid)) >= floor) low = mid;
+          else high = mid;
+        }
+        couple = solve(low);
+      }
+    }
+  }
+  const legs = slideKnees(couple, legContactFor(hold));
   const opened = openUpperBodies(legs);
   return connectHold(opened.lead, opened.follow, bodies, hold);
 }
