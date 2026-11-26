@@ -1,0 +1,139 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Five Step",
+  "style": "tango",
+  "time": "2/4",
+  "slow": 1,
+  "notes": "Book Five Step (Q Q Q Q S), as the owner dances it after the Open Reverse Turn; the owner approved the shape from a sketch. He turns 1/4 left between 1 and 2, then steps straight back while she walks forward, outside him on 3. On 5 neither changes weight: he places his left foot to the side and she turns 1/4 right into the Progressive Link's promenade, so her steps 3 and 4 drift to his right. Steps 1 and 2 are laid out as in the Open Reverse Turn. Provisional: step sizes, foot routes and how far outside him she is on 3.",
+  "steps": [
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": 0.45
+        },
+        "label": "forward in CBMP, starting to turn left"
+      },
+      "follow": {
+        "go": {
+          "forward": -0.45
+        },
+        "label": "back in CBMP, starting to turn left"
+      }
+    },
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": 0.92,
+          "right": 0.25
+        },
+        "turn": {
+          "left": "1/4"
+        },
+        "pointing": {
+          "left": "1/8"
+        },
+        "label": "side and slightly back",
+        "path": "around the standing foot"
+      },
+      "follow": {
+        "go": {
+          "forward": -0.67,
+          "right": 0.2
+        },
+        "turn": {
+          "left": "1/4"
+        },
+        "pointing": {
+          "left": "1/8"
+        },
+        "label": "side and slightly forward",
+        "path": "around the standing foot"
+      }
+    },
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": -0.7478,
+          "right": 0.2893
+        },
+        "label": "back in CBMP, partner outside",
+        "bodyOffset": {
+          "right": 0.0667
+        }
+      },
+      "follow": {
+        "go": {
+          "forward": 0.45,
+          "right": -0.46
+        },
+        "label": "forward in CBMP, outside partner",
+        "bodyOffset": {
+          "right": 0.1244
+        },
+        "path": "auto",
+        "cross": true
+      }
+    },
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": -0.5078,
+          "right": 0.0393
+        },
+        "label": "back"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.6598101012677666,
+          "right": -0.2787112549695429
+        },
+        "label": "forward and slightly to the left",
+        "path": "auto",
+        "bodyOffset": {
+          "forward": -0.112,
+          "right": 0.0505
+        }
+      }
+    },
+    {
+      "length": "S",
+      "lead": {
+        "go": {
+          "forward": -0.13,
+          "right": -0.06
+        },
+        "weight": false,
+        "label": "to the side in promenade, without weight",
+        "path": "auto"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.1378,
+          "right": 0.3207
+        },
+        "turn": {
+          "right": "1/4"
+        },
+        "weight": false,
+        "label": "to the side in promenade, without weight",
+        "path": "auto"
+      }
+    }
+  ],
+  "expectBeats": 3,
+  "expectEnd": {
+    "stance": "tango promenade",
+    "moved": {
+      "forward": 0.9193000000000001,
+      "right": 0.8578
+    },
+    "turned": {
+      "left": "1/8"
+    },
+    "leadStandingOn": "R"
+  }
+}
