@@ -57,7 +57,7 @@ implementation's choice, not a confirmed dance rule.
   figure-file format's types, `FigureError`), `stances.mts` (named
   stances and their measurements, `stancePose`), `moves.mts` (rows into
   model steps: offsets, turns, mirroring, foot choice, curved paths),
-  `checks.mts` (hold, feet and `expectEnd` checks), `define.mts`
+  `autoPath.mts` (routes for `path: "auto"`), `checks.mts` (hold, feet and `expectEnd` checks), `define.mts`
   (`defineFigure`) and `parse.mts` (`parseFigureDefinition`). Import from
   `authoring.mts`, not the modules, so the split can change freely.
 
@@ -190,6 +190,20 @@ the owner before building more on top of them.
   circles tighter than `MIN_ORBIT_RADIUS` (0.12 m). It compiles to an
   ordinary arc (`setOff`, `curvature`, `arcLength`), so nothing persisted
   changes (2026-11-20, owner's request, for big reverse turns).
+  `"auto"` (`routeAutoPaths` in `authoring/autoPath.mts`) chooses the route
+  itself once every step's timing is known: straight if the foot's
+  outline stays `AUTO_PATH_CLEARANCE` (5 mm) clear of every standing foot
+  (the dancer's other foot and the partner's feet that aren't moving),
+  otherwise the gentlest single arc to the same landing that does, tried
+  a degree of set-off at a time on both sides. The flow limits,
+  `AUTO_PATH_MAX_BULGE` (12 cm from the straight line) and
+  `AUTO_PATH_MAX_LENGTH_RATIO` (15% longer), bound the arcs tried; if
+  none clears, the figure is refused with how close the best came, since
+  that usually means the landing spot is wrong. Moving feet aren't
+  avoided (their timing differs between linear and eased playback);
+  the ordinary checks cover them. One arc can't pass close and then swing
+  out; a two-part route would be a new movement type. The limits are
+  provisional, agreed with the owner as roughly 12-15 cm and 15%.
   Trails draw arcs as curves (`ARC_TRAIL_SAMPLES`).
 - A straight step's foot passes close beside the standing foot when its
   line runs past it (a walk, forward or back, or a diagonal that passes

@@ -192,9 +192,10 @@
       "enum": [
         "around the front",
         "around the back",
-        "around the standing foot"
+        "around the standing foot",
+        "auto"
       ],
-      "description": "The foot curves instead of going straight, landing where the step says. \"around the front\": it sets off the way the dancer faces. \"around the back\": it sets off diagonally back towards the side it lands on, to uncross feet the way they crossed. \"around the standing foot\": on a turning step it circles the standing foot the way the body turns, keeping its side of the body through a big turn."
+      "description": "The foot curves instead of going straight, landing where the step says. \"around the front\": it sets off the way the dancer faces. \"around the back\": it sets off diagonally back towards the side it lands on, to uncross feet the way they crossed. \"around the standing foot\": on a turning step it circles the standing foot the way the body turns, keeping its side of the body through a big turn. \"auto\": straight if that keeps the foot clear of the standing feet, otherwise the gentlest curve (at most 12 cm off the straight line, 15% longer) that does."
     },
     "label": {
       "type": "string",

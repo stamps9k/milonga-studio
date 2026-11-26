@@ -26,6 +26,7 @@ import type {
   TimeSignature,
 } from "../step.mts";
 import { checkExpectedEnd, checkFeet, checkHold } from "./checks.mts";
+import { routeAutoPaths } from "./autoPath.mts";
 import { DIRECTION_DEGREES, FigureError } from "./definition.mts";
 import type {
   AuthoredFigure,
@@ -236,6 +237,8 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     where: string;
     /** For checkHold: the row (0-based) the step came from. */
     row: number;
+    /** Written with `path: "auto"`: routed by routeAutoPaths. */
+    auto: boolean;
   }[] = [];
 
   rows.forEach((row, index) => {
@@ -464,6 +467,7 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         cross: partnerMove.cross === true,
         where: `step ${index + 1}`,
         row: index,
+        auto: partnerMove.path === "auto",
       });
       // Any other step that places a foot (a close, separately written
       // steps) leaves its pair in whatever relation the steps give; it
@@ -522,6 +526,34 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         }
       : step,
   );
+
+  // Bend the `path: "auto"` steps, now that every step's timing is
+  // known (a route avoids the feet standing while it's under way).
+  const figureOf = (candidate: Omit<DanceStep, "id">[]): Figure => ({
+    id: "authored",
+    name,
+    style: definition.style,
+    timeSignature,
+    steps: candidate.map((step, index) => ({ ...step, id: String(index + 1) })),
+    startPose,
+    endPose: startPose,
+  });
+  const autos = resolved.flatMap((entry, index) => {
+    if (!entry.auto) return [];
+    if (isFreeFootFollow(steps[index], steps)) {
+      throw new FigureError(
+        `${name}, ${entry.where} (${entry.step.partner}): "auto" is for a step that takes weight, not a free foot following another step`,
+      );
+    }
+    return [
+      {
+        index,
+        facing: entry.frame,
+        where: `${entry.where} (${entry.step.partner})`,
+      },
+    ];
+  });
+  if (autos.length > 0) steps = routeAutoPaths(name, figureOf, steps, autos);
 
   const figure: Figure = {
     id: "authored",

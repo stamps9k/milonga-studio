@@ -16,11 +16,12 @@ import type { ShortFoot, StanceName } from "./stances.mts";
 
 /** The curved foot paths a step can ask for (MoveOptions.path). */
 export type CurvedPath =
-  "around the front" | "around the back" | "around the standing foot";
+  "around the front" | "around the back" | "around the standing foot" | "auto";
 export const CURVED_PATHS: readonly CurvedPath[] = [
   "around the front",
   "around the back",
   "around the standing foot",
+  "auto",
 ];
 
 /** The checks a figure can skip (FigureDefinition.skipChecks). */
@@ -176,7 +177,10 @@ export interface MoveOptions {
    *    body (a left foot stays on the dancer's left) while the dancer
    *    turns a long way. For big turns, where a straight or front/back
    *    curve would cross the feet or clip the standing foot (owner's
-   *    request, 2026-11-20). Needs a `turn`; no `pathSetOff`. */
+   *    request, 2026-11-20). Needs a `turn`; no `pathSetOff`.
+   *  - "auto": straight if the foot passes clear of the standing feet,
+   *    otherwise the gentlest single arc that does, within the flow
+   *    limits in autoPath.mts (see routeAutoPaths). No `pathSetOff`. */
   path?: CurvedPath;
   /** Optional arc departure heading in degrees clockwise from this dancer
    * before the step. Overrides the preset; use for a compact passing route.
