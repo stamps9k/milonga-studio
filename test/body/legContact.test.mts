@@ -11,9 +11,11 @@ import {
 } from "../../src/libs/body/legContact.mts";
 import { DEFAULT_PROPORTIONS } from "../../src/libs/body/proportions.mts";
 import {
+  cbmTurn,
   solvePartnerSkeleton,
   solveSkeleton,
 } from "../../src/libs/body/skeleton.mts";
+import { normalizeDegrees } from "../../src/libs/dance/heading.mts";
 import type { CoupleSkeleton } from "../../src/libs/body/skeleton.mts";
 import { distance } from "../../src/libs/body/vector3.mts";
 import {
@@ -153,11 +155,24 @@ test("every figure: partners' legs at most touch, with knees sliding smoothly", 
           `${figure.name}: legs press in ${gap} m at beat ${beat}`,
         );
         const shifts = (["lead", "follow"] as const).flatMap((partner) => {
+          // The legs before sliding, with the pelvis turned as far as
+          // solveSkeleton turned it (it scales contra body movement back
+          // where the hips would press together).
+          const turn = cbmTurn(pose[partner]);
+          const share =
+            turn === 0
+              ? 1
+              : (normalizeDegrees(
+                  couple[partner].hipFacing - couple[partner].facing + 180,
+                ) -
+                  180) /
+                turn;
           const natural = solvePartnerSkeleton(
             pose[partner],
             DEFAULT_PROPORTIONS[partner],
             partner,
             hold,
+            share,
           ).joints;
           const slid = couple[partner].joints;
           return [
