@@ -375,8 +375,7 @@ the owner before building more on top of them.
 - A row may set `hold: "opposed promenade"` (authoring only): after that
   row the hold check expects the follow side by side and facing the other
   way, 35 cm to the lead's right and 10 cm ahead in his frame, with the
-  usual tolerances. The Weave uses it while the couple travels shoulder to
-  shoulder.
+  usual tolerances.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a

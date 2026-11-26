@@ -22,7 +22,7 @@ import type { Figure } from "../../src/libs/dance/step.mts";
 // and sampled every 1/128 beat (under 10 ms at tango's default tempo),
 // with linear and eased foot travel. A failure here is something a
 // viewer sees in the 3D view: an arm or the hips jumping between frames,
-// or the partners' arms passing through each other. No figure is exempt.
+// or an arm passing through the partner. No figure is exempt.
 
 const SAMPLE = 1 / 128;
 
@@ -31,6 +31,9 @@ const RADIUS = {
   upperArm: 0.04,
   forearm: 0.033,
   shoulder: 0.05,
+  waist: 0.1,
+  chest: 0.11,
+  neck: 0.1,
 };
 
 const figures: Figure[] = loadFigures().map((figure) => ({
@@ -76,6 +79,7 @@ function* samples(figure: Figure) {
 }
 
 const partners = ["lead", "follow"] as const;
+const other = { lead: "follow", follow: "lead" } as const;
 const sides = ["left", "right"] as const;
 
 /** A dancer's arm bones as capsules: [from joint, to joint, radius]. */
@@ -92,6 +96,11 @@ function armBones(
     [`${side}LowerArm`, `${side}Hand`, RADIUS.forearm, `${side} forearm`],
   ];
 }
+const TORSO: [JointName, JointName, number][] = [
+  ["hips", "spine", RADIUS.waist],
+  ["spine", "chest", RADIUS.chest],
+  ["chest", "neck", RADIUS.neck],
+];
 
 test("figures: elbows and hands move smoothly relative to the body", async (t) => {
   // Measured relative to the chest, so the body's own travel doesn't
@@ -140,6 +149,40 @@ test("figures: the hips rise and sink smoothly", async (t) => {
             moved <= STEP,
             `${partner}'s hips jump ${moved.toFixed(3)} m at beat ${beat.toFixed(3)}`,
           );
+        }
+    });
+});
+
+test("figures: no arm passes into the partner's body", async (t) => {
+  // Each arm bone against the partner's torso (waist, chest and upper
+  // chest capsules). His hand lies on her back and her hand on his arm,
+  // so a forearm may press in a little where it meets the body.
+  // Provisional limit, just above the deepest now (about 3 cm, his right
+  // forearm against her back in the Weave).
+  const PRESS = 0.04;
+  for (const figure of figures)
+    await t.test(figure.name, () => {
+      for (const { couple, beat } of samples(figure))
+        for (const partner of partners) {
+          const own = couple[partner].joints;
+          const theirs = couple[other[partner]].joints;
+          for (const side of sides)
+            for (const [from, to, radius, name] of armBones(side))
+              for (const [bodyFrom, bodyTo, bodyRadius] of TORSO) {
+                const gap =
+                  segmentDistance(
+                    own[from],
+                    own[to],
+                    theirs[bodyFrom],
+                    theirs[bodyTo],
+                  ) -
+                  radius -
+                  bodyRadius;
+                assert.ok(
+                  gap >= -PRESS,
+                  `${partner}'s ${name} is ${(-gap).toFixed(3)} m into the partner at beat ${beat.toFixed(3)}`,
+                );
+              }
         }
     });
 });

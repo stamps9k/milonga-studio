@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
   defineFigure,
+  HOLD_SHAPES,
+  HOLD_TOLERANCE,
   parseFigureDefinition,
   stancePose,
 } from "../../src/libs/dance/authoring.mts";
@@ -26,6 +28,7 @@ import { placeEntry } from "../../src/libs/dance/chain.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
 import { assessLateralBalance } from "../../src/libs/body/balance.mts";
+import { LEG_CONTACT } from "../../src/libs/body/legContact.mts";
 import { segmentDistance } from "../support/legClearance.mts";
 
 function load(file: string) {
@@ -69,7 +72,7 @@ function poseClose(a: Pose, b: Pose) {
   }
 }
 
-test("Weave: six uninterrupted alternating counts from feet-apart promenade", () => {
+test("Weave: six alternating weighted counts, with her free foot drawn in on 1 and 2", () => {
   assert.deepEqual(definition.skipChecks ?? [], []);
   assert.equal(figureDurationBeats(weave), 6);
   assert.equal(definition.time, "3/4");
@@ -78,31 +81,83 @@ test("Weave: six uninterrupted alternating counts from feet-apart promenade", ()
     stancePose("promenade apart", { lead: "left", follow: "right" }),
   );
   for (const partner of ["lead", "follow"] as const) {
-    const steps = weave.steps.filter((s) => s.partner === partner);
+    const steps = weave.steps.filter((s) => s.partner === partner),
+      weighted = steps.filter((s) => s.weight === 1);
     assert.deepEqual(
-      steps.map((s) => s.foot),
+      weighted.map((s) => s.foot),
       partner === "lead"
         ? ["right", "left", "right", "left", "right", "left"]
         : ["left", "right", "left", "right", "left", "right"],
     );
     assert.deepEqual(
-      steps.map((s) => s.beat),
-      [1, 2, 3, 4, 5, 6],
+      weighted.map((s) => [s.beat, s.duration]),
+      [1, 2, 3, 4, 5, 6].map((beat) => [beat, 1]),
     );
-    assert.ok(steps.every((s) => s.duration === 1 && s.weight === 1));
-    // Both feet travel at the bar line: count 3 is no close or resting pose.
-    for (const beat of [3, 4]) {
-      const step = steps[beat - 1],
-        before = poseAtBeat(weave, beat - 1),
-        after = poseAtBeat(weave, beat);
-      const a = before[partner][step.foot].position,
-        b = after[partner][step.foot].position;
-      assert.ok(Math.hypot(b.x - a.x, b.y - a.y) > 0.1);
+    // The follow's free foot is drawn in during counts 1 and 2 and arrives
+    // by the next count, so every weighted step starts from a collected foot.
+    const free = steps.filter((s) => s.weight !== 1);
+    assert.deepEqual(
+      free.map((s) => [s.foot, Math.ceil(s.beat)]),
+      partner === "lead"
+        ? []
+        : [
+            ["right", 2],
+            ["left", 3],
+          ],
+    );
+    for (const s of free) {
+      assert.equal(s.weight, 0);
+      assert.ok(s.beat + s.duration <= Math.ceil(s.beat) + 1e-9);
     }
   }
 });
 
-test("Weave: existing promenade entries connect without a Whisk or contra check requirement", () => {
+test("Weave: promenade on 1, closed through the turn on 2-3, outside partner on 4, closed on 5, promenade on 6", () => {
+  const { offset, distance } = HOLD_SHAPES.standard;
+  const relative = (beat: number) => {
+    const p = poseAtBeat(weave, beat),
+      l = bodyPosition(p.lead),
+      f = bodyPosition(p.follow);
+    return {
+      at: rotatePoint({ x: f.x - l.x, y: f.y - l.y }, -p.lead.orientation),
+      facing: normalizeDegrees(p.follow.orientation - p.lead.orientation),
+    };
+  };
+  const facingOff = (a: number, b: number) =>
+    Math.abs(normalizeDegrees(a - b + 180) - 180);
+  for (const beat of [1, 6])
+    assert.ok(facingOff(relative(beat).facing, 270) <= 30, `V on ${beat}`);
+  for (const beat of [2, 3, 4, 5]) {
+    const { at, facing } = relative(beat),
+      across = at.x - offset,
+      along = at.y - distance;
+    assert.ok(facingOff(facing, 180) <= 30, `Facing on ${beat}`);
+    if (beat === 4) {
+      // Outside partner: she has moved at least 10 cm to his right of
+      // the closed position and stays within the hold tolerance.
+      assert.ok(across >= 0.1, `Outside partner on 4: ${across}`);
+      assert.ok(Math.hypot(across, along) <= HOLD_TOLERANCE);
+    } else {
+      assert.ok(Math.hypot(across, along) <= 0.07, `Closed on ${beat}`);
+    }
+  }
+  // From count 3 to 5 he faces against the line of dance (the start
+  // facing) and backs along it on 4 and 5.
+  const lod = weave.startPose.lead.orientation;
+  for (const beat of [3, 4, 5])
+    close(
+      poseAtBeat(weave, beat).lead.orientation,
+      normalizeDegrees(lod + 180),
+    );
+  for (const beat of [4, 5]) {
+    const a = bodyPosition(poseAtBeat(weave, beat - 1).lead),
+      b = bodyPosition(poseAtBeat(weave, beat).lead);
+    const along = rotatePoint({ x: b.x - a.x, y: b.y - a.y }, -lod).y;
+    assert.ok(along >= 0.2, `Backing the line of dance on ${beat}: ${along}`);
+  }
+});
+
+test("Weave: promenade entries connect, and it ends in promenade a 5/8 turn to the left", () => {
   for (const name of ["promenade-chasse", "contra-check-recovery-promenade"]) {
     const incoming = placeEntry(load(name).figure, undefined),
       next = placeEntry(weave, incoming);
@@ -112,7 +167,7 @@ test("Weave: existing promenade entries connect without a Whisk or contra check 
   poseClose(
     weave.endPose,
     applyTransform(
-      { position: weave.endPose.lead.left.position, rotation: 180 },
+      { position: weave.endPose.lead.left.position, rotation: -225 },
       stancePose("promenade apart", { lead: "left", follow: "right" }),
     ),
   );
@@ -123,105 +178,6 @@ test("Weave: existing promenade entries connect without a Whisk or contra check 
   ]) {
     assert.equal(assessJoin(weave.endPose, next).fits, true);
   }
-});
-
-test("Weave: count three continues the pivot together, swaps sides and keeps opening-direction progress", () => {
-  const before = poseAtBeat(weave, 2),
-    after = poseAtBeat(weave, 3);
-  // Preserve the accepted opening and the follow's arrival from its pivot.
-  close(before.lead.left.position.x, -0.5);
-  close(before.lead.left.position.y, -0.08);
-  close(before.follow.right.position.x, -0.65);
-  close(before.follow.right.position.y, 0.26);
-  for (const options of [{}, { footEasing: footEase }])
-    for (let sample = 0; sample <= 256; sample++) {
-      const progress = sample / 256,
-        p = poseAtBeat(weave, 2 + progress, options);
-      close(p.lead.orientation, 270 - 90 * progress);
-      close(p.follow.orientation, 90 - 90 * progress);
-      close(normalizeDegrees(p.follow.orientation - p.lead.orientation), 180);
-    }
-  const a = bodyPosition(before.lead),
-    b = bodyPosition(before.follow),
-    c = bodyPosition(after.lead),
-    d = bodyPosition(after.follow);
-  assert.ok(
-    a.y < b.y && c.y > d.y,
-    "Partners exchange sides during the shared turn",
-  );
-  assert.ok(
-    c.x < a.x && d.x < b.x,
-    "Both continue westward rather than reversing east",
-  );
-  const delta = {
-    x: (c.x + d.x - a.x - b.x) / 2,
-    y: (c.y + d.y - a.y - b.y) / 2,
-  };
-  // The centre travels northwest: between an eighth and a quarter turn
-  // clockwise from the opening's westward line, without a reverse step.
-  assert.ok(delta.x < -0.15 && delta.y >= -delta.x);
-});
-
-test("Weave: opposed shoulder spacing is maintained through the shared turn and new travelling heading", () => {
-  for (const options of [{}, { footEasing: footEase }])
-    for (let sample = 2 * 256; sample <= 5 * 256; sample++) {
-      const p = poseAtBeat(weave, sample / 256, options),
-        l = bodyPosition(p.lead),
-        f = bodyPosition(p.follow);
-      // During the shared turn the shoulders draw closer and the forward
-      // stagger approaches level; it remains positive and returns to 15 cm
-      // at each landing. Keep the geometry/body limits independently strict.
-      const relative = rotatePoint(
-        { x: f.x - l.x, y: f.y - l.y },
-        -p.lead.orientation,
-      );
-      close(normalizeDegrees(p.follow.orientation - p.lead.orientation), 180);
-      assert.ok(
-        relative.x >= 0.27 && relative.x <= 0.52,
-        `Shoulder spacing at ${sample / 256}`,
-      );
-      assert.ok(
-        relative.y >= 0.01 && relative.y <= 0.26,
-        `Lead ahead along shared travel at ${sample / 256}`,
-      );
-      if (sample >= 3 * 256) {
-        close(p.lead.orientation, 180);
-        close(p.follow.orientation, 0);
-      }
-    }
-  assert.deepEqual(
-    definition.steps.map((row) => row.hold),
-    [
-      undefined,
-      "opposed promenade",
-      "opposed promenade",
-      "opposed promenade",
-      "opposed promenade",
-      undefined,
-    ],
-  );
-  for (const beat of [2, 3, 4, 5]) {
-    const p = poseAtBeat(weave, beat),
-      l = bodyPosition(p.lead),
-      f = bodyPosition(p.follow),
-      relative = rotatePoint(
-        { x: f.x - l.x, y: f.y - l.y },
-        -p.lead.orientation,
-      );
-    assert.ok(relative.x >= 0.33 && relative.x <= 0.39);
-    close(relative.y, 0.15);
-  }
-  // After the twirl the lead backs north and the follow walks north.
-  for (const beat of [4, 5]) {
-    const a = poseAtBeat(weave, beat - 1),
-      b = poseAtBeat(weave, beat);
-    assert.ok(bodyPosition(b.lead).y - bodyPosition(a.lead).y >= 0.2);
-    assert.ok(bodyPosition(b.follow).y - bodyPosition(a.follow).y >= 0.17);
-  }
-  close(poseAtBeat(weave, 1).lead.orientation, 300);
-  close(poseAtBeat(weave, 1).follow.orientation, 240);
-  close(weave.endPose.lead.orientation, 135);
-  close(weave.endPose.follow.orientation, 45);
 });
 
 test("Promenade Walk and Close: separate three counts and an exact collected closed exit", () => {
@@ -266,30 +222,39 @@ test("Promenade Walk and Close: separate three counts and an exact collected clo
   poseClose(first.resolvedEndPose, second.resolvedStartPose);
 });
 
-test("Weave and separate close: all nine counts clear every footprint and thigh/shin pair, with normal reach and balance", () => {
+/** During count 4 both step in CBMP, her outside partner: her right foot
+ *  passes between his standing right foot and her own left, and each
+ *  dancer's legs pass close. There, footprints may brush by up to 4 cm
+ *  and a dancer's own legs meet by up to 3 cm (the owner accepted this
+ *  brush for the book geometry; provisional). That is weave beats 3-4,
+ *  plus the first quarter of count 5 while her left foot uncrosses. */
+const CBMP_BRUSH = { from: 3, to: 4.25, feet: -0.04, ownLegs: -0.03 };
+
+test("Weave and separate close: feet and legs stay clear apart from the CBMP brush, with normal reach and balance", () => {
   const first = placeEntry(weave, undefined),
     entries = [first, placeEntry(promenadeClose, first)];
-  // No interval is omitted for cross:true. Include all nine beats, both easing
-  // modes and the join itself. These are mannequin capsule proxies, not meshes.
-  // Keep authored poses and placed playback covered independently. The
-  // existing floor transform currently omits foot pitch; this guards both
-  // solver inputs without changing that separate playback behaviour here.
+  // All nine beats, both easing modes and the join itself, for the placed
+  // pair and both authored figures. These are mannequin capsule proxies,
+  // not meshes. Partner legs use the catalogue's contact allowance.
   const sources = [
     {
       name: "placed pair",
       beats: 9,
+      weaveStart: 0,
       at: (beat: number, options: PoseOptions) =>
         sequencePoseAtBeat(entries, beat, options),
     },
     {
       name: "authored weave",
       beats: 6,
+      weaveStart: 0,
       at: (beat: number, options: PoseOptions) =>
         poseAtBeat(weave, beat, options),
     },
     {
       name: "authored close",
       beats: 3,
+      weaveStart: -Infinity,
       at: (beat: number, options: PoseOptions) =>
         poseAtBeat(promenadeClose, beat, options),
     },
@@ -298,7 +263,9 @@ test("Weave and separate close: all nine counts clear every footprint and thigh/
     for (const options of [{}, { footEasing: footEase }])
       for (let sample = 0; sample <= source.beats * 256; sample++) {
         const beat = sample / 256,
-          p = source.at(beat, options);
+          p = source.at(beat, options),
+          weaveBeat = beat - source.weaveStart,
+          brush = weaveBeat > CBMP_BRUSH.from && weaveBeat <= CBMP_BRUSH.to;
         assert.ok(p, `${source.name} has a pose at beat ${beat}`);
         const skeleton = solveSkeleton(p),
           feet = [],
@@ -314,6 +281,7 @@ test("Weave and separate close: all nine counts clear every footprint and thigh/
           );
           for (const side of ["left", "right"] as const) {
             feet.push({
+              partner,
               p: p[partner][side].position,
               h: footHeading(p[partner], side),
             });
@@ -340,9 +308,15 @@ test("Weave and separate close: all nine counts clear every footprint and thigh/
           for (let k = i + 1; k < feet.length; k++) {
             const a = feet[i],
               b = feet[k];
+            // Her own feet may touch as the free foot is drawn in.
+            const limit = brush
+              ? CBMP_BRUSH.feet
+              : a.partner === b.partner
+                ? 0
+                : 0.005;
             assert.ok(
-              footprintGap(a.p, a.h, b.p, b.h) >= 0.005,
-              `Footprints ${i}/${k} at ${beat}`,
+              footprintGap(a.p, a.h, b.p, b.h) >= limit,
+              `Footprints ${i}/${k} at ${beat} in ${source.name}`,
             );
           }
         for (let i = 0; i < bones.length; i++)
@@ -350,9 +324,15 @@ test("Weave and separate close: all nine counts clear every footprint and thigh/
             const a = bones[i],
               b = bones[k];
             if (a.partner === b.partner && a.side === b.side) continue;
+            const limit =
+              a.partner !== b.partner
+                ? -LEG_CONTACT
+                : brush
+                  ? CBMP_BRUSH.ownLegs
+                  : 0.005;
             assert.ok(
-              segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= 0.005,
-              `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat}`,
+              segmentDistance(a.a, a.b, b.a, b.b) - a.r - b.r >= limit,
+              `Legs ${a.partner} ${a.side}/${b.partner} ${b.side} at ${beat} in ${source.name}`,
             );
           }
       }
