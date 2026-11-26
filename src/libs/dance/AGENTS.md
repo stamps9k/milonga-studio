@@ -359,12 +359,14 @@ the owner before building more on top of them.
   left foot. The partners are `PROMENADE_SEPARATION` (about 7 cm) further
   apart each than in crossed promenade, to leave room for the Open
   Natural Turn's first stride (owner's request).
-- The "tango promenade" stance is where the owner's tango Progressive
-  Link ends: the same V and frame, feet apart and uncrossed, each
-  outside foot `TANGO_PROMENADE_WIDTH` (60 cm, from the owner's wide
-  step) along the line of travel from the inside foot, measured from the
-  lead's right foot, partners at closed hold's distance and offset. Its default
-  starting weight is on the inside feet.
+- The "tango promenade" stance is where the book's tango Progressive
+  Link ends: the same V and frame, measured from the lead's right foot.
+  As in the book the man doesn't turn into promenade; the lady turns a
+  quarter to the right and steps round to his right side, at the hold's
+  `promenadeDistance` across the line and `offset` behind. His left foot
+  stays as in closed position (`STANCE_WIDTH` to his left, his right
+  drawn back) and her right is still in front of it, where her first
+  quick put it. Its default starting weight is on the inside feet.
 - The "contra check" stance is the owner's Contra Check ending and its
   recoveries' start, in the closed frame: lead LF / follow RF
   `CONTRA_CHECK_ADVANCE` (40 cm) forward/back and `CONTRA_CHECK_INWARD`

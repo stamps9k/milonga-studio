@@ -18,6 +18,7 @@ import { footHeading } from "../../src/libs/dance/pose.mts";
 import type { Figure } from "../../src/libs/dance/step.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
 import { placeEntry } from "../../src/libs/dance/chain.mts";
+import { applyTransform } from "../../src/libs/dance/floor.mts";
 import { assessJoin } from "../../src/libs/dance/join.mts";
 import { solveSkeleton } from "../../src/libs/body/skeleton.mts";
 import { DEFAULT_PROPORTIONS } from "../../src/libs/body/proportions.mts";
@@ -74,42 +75,32 @@ function assertPoseClose(actual: Pose, expected: Pose) {
   }
 }
 
-test("Closed Promenade: retains the original connection poses and S Q Q S phrasing", () => {
+test("Closed Promenade: S Q Q S from tango promenade into closed hold, the lead keeping his facing", () => {
   assertPoseClose(
     promenade.startPose,
     stancePose("tango promenade", { lead: "right", follow: "left" }, "tango"),
   );
-  // The resolved endpoint in tango hold, including the historical rounded
-  // third-step offsets. Pin the world positions, not just a fitted closed
-  // stance, so shortening a stride cannot silently shorten the chain.
-  const originalEnd: Pose = {
-    lead: {
-      left: {
-        position: { x: -1.6994398256836465, y: 0.14990663761154654 },
-        weight: 0,
-      },
-      right: {
-        position: { x: -1.4994398256836468, y: 0.06990663761154604 },
-        weight: 1,
-      },
-      orientation: 0,
-      rise: 0,
-    },
-    follow: {
-      left: {
-        position: { x: -1.3994398256836469, y: 0.4199066376115471 },
-        weight: 1,
-      },
-      right: {
-        position: { x: -1.599439825683647, y: 0.33990663761154694 },
-        weight: 0,
-      },
-      orientation: 180,
-      rise: 0,
-    },
+  // The book: the man has no turn, the lady turns a quarter to the left
+  // on her side step (step 3), and they close into closed position.
+  const closed = stancePose(
+    "closed",
+    { lead: "right", follow: "left" },
+    "tango",
+  );
+  const turned = applyTransform(
+    { position: { x: 0, y: 0 }, rotation: -45 },
+    closed,
+  );
+  const end = promenade.endPose;
+  const shift = {
+    x: end.lead.left.position.x - turned.lead.left.position.x,
+    y: end.lead.left.position.y - turned.lead.left.position.y,
   };
-  assertPoseClose(promenade.endPose, originalEnd);
-  assertPoseClose(poseAtBeat(promenade, 3), originalEnd);
+  assertPoseClose(
+    end,
+    applyTransform({ position: shift, rotation: 0 }, turned),
+  );
+  assertPoseClose(poseAtBeat(promenade, 3), end);
   assert.equal(figureDurationBeats(promenade), 3);
   for (const partner of ["lead", "follow"] as const) {
     const steps = promenade.steps.filter((step) => step.partner === partner);
@@ -123,12 +114,32 @@ test("Closed Promenade: retains the original connection poses and S Q Q S phrasi
         ? ["left", "right", "left", "right"]
         : ["right", "left", "right", "left"],
     );
-    for (const beat of [1, 1.5, 2])
-      assert.equal(
-        poseAtBeat(promenade, beat)[partner].orientation,
-        promenade.startPose[partner].orientation,
-      );
   }
+  for (const beat of [1, 1.5, 2, 3])
+    assert.equal(poseAtBeat(promenade, beat).lead.orientation, 315);
+  for (const beat of [1, 1.5])
+    assert.equal(poseAtBeat(promenade, beat).follow.orientation, 225);
+  for (const beat of [2, 3])
+    assert.equal(poseAtBeat(promenade, beat).follow.orientation, 135);
+});
+
+test("Progressive Link: the lead doesn't turn and the follow turns a quarter right on the second quick", () => {
+  const link = load("walks-and-progressive-link");
+  for (const beat of [0, 1, 2, 2.5, 3])
+    assert.equal(poseAtBeat(link, beat).lead.orientation, 0);
+  for (const beat of [0, 1, 2, 2.5])
+    assert.equal(poseAtBeat(link, beat).follow.orientation, 180);
+  assert.equal(poseAtBeat(link, 3).follow.orientation, 270);
+  // The first quick travels; on the second his right foot lands close
+  // beside his left, slightly behind it, so his body barely moves on.
+  const q1 = poseAtBeat(link, 2.5).lead,
+    q2 = poseAtBeat(link, 3).lead;
+  assert.ok(
+    q1.left.position.y - poseAtBeat(link, 2).lead.right.position.y > 0.45,
+  );
+  const across = q2.right.position.x - q2.left.position.x,
+    behind = q2.left.position.y - q2.right.position.y;
+  assert.ok(Math.abs(across - 0.2) < 1e-9 && Math.abs(behind - 0.08) < 1e-9);
 });
 
 test("Closed Promenade: joins Progressive Link and Back Corté without foot, facing or weight discontinuities", () => {
@@ -254,6 +265,7 @@ test("Closed Promenade: thighs and shins clear while hips nearly touch", () => {
 test("Closed Promenade: the outer feet pass under the hips without a wide side swing", () => {
   for (const options of [{}, { footEasing: footEase }]) {
     const nearest = { lead: Infinity, follow: Infinity };
+    const start = { lead: -Infinity, follow: -Infinity };
     for (let beat = 1.5; beat <= 2; beat += 1 / 256) {
       const pose = poseAtBeat(promenade, beat, options);
       const skeleton = solveTango(pose);
@@ -261,12 +273,15 @@ test("Closed Promenade: the outer feet pass under the hips without a wide side s
         const foot =
           pose[partner][partner === "lead" ? "left" : "right"].position;
         const hip = skeleton[partner].joints.hips;
-        // Floor y is across promenade travel. The old 135-degree departure
-        // swung the foot over 43 cm outward from the pelvis; a compact route
-        // stays inside 14 cm, including the 13 cm starting separation.
+        // Floor y is across promenade travel. Each outer foot starts
+        // about 13 cm out from its pelvis. His left goes to the side and
+        // never more than 1 mm further out. Her right uncrosses behind her
+        // standing left as she turns to face him, so it sweeps out round
+        // her heel, but compactly: within 21 cm of her pelvis.
         const outward = partner === "lead" ? hip.y - foot.y : foot.y - hip.y;
+        if (beat === 1.5) start[partner] = outward;
         assert.ok(
-          outward <= 0.14,
+          outward <= (partner === "lead" ? start.lead + 0.001 : 0.21),
           `${partner} swings ${outward} m outward at ${beat}`,
         );
         if (beat > 1.6 && beat < 1.9)

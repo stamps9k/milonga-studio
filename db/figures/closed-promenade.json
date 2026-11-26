@@ -4,122 +4,121 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description: S Q Q S from tango promenade (after Two Walks and Progressive Link) into closed hold, ready for the Back Corté. Standard name. The inner feet step through on the first slow with the hips kept close; the outer feet then step side and uncross on shallow curves, close beneath the hips. The lead's uncrossing curve sets off wide enough for his flexed knees to pass. 2/4: a slow is one beat. Reviewed by the owner (2026-11-19).",
+  "notes": "Owner's description: S Q Q S from tango promenade (after Two Walks and Progressive Link) into closed hold, ready for the Back Corté. As in the book: side in promenade, forward and across in CBMP, then he steps side and slightly forward while she steps side and slightly back turning 1/4 left into closed position, and they close. He doesn't turn. The inner feet step through with the hips kept close. Provisional: step sizes and the curved routes of both outer feet on step 3. 2/4: a slow is one beat.",
   "start": "tango promenade",
   "steps": [
     {
+      "length": "S",
+      "label": "side, in promenade",
       "lead": {
         "go": {
-          "forward": -0.014142135623730932,
-          "right": -0.07071067811865475
-        },
-        "pointing": {
-          "left": "1/8"
+          "forward": 0.3301219330881977,
+          "right": -0.29497474683058317
         },
         "bodyOffset": {
           "forward": 0.0878226622233692,
           "right": 0.08782266222336922
+        },
+        "pointing": {
+          "left": "1/8"
         }
       },
       "follow": {
         "go": {
-          "forward": -0.014142135623730963,
-          "right": 0.07071067811865475
-        },
-        "pointing": {
-          "right": "1/8"
+          "forward": -0.029289321881345365,
+          "right": 0.42296464556281665
         },
         "bodyOffset": {
           "forward": 0.08782266222336922,
           "right": -0.08782266222336921
+        },
+        "pointing": {
+          "right": "1/8"
         }
-      },
-      "length": "S",
-      "label": "side, in promenade"
+      }
     },
     {
+      "length": "Q",
+      "label": "forward and across",
       "lead": {
         "go": {
           "forward": 0.8909545442950499,
           "right": -0.7212489168102781
         },
         "cross": true,
-        "pointing": {
-          "left": "1/8"
-        },
         "bodyOffset": {
           "forward": -0.03889087296526011,
           "right": -0.03889087296526012
+        },
+        "pointing": {
+          "left": "1/8"
         }
       },
       "follow": {
         "go": {
-          "forward": 0.8909545442950497,
-          "right": 0.7212489168102786
+          "forward": 0.8909545442950499,
+          "right": 0.7212489168102787
         },
         "cross": true,
-        "pointing": {
-          "right": "1/8"
-        },
         "bodyOffset": {
           "forward": -0.03889087296526012,
           "right": 0.038890872965260115
+        },
+        "pointing": {
+          "right": "1/8"
         }
-      },
-      "length": "Q",
-      "label": "forward and across"
+      }
     },
     {
+      "length": "Q",
       "lead": {
         "go": {
-          "forward": 0.8975634918711923,
-          "right": -0.6007106781288084
+          "forward": 0.5308326112068523,
+          "right": -0.526274169979695
         },
+        "label": "side and slightly forward",
         "path": "around the back",
-        "bodyOffset": {
-          "forward": -0.0353553390593274,
-          "right": 0.02
-        },
         "pathSetOff": -55
       },
       "follow": {
         "go": {
-          "forward": 0.8199137802966383,
-          "right": 0.6783603897033625
+          "forward": 0.8505382386916236,
+          "right": 0.4379898987322334
         },
+        "turn": {
+          "left": "1/4"
+        },
+        "label": "side and slightly back, turning to closed position",
         "path": "around the back",
-        "bodyOffset": {
-          "forward": -0.03535533905932736,
-          "right": -0.02
-        },
-        "pathSetOff": 55
-      },
-      "length": "Q",
-      "label": "side, uncrossing"
+        "pathSetOff": 90
+      }
     },
     {
+      "length": "S",
+      "label": "close",
       "lead": {
-        "go": "close",
-        "turn": {
-          "right": "1/8"
+        "go": {
+          "forward": -0.03000000000000004,
+          "right": -0.10000000000000006
         }
       },
       "follow": {
-        "go": "close",
-        "turn": {
-          "left": "1/8"
+        "go": {
+          "forward": -0.2917157287525379,
+          "right": 0.16970562748477125
         }
-      },
-      "length": "S",
-      "label": "close, turning to face"
+      }
     }
   ],
   "expectBeats": 3,
   "expectEnd": {
     "stance": "closed",
     "moved": {
-      "forward": 0.11,
-      "right": -1.6
+      "forward": -0.014350288425444106,
+      "right": -1.2884924240491749
+    },
+    "turned": {
+      "left": "1/8"
     },
     "leadStandingOn": "R"
   }

@@ -4,7 +4,7 @@
   "style": "tango",
   "time": "2/4",
   "slow": 1,
-  "notes": "Owner's description: walk forward slow, slow; then quick, quick into promenade. Named after the standard Walks and Progressive Link. In the book the link's first quick is a small step forward and its second side and slightly back; the owner steps wide on the first quick and changes weight back on the second, ending in the same place. Walks are straight (real tango walks curve gradually left), with no rise. From the tango hold's staggered closed position the follow's second walk and link step are her own. 2/4: a slow is one beat. Reviewed by the owner (2026-11-19).",
+  "notes": "Owner's description: walk forward slow, slow; then quick, quick into promenade. Walks and Progressive Link as in the book (the owner's video matches): on the first quick he steps forward in CBMP and she back; on the second his right foot lands beside and slightly behind his left with little travel, while she steps to the side turning 1/4 right into promenade. He doesn't turn. Walks are straight (real tango walks curve gradually left), with no rise. Provisional: step sizes, and her back step setting off straight back past his right foot. 2/4: a slow is one beat.",
   "steps": [
     {
       "both": "forward",
@@ -30,40 +30,54 @@
       "length": "S"
     },
     {
+      "length": "Q",
       "lead": {
         "go": {
-          "forward": 0.5,
-          "right": -0.4
+          "forward": 1,
+          "right": 0.14999999999999997
         },
-        "turn": {
-          "left": "1/8"
-        },
-        "label": "wide step, opening to promenade"
+        "label": "forward in CBMP"
       },
       "follow": {
         "go": {
-          "forward": -0.69,
-          "right": 0.4
+          "forward": -1,
+          "right": -0.1499999999999999
         },
-        "turn": {
-          "right": "1/8"
-        },
-        "label": "wide step, opening to promenade"
-      },
-      "length": "Q"
+        "path": "around the front",
+        "pathSetOff": 180,
+        "label": "back in CBMP"
+      }
     },
     {
-      "both": "in place",
       "length": "Q",
-      "label": "weight back, in promenade"
+      "lead": {
+        "go": {
+          "forward": 0.41999999999999993,
+          "right": 0.15
+        },
+        "label": "side and slightly back, small step, into promenade"
+      },
+      "follow": {
+        "go": {
+          "forward": -0.2379898987322333,
+          "right": -0.3894112549695428
+        },
+        "turn": {
+          "right": "1/4"
+        },
+        "label": "side and slightly back, turning to promenade"
+      }
     }
   ],
   "expectBeats": 3,
   "expectEnd": {
     "stance": "tango promenade",
     "moved": {
-      "forward": 1.0,
-      "right": 0.1
+      "forward": 1.42,
+      "right": 0.25
+    },
+    "turned": {
+      "right": "1/8"
     },
     "leadStandingOn": "R"
   }

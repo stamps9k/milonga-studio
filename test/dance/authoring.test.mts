@@ -588,20 +588,25 @@ test("promenade apart: the leading feet at the front of the V, the trailing ones
   assert.equal(steps[0].foot, "right");
 });
 
-test("tango promenade: inside feet standing, outside feet 0.6 along the line, the follow 0.1 behind", () => {
-  // Lead's right at the origin facing 315, his left 0.6 along the line
-  // of travel (-x); the follow's left 0.4 across from his right and 0.1
-  // back along the line (the offset hold), facing 225, her right 0.6
-  // along the line from it. Each stands on the inside foot,
-  // so the lead's first step is with his left.
+test("tango promenade: inside feet standing, his left as in closed, her right still in front of it", () => {
+  // Lead's right at the origin facing 315, his left STANCE_WIDTH to his
+  // left (no draw-back in the standard hold); the follow's left 0.4
+  // across the line from his right and 0.1 back along it, facing 225,
+  // her right 0.4 in front of his left and 0.1 to its right in his
+  // facing, where the link's first quick left it. Each stands on the
+  // inside foot, so the lead's first step is with his left.
   const { startPose, steps } = figure(
     [{ both: "diagonal forward left", by: 0.2, length: "S" }],
     { start: "tango promenade" },
   );
+  const r = Math.SQRT1_2;
   pointClose(startPose.lead.right.position, [0, 0]);
-  pointClose(startPose.lead.left.position, [-0.6, 0]);
+  pointClose(startPose.lead.left.position, [-0.2 * r, -0.2 * r]);
   pointClose(startPose.follow.left.position, [0.1, 0.4]);
-  pointClose(startPose.follow.right.position, [-0.5, 0.4]);
+  pointClose(startPose.follow.right.position, [
+    -0.2 * r + 0.1 * r - 0.4 * r,
+    -0.2 * r + 0.1 * r + 0.4 * r,
+  ]);
   assert.equal(startPose.lead.orientation, 315);
   assert.equal(startPose.follow.orientation, 225);
   assert.equal(startPose.lead.right.weight, 1);
@@ -883,8 +888,10 @@ test("hold: after every row the partners are in closed hold or promenade, within
     }),
   );
 
-  // Mirrored steps keep the hold, turning or not, and every promenade
-  // stance counts as in hold.
+  // Mirrored steps keep the hold, turning or not, and the waltz
+  // promenade stances count as in hold standing on either foot. (In
+  // tango promenade only the inside feet are: her free right foot is
+  // still in front of his left, where the link left it.)
   assert.doesNotThrow(() =>
     figure(
       [
@@ -895,11 +902,7 @@ test("hold: after every row the partners are in closed hold or promenade, within
       { skipChecks: ["own feet"] },
     ),
   );
-  for (const start of [
-    "crossed promenade",
-    "promenade apart",
-    "tango promenade",
-  ] as const) {
+  for (const start of ["crossed promenade", "promenade apart"] as const) {
     assert.doesNotThrow(() =>
       figure([{ both: "in place", length: "Q" }], {
         start,
