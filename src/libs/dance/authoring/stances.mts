@@ -129,12 +129,13 @@ export function isDrawnBack(partner: Partner, foot: Foot): boolean {
  *   the follow's right) has gone PROMENADE_SIDE_STEP along the line of
  *   travel past where the trailing foot closed. See
  *   promenadeApartPose. Named by the owner (2026-11-16).
- * - "tango promenade": the ballroom tango promenade, where the owner's
+ * - "tango promenade": the ballroom tango promenade, where the book's
  *   Progressive Link ends and the Closed Promenade starts. The same V
- *   and frame as the waltz promenades, with the feet apart and
- *   uncrossed: each partner stands on the inside foot (the lead's right,
- *   the follow's left) with the outside foot TANGO_PROMENADE_WIDTH out
- *   along the line of travel. See tangoPromenadePose.
+ *   and frame as the waltz promenades: the lead hasn't turned from
+ *   closed position and the follow has turned a quarter to the right.
+ *   Each stands on the inside foot (the lead's right, the follow's
+ *   left); his left is where it would be in closed position and her
+ *   right is still in front of it. See tangoPromenadePose.
  * - "contra check": the compact checked position in the original closed
  *   frame, lead LF / follow RF weighted, with 15° left contra rotation and
  *   3 cm lowering. See CONTRA_CHECK_* for the dimensions.
@@ -177,12 +178,6 @@ export const PROMENADE_CLOSE_WIDTH = 0.1;
  *  2026-11-16). The chassé writes it as 0.05 forward and 0.05 outward
  *  in each dancer's opened facing, 0.05 * sqrt 2 across the line. */
 export const PROMENADE_SEPARATION = 0.05 * Math.SQRT2;
-
-/** In "tango promenade", how far each partner's outside foot is along
- *  the line of travel from the inside foot, in metres. The owner's
- *  link steps wide, landing level with the other foot 0.4 out from
- *  where it was, from a closed stance 0.2 wide. */
-export const TANGO_PROMENADE_WIDTH = 0.6;
 
 /** The owner's compact contra check, in metres and degrees: how far
  *  the lead's left foot goes forward and inward from closed stance, the
@@ -456,31 +451,46 @@ function promenadeApartPose(
  * "tango promenade", in the same frame as the waltz promenades (the
  * lead faces 315 and the follow 225, and the line of travel runs
  * towards -x), measured from the lead's right foot, the one he stands
- * on:
+ * on. It is where the book's Progressive Link ends: the lead hasn't
+ * turned, the follow has turned a quarter to the right and stepped
+ * round to his right side, and each keeps the feet as in closed
+ * position:
  *
- * - Lead: right foot at (0, 0); left foot TANGO_PROMENADE_WIDTH along
- *   the line of travel, at (-0.6, 0).
- * - Follow: left foot the hold's `distance` across the line and its
- *   `offset` behind along it, where it was in closed hold (at (0.1, 0.38) in the tango hold); right foot TANGO_PROMENADE_WIDTH along
- *   the line.
+ * - Lead: right foot at (0, 0); left foot STANCE_WIDTH to his left and
+ *   the hold's `drawBack` in front of it (the right foot drawn back, as
+ *   in closed position), so it is about 20 cm ahead along the line.
+ * - Follow: left foot the hold's `promenadeDistance` across the line and
+ *   its `offset` behind along it (at (0.1, 0.38) in the tango hold);
+ *   right foot still where she stepped back on the link's first quick,
+ *   in front of his left foot as in closed position (`offset` to his
+ *   right and `distance` less both draw-backs ahead, in his facing). She
+ *   turns into promenade over it, so it is in the V's mouth, about 21 cm
+ *   from his left foot.
  *
- * Unlike "promenade apart", the partners stand about closed hold's
- * distance apart. In the tango hold it is a little more than the compact
- * closed distance: at 0.35 the inside legs (his right, her left) touch as
- * the hips open into the V. The weights come from `weight`, normally on
- * the inside feet.
+ * In the tango hold the partners are a little further apart than the
+ * compact closed distance: at 0.35 the inside legs (his right, her left)
+ * touch as the hips open into the V. The weights come from `weight`,
+ * normally on the inside feet.
  */
 function tangoPromenadePose(
   weight: (partner: Partner, foot: Foot) => number,
   shape: HoldShape,
 ): Pose {
-  const out = { x: -TANGO_PROMENADE_WIDTH, y: 0 };
+  // In the lead's facing (315): `right` across and `ahead` forward.
+  const inLeadFrame = (right: number, ahead: number) =>
+    addPoints(
+      scalePoint(headingToUnitVector(315 + 90), right),
+      scalePoint(headingToUnitVector(315), ahead),
+    );
   const leadRight = { x: 0, y: 0 };
+  // His left foot as in closed position: STANCE_WIDTH to his left, his
+  // right drawn back behind it.
+  const leadLeft = inLeadFrame(-STANCE_WIDTH, shape.drawBack);
   const followLeft = { x: shape.offset, y: shape.promenadeDistance };
   return {
     lead: {
       left: {
-        position: addPoints(leadRight, out),
+        position: leadLeft,
         weight: weight("lead", "left"),
       },
       right: { position: leadRight, weight: weight("lead", "right") },
@@ -490,7 +500,10 @@ function tangoPromenadePose(
     follow: {
       left: { position: followLeft, weight: weight("follow", "left") },
       right: {
-        position: addPoints(followLeft, out),
+        position: addPoints(
+          leadLeft,
+          inLeadFrame(shape.offset, shape.distance - 2 * shape.drawBack),
+        ),
         weight: weight("follow", "right"),
       },
       orientation: 225,
