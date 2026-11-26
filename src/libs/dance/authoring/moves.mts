@@ -444,7 +444,20 @@ export function applyMove(
     throw new FigureError(`${where}: "pathSetOff" needs a curved "path"`);
   }
   let movement: Movement = { type: "straight", direction, distance };
-  if (move.path === "around the standing foot") {
+  if (move.path === "auto") {
+    // Compiled straight here; defineFigure bends it afterwards, once the
+    // timing of every step is known (routeAutoPaths in autoPath.mts).
+    if (air || distance === 0) {
+      throw new FigureError(
+        `${where}: "path" needs a step that travels along the floor`,
+      );
+    }
+    if (move.pathSetOff !== undefined) {
+      throw new FigureError(
+        `${where}: "auto" chooses its own set-off; leave out "pathSetOff"`,
+      );
+    }
+  } else if (move.path === "around the standing foot") {
     if (air || distance === 0) {
       throw new FigureError(
         `${where}: "path" needs a step that travels along the floor`,
@@ -563,7 +576,7 @@ const AROUND_THE_BACK_SET_OFF = 135;
  *   straight behind, there is no side to go round.
  */
 function curveAround(
-  path: CurvedPath,
+  path: Exclude<CurvedPath, "auto" | "around the standing foot">,
   facing: number,
   direction: number,
   chord: number,

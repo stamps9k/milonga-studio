@@ -24,8 +24,9 @@
  *
  * The code is in ./authoring/: definition.mts (the figure-file format's
  * types), stances.mts (named stances and their measurements), moves.mts
- * (rows into steps), checks.mts (hold, feet and expectEnd checks),
- * define.mts (defineFigure) and parse.mts (parseFigureDefinition). This
+ * (rows into steps), autoPath.mts (routes for `path: "auto"`),
+ * checks.mts (hold, feet and expectEnd checks), define.mts
+ * (defineFigure) and parse.mts (parseFigureDefinition). This
  * file is the public entry point; import from here.
  */
 
@@ -76,5 +77,10 @@ export {
   HOLD_FACING_TOLERANCE,
   PARTNER_FOOT_CLEARANCE,
 } from "./authoring/checks.mts";
+export {
+  AUTO_PATH_CLEARANCE,
+  AUTO_PATH_MAX_BULGE,
+  AUTO_PATH_MAX_LENGTH_RATIO,
+} from "./authoring/autoPath.mts";
 export { defineFigure } from "./authoring/define.mts";
 export { parseFigureDefinition } from "./authoring/parse.mts";
