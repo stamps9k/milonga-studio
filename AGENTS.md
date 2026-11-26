@@ -62,10 +62,10 @@ frontend and a small Express + SQLite API.
   flexed 4 cm and allows 2 cm of leg contact, where the right thighs meet.
   `test/body/figureHold.test.mts` dances every figure in its hold and fails
   if an elbow, a hand or the hips jump between frames or the partners'
-  arms pass through each other, with no figure exempt. `shaping.mts` tilts
-  the upper bodies apart from the hips wherever the partners' shoulders
-  come closer than 20 cm (promenade), so the hips stay together and the V
-  opens at the top.
+  arms pass through each other or into the other's body, with no figure
+  exempt. `shaping.mts` tilts the upper bodies apart from the hips
+  wherever the partners' shoulders come closer than 20 cm (promenade), so
+  the hips stay together and the V opens at the top.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;
