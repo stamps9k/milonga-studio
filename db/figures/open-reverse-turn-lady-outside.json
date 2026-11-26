@@ -1,0 +1,168 @@
+{
+  "$schema": "../figure.schema.json",
+  "name": "Open Reverse Turn, Lady Outside",
+  "style": "tango",
+  "time": "2/4",
+  "slow": 1,
+  "notes": "Book Open Reverse Turn, Lady Outside, with the closed finish (Q Q S Q Q S, 3/4 turn to the left), as the owner dances it after the Back Corté; the lead-in steps in the owner's video aren't danced. The owner approved the shape from a sketch. The follow pivots on her right on 2 and steps forward in CBMP outside the lead on 3. Provisional: step sizes, the turn split (1/4 on 2, 1/8 on 3, 1/4 on 4, 1/8 on 5, none on the close), foot pointing on 2, the pelvis offsets on 3 and 4, and the foot routes.",
+  "steps": [
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": 0.45,
+          "right": 2.7554552980815448e-17
+        },
+        "label": "forward, starting to turn left"
+      },
+      "follow": {
+        "go": {
+          "forward": -0.44999999999999996,
+          "right": -8.266365894244633e-17
+        },
+        "label": "back, starting to turn left"
+      }
+    },
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": 0.92,
+          "right": 0.25000000000000006
+        },
+        "turn": {
+          "left": "1/4"
+        },
+        "pointing": {
+          "left": "1/8"
+        },
+        "label": "side",
+        "path": "around the standing foot"
+      },
+      "follow": {
+        "go": {
+          "forward": -0.6699999999999999,
+          "right": 0.1999999999999999
+        },
+        "turn": {
+          "left": "1/4"
+        },
+        "pointing": {
+          "left": "1/8"
+        },
+        "label": "side and slightly forward",
+        "path": "around the standing foot"
+      }
+    },
+    {
+      "length": "S",
+      "lead": {
+        "go": {
+          "forward": -0.7187005768508881,
+          "right": 0.68698484809835
+        },
+        "turn": {
+          "left": "1/8"
+        },
+        "label": "back in CBMP, partner outside",
+        "path": "around the front",
+        "pathSetOff": 180
+      },
+      "follow": {
+        "go": {
+          "forward": 0.282842712474619,
+          "right": -0.5121320343559643
+        },
+        "turn": {
+          "left": "1/8"
+        },
+        "label": "forward in CBMP, outside partner",
+        "bodyOffset": {
+          "right": 0.08
+        },
+        "path": "auto"
+      }
+    },
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": -0.32,
+          "right": 0.37
+        },
+        "turn": {
+          "left": "1/4"
+        },
+        "label": "back, turning left",
+        "bodyOffset": {
+          "right": -0.02
+        },
+        "path": "auto"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.2367766952966369,
+          "right": 0.2981980515339464
+        },
+        "turn": {
+          "left": "1/4"
+        },
+        "label": "forward, turning left"
+      }
+    },
+    {
+      "length": "Q",
+      "lead": {
+        "go": {
+          "forward": -0.4560660171779821,
+          "right": -0.16748737341529163
+        },
+        "turn": {
+          "left": "1/8"
+        },
+        "label": "side and slightly forward"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.0028069990999368133,
+          "right": 0.4579036790187178
+        },
+        "turn": {
+          "left": "1/8"
+        },
+        "label": "side and slightly back",
+        "path": "around the back",
+        "pathSetOff": 180
+      }
+    },
+    {
+      "length": "S",
+      "lead": {
+        "go": {
+          "forward": 0.020000000000000007,
+          "right": -0.04999999999999982
+        },
+        "label": "closes, slightly back"
+      },
+      "follow": {
+        "go": {
+          "forward": -0.3063603896932108,
+          "right": 0.3813351365237937
+        },
+        "label": "closes, slightly forward"
+      }
+    }
+  ],
+  "expectBeats": 4,
+  "expectEnd": {
+    "stance": "closed",
+    "moved": {
+      "forward": 1.5179036790187177,
+      "right": 0.3746446609406727
+    },
+    "turned": {
+      "left": "3/4"
+    },
+    "leadStandingOn": "R"
+  }
+}
