@@ -11,6 +11,7 @@ import {
 import type { JointName } from "../../src/libs/body/skeleton.mts";
 import { distance, sub } from "../../src/libs/body/vector3.mts";
 import { holdForStyle } from "../../src/libs/dance/authoring.mts";
+import { normalizeDegrees } from "../../src/libs/dance/heading.mts";
 import {
   figureDurationBeats,
   footEase,
@@ -104,9 +105,13 @@ const TORSO: [JointName, JointName, number][] = [
 
 test("figures: elbows and hands move smoothly relative to the body", async (t) => {
   // Measured relative to the chest, so the body's own travel doesn't
-  // count: a joint moving more than this in one sample is a visible
-  // jump. Provisional: just above the largest step now (about 4.8 cm,
-  // his left elbow at the start of the Back Corté's second step).
+  // count: a joint moving more than STEP in one sample, plus however far
+  // the chest's turn in that sample carries it round (the turn times the
+  // joint's distance from the vertical through the chest), is a visible
+  // jump. An arm held still against a spinning chest sweeps round with
+  // it smoothly however fast the turn is. Provisional: STEP is just above
+  // the largest step where the chest barely turns (about 4.8 cm, his
+  // left elbow at the start of the Back Corté's second step).
   const STEP = 0.05;
   for (const figure of figures)
     await t.test(figure.name, () => {
@@ -118,13 +123,26 @@ test("figures: elbows and hands move smoothly relative to the body", async (t) =
             "leftHand",
             "rightHand",
           ] as const) {
+            const from = sub(
+              before[partner].joints[joint],
+              before[partner].joints.chest,
+            );
             const moved = distance(
               sub(now[partner].joints[joint], now[partner].joints.chest),
-              sub(before[partner].joints[joint], before[partner].joints.chest),
+              from,
             );
+            const turned =
+              (Math.abs(
+                normalizeDegrees(
+                  now[partner].chestFacing - before[partner].chestFacing + 180,
+                ) - 180,
+              ) *
+                Math.PI) /
+              180;
+            const allowed = STEP + turned * Math.hypot(from.x, from.y);
             assert.ok(
-              moved <= STEP,
-              `${partner} ${joint} jumps ${moved.toFixed(3)} m at beat ${beat.toFixed(3)}`,
+              moved <= allowed,
+              `${partner} ${joint} jumps ${moved.toFixed(3)} m at beat ${beat.toFixed(3)}, more than the ${allowed.toFixed(3)} m allowed`,
             );
           }
     });

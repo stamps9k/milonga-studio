@@ -17,7 +17,7 @@ import {
 } from "../../src/libs/body/skeleton.mts";
 import { normalizeDegrees } from "../../src/libs/dance/heading.mts";
 import type { CoupleSkeleton } from "../../src/libs/body/skeleton.mts";
-import { distance } from "../../src/libs/body/vector3.mts";
+import { distance, sub } from "../../src/libs/body/vector3.mts";
 import {
   defineFigure,
   holdForStyle,
@@ -131,13 +131,47 @@ test("slideKnees swings a pressing knee round its hip-ankle line until the legs 
   );
 });
 
+/** How far the partner's legs moved past this dancer between two
+ *  samples: the largest move of any of the partner's hip, knee or ankle
+ *  joints, measured from this dancer's hips, so the couple travelling
+ *  together doesn't count. */
+function partnerLegsMoved(
+  before: CoupleSkeleton,
+  now: CoupleSkeleton,
+  partner: "lead" | "follow",
+): number {
+  const other = partner === "lead" ? "follow" : "lead";
+  const joints = [
+    "leftUpperLeg",
+    "leftLowerLeg",
+    "leftFoot",
+    "rightUpperLeg",
+    "rightLowerLeg",
+    "rightFoot",
+  ] as const;
+  let moved = 0;
+  for (const joint of joints)
+    moved = Math.max(
+      moved,
+      distance(
+        sub(now[other].joints[joint], now[partner].joints.hips),
+        sub(before[other].joints[joint], before[partner].joints.hips),
+      ),
+    );
+  return moved;
+}
+
 test("every figure: partners' legs at most touch, with knees sliding smoothly", () => {
-  // How far a knee is moved from its natural bend may change by at most
-  // KNEE_STEP between samples 1/128 beat apart (under 10 ms at the
-  // fastest default tempo): faster than that, the slide would show as a
-  // flick. Distance, not swing angle: a big swing of a nearly straight
-  // leg moves the knee only millimetres. Provisional, set just above the
-  // largest current step (about 7 mm in the Back Corté).
+  // How far a knee is moved from its natural bend may change between
+  // samples 1/128 beat apart (under 10 ms at the fastest default tempo)
+  // by at most KNEE_STEP, plus however far the partner's legs moved past
+  // this dancer in that sample (partnerLegsMoved): a knee pushed aside
+  // by a leg sweeping past moves with that leg, which is smooth however
+  // fast the leg goes; a knee moving faster than anything pushing it
+  // would show as a flick. Distance, not swing angle: a big swing of a
+  // nearly straight leg moves the knee only millimetres. Provisional:
+  // KNEE_STEP is just above the largest step where the partner's legs
+  // barely move past (about 7 mm in the Back Corté).
   const KNEE_STEP = 0.008;
   const step = 1 / 128;
   for (const figure of loadFigures()) {
@@ -146,6 +180,7 @@ test("every figure: partners' legs at most touch, with knees sliding smoothly", 
     const beats = Math.max(...figure.steps.map((s) => s.beat - 1 + s.duration));
     for (const options of [{}, { footEasing: footEase }]) {
       let previous: number[] | null = null;
+      let previousCouple: CoupleSkeleton | null = null;
       for (let beat = 0; beat <= beats + 1e-9; beat += step) {
         const pose = poseAtBeat(figure, beat, options);
         const couple = solveSkeleton(pose, DEFAULT_PROPORTIONS, hold);
@@ -180,14 +215,21 @@ test("every figure: partners' legs at most touch, with knees sliding smoothly", 
             distance(slid.rightLowerLeg, natural.rightLowerLeg),
           ];
         });
-        if (previous !== null)
+        if (previous !== null && previousCouple !== null) {
+          // shifts are the lead's left and right knees, then the follow's.
+          const allowed = (["lead", "follow"] as const).map(
+            (partner) =>
+              KNEE_STEP + partnerLegsMoved(previousCouple!, couple, partner),
+          );
           shifts.forEach((shift, i) =>
             assert.ok(
-              Math.abs(shift - previous![i]) <= KNEE_STEP,
-              `${figure.name}: a knee slides ${shift - previous![i]} m in one sample at beat ${beat}`,
+              Math.abs(shift - previous![i]) <= allowed[i < 2 ? 0 : 1],
+              `${figure.name}: a knee slides ${shift - previous![i]} m in one sample at beat ${beat}, more than the ${allowed[i < 2 ? 0 : 1].toFixed(4)} m allowed`,
             ),
           );
+        }
         previous = shifts;
+        previousCouple = couple;
       }
     }
   }
