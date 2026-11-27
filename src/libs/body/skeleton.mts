@@ -662,6 +662,16 @@ interface HoldPlacement {
    * reaches its hand.
    */
   arms: { armpitOut: number; armpitDown: number; herElbowAbove: number };
+  /**
+   * The joined hands never come so close to his left shoulder or her
+   * right that the elbow would bend tighter than this, in degrees
+   * between upper arm and forearm (180: straight). Where they would, as
+   * where her right shoulder comes close beside his left in promenade or
+   * with her outside, the hands move further out (see connectHold). Each
+   * value is about the elbow's bend in that style's closed hold, so
+   * closed hold keeps its shape. Provisional.
+   */
+  joinedMinElbow: number;
 }
 const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
   standard: {
@@ -674,6 +684,7 @@ const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
     upperArmAbove: 0.05,
     underArm: 0,
     arms: { armpitOut: 0.15, armpitDown: 0.1, herElbowAbove: 0.07 },
+    joinedMinElbow: 45,
   },
   tango: {
     joinedOut: 0.12,
@@ -685,9 +696,38 @@ const HOLD_PLACEMENT: Record<HoldKind, HoldPlacement> = {
     upperArmAbove: 0.02,
     underArm: 0.07,
     arms: { armpitOut: 0.15, armpitDown: 0.14, herElbowAbove: 0.06 },
+    joinedMinElbow: 30,
   },
 };
 const PALM = 0.025;
+
+/** How far the wrist is from the shoulder joint when the elbow bends to
+ *  `elbow` degrees between upper arm and forearm (law of cosines). */
+function reachAtElbow(body: BodyProportions, elbow: number): number {
+  const { upperArm: u, forearm: f } = body;
+  return Math.sqrt(
+    u * u + f * f - 2 * u * f * Math.cos((elbow * Math.PI) / 180),
+  );
+}
+
+/**
+ * How far `point` must move along the horizontal unit vector `direction`
+ * to be at least `least` from `from` and stay so as it moves on: 0 if it
+ * already is. A point behind `from` (along `direction`) also moves at
+ * least level with it; without that, the move would jump from nothing
+ * to across `from` as the point's distance fell to `least`.
+ */
+function pushFrom(
+  point: Point3D,
+  direction: Point3D,
+  from: Point3D,
+  least: number,
+): number {
+  const offset = sub(point, from);
+  const along = dot(offset, direction);
+  const short = dot(offset, offset) - least * least;
+  return Math.max(0, -along + Math.sqrt(Math.max(0, along * along - short)));
+}
 
 /**
  * How far ballroom tango's posture lowers the hips below standing
@@ -826,10 +866,35 @@ function connectHold(
   const outward =
     normalize(vec(between.x - middle.x, between.y - middle.y, 0)) ??
     scale(headingVector(lead.facing + 90), -1);
-  const joined = {
+  const placed = {
     ...add(between, scale(outward, place.joinedOut)),
     z: follow.joints.head.z + place.joinedAboveHead,
   };
+  // Further out where either shoulder is too close for a natural bend
+  // of the elbow (place.joinedMinElbow), as where her right shoulder
+  // comes close beside his left: square to the line between the two
+  // shoulders, on the outward side, which is where both arms reach with
+  // that bend. Pushed straight outward instead, the hands could end up
+  // beside both shoulders, with the two forearms coming from the same
+  // side and passing through each other.
+  const across = sub(herShoulder, hisShoulder);
+  const squareTo = normalize(vec(across.y, -across.x, 0)) ?? outward;
+  const clear = dot(squareTo, outward) < 0 ? scale(squareTo, -1) : squareTo;
+  const joinedOut = Math.max(
+    pushFrom(
+      placed,
+      clear,
+      hisShoulder,
+      reachAtElbow(bodies.lead, place.joinedMinElbow) + PALM,
+    ),
+    pushFrom(
+      placed,
+      clear,
+      herShoulder,
+      reachAtElbow(bodies.follow, place.joinedMinElbow) + PALM,
+    ),
+  );
+  const joined = add(placed, scale(clear, joinedOut));
   const palmShort = (shoulder: Point3D) =>
     add(joined, scale(normalize(sub(shoulder, joined)) ?? UP, PALM));
 
