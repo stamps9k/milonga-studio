@@ -67,7 +67,9 @@ frontend and a small Express + SQLite API.
   `test/body/figureHold.test.mts` dances every figure in its hold and fails
   if an elbow, a hand or the hips jump between frames or the partners'
   arms pass through each other or into the other's body, with no figure
-  exempt. The pelvis turns with contra body movement (`cbmTurn`): where
+  exempt. A pose's `chestTurn` turns the chest, shoulders and arms from the
+  hips (`solvePartnerSkeleton`; `chestFacing` in the skeleton). The pelvis
+  turns with contra body movement (`cbmTurn`): where
   the feet are placed across the body (CBMP) the hips turn towards the
   foot that is ahead, while the chest and the hold keep the body's facing,
   and `solveSkeleton` scales that back where it would push the partners'

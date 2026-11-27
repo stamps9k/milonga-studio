@@ -142,6 +142,29 @@ export interface DanceStep {
    *  fold.mts. */
   bodyArc?: boolean;
 
+  /** true when the body travels as if the stepping foot went straight
+   *  to where it lands, rather than swinging out with the foot's curve
+   *  (Movement "arc") or its passing by the standing foot. The weight
+   *  still moves across as usual; only the moving foot's detour from the
+   *  straight line is kept out of the body's position. For a foot curving
+   *  round the standing foot on a step that takes weight, as the follow
+   *  walking round the lead in a twist turn: a real foot carries little
+   *  weight until it lands, so the body doesn't follow its curve. Left
+   *  out, the body is where the weighted feet put it, the curve
+   *  included. */
+  steadyBody?: boolean;
+
+  /** How far the chest, shoulders and hold are turned from the hips at
+   *  the end of this step, in degrees clockwise (negative anticlockwise),
+   *  at most 90 either way. `orientation` stays the way the hips and
+   *  feet face; the upper body faces `orientation + chestTurn`. Changes
+   *  steadily over the step from where the previous step left it, like
+   *  bodyOffset; left out means none, so the upper body comes back
+   *  square to the hips over a step that leaves it out. For the follow
+   *  walking forward round the lead with her chest towards him. See
+   *  chestFacing in pose.mts. */
+  chestTurn?: number;
+
   /** Vertical displacement of the body at this step, relative to a neutral
    *  standing height, in metres. Structural for waltz-style rise and
    *  fall, left at 0 for flat styles like most tango/blues. */

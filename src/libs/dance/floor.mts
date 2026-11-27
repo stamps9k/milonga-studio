@@ -51,6 +51,10 @@ export function applyTransform(transform: FloorTransform, pose: Pose): Pose {
         partnerPose.orientation + transform.rotation,
       ),
       rise: partnerPose.rise,
+      // Relative to the body's facing, so it turns with it.
+      ...(partnerPose.chestTurn !== undefined
+        ? { chestTurn: partnerPose.chestTurn }
+        : {}),
       // An offset is a vector: rotate it with the floor, never translate it.
       ...(partnerPose.bodyOffset
         ? {

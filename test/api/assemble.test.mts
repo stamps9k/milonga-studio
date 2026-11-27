@@ -207,7 +207,7 @@ test("assembleFigure: a late weight change is kept, and the default even timing 
   assert.equal("weightTiming" in even, false);
 });
 
-test("assembleFigure: a step's swivel point and body arc come back, and the defaults are left out", () => {
+test("assembleFigure: a step's swivel point, body arc, steady body and chest turn come back, and the defaults are left out", () => {
   const figureId = insertFigure("Swivel Test");
   const [firstStep] = db
     .prepare(
@@ -226,6 +226,19 @@ test("assembleFigure: a step's swivel point and body arc come back, and the defa
   const [curved, straight] = assemble.assembleFigure(figureId).steps;
   assert.equal(curved.bodyArc, true);
   assert.equal("bodyArc" in straight, false);
+  db.prepare(
+    "UPDATE dance_steps SET steady_body = 1, chest_turn = 90 WHERE id = ?",
+  ).run(firstStep.id);
+  const [steady, plainBody] = assemble.assembleFigure(figureId).steps;
+  assert.equal(steady.steadyBody, true);
+  assert.equal(steady.chestTurn, 90);
+  assert.equal("steadyBody" in plainBody, false);
+  assert.equal("chestTurn" in plainBody, false);
+  assert.throws(() =>
+    db
+      .prepare("UPDATE dance_steps SET chest_turn = 91 WHERE id = ?")
+      .run(firstStep.id),
+  );
   assert.throws(() =>
     db
       .prepare("UPDATE dance_steps SET swivel = 'toe' WHERE id = ?")

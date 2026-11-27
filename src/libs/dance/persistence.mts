@@ -80,7 +80,15 @@ function partner(value: unknown, path: string): PartnerPose {
     ...(row.bodyOffset === undefined
       ? {}
       : { bodyOffset: point(row.bodyOffset, `${path}.bodyOffset`) }),
+    ...chestTurn(row.chestTurn, `${path}.chestTurn`),
   };
+}
+/** A chest turn, at most a quarter either way (MAX_CHEST_TURN); 0 is
+ *  the same as none and left out. */
+function chestTurn(value: unknown, path: string): { chestTurn?: number } {
+  if (value === undefined) return {};
+  const degrees = number(value, path, -90, 90);
+  return degrees === 0 ? {} : { chestTurn: degrees };
 }
 function pose(value: unknown, path: string): Pose {
   const row = record(value, path);
@@ -144,6 +152,12 @@ function step(value: unknown, path: string): DanceStep {
       : row.bodyArc === true
         ? { bodyArc: true }
         : invalid(`${path}.bodyArc`)),
+    ...(row.steadyBody === undefined || row.steadyBody === false
+      ? {}
+      : row.steadyBody === true
+        ? { steadyBody: true }
+        : invalid(`${path}.steadyBody`)),
+    ...chestTurn(row.chestTurn, `${path}.chestTurn`),
     ...(row.weightTiming === undefined
       ? {}
       : {

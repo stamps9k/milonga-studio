@@ -12,6 +12,8 @@ import {
   lerp,
   lerpAngleDegrees,
   lerpPoint,
+  scalePoint,
+  subPoints,
 } from "../heading.mts";
 import { footHeading } from "../pose.mts";
 import type { PartnerPose, Point2D, Pose } from "../pose.mts";
@@ -131,6 +133,10 @@ function foldPoseAtBeat(
     lead: figure.startPose.lead.bodyOffset ?? { x: 0, y: 0 },
     follow: figure.startPose.follow.bodyOffset ?? { x: 0, y: 0 },
   };
+  const chestTurns: Record<Partner, number> = {
+    lead: figure.startPose.lead.chestTurn ?? 0,
+    follow: figure.startPose.follow.chestTurn ?? 0,
+  };
   // How far each foot is tipped (footPitchAt): only a foot partway
   // through a step with footwork is.
   const pitches: Record<Partner, Record<Foot, number>> = {
@@ -155,9 +161,10 @@ function foldPoseAtBeat(
     (a, b) => a.beat - b.beat,
   );
   const passings = stepPassings(figure);
-  // How far each body is off the straight line between steps because a
-  // step takes it round an arc (DanceStep.bodyArc, bodyArcOffset); added
-  // to bodyOffset.
+  // How far each body is moved from where the weighted feet put it
+  // because a step takes it round an arc (DanceStep.bodyArc,
+  // bodyArcOffset) or keeps it off the moving foot's route
+  // (DanceStep.steadyBody); added to bodyOffset.
   const bodyArcs: Record<Partner, Point2D> = {
     lead: { x: 0, y: 0 },
     follow: { x: 0, y: 0 },
@@ -232,6 +239,7 @@ function foldPoseAtBeat(
       orientations[step.partner] = step.orientation;
       rises[step.partner] = step.rise;
       bodyOffsets[step.partner] = step.bodyOffset ?? { x: 0, y: 0 };
+      chestTurns[step.partner] = step.chestTurn ?? 0;
       continue;
     }
 
@@ -282,6 +290,7 @@ function foldPoseAtBeat(
         ),
       );
     }
+    const routeStart = positions[step.partner][step.foot];
     positions[step.partner][step.foot] =
       step.contact === "air"
         ? airborneExcursionAt(
@@ -327,6 +336,20 @@ function foldPoseAtBeat(
       weightProgress,
     );
     weights[step.partner][otherFoot] = 1 - weights[step.partner][step.foot];
+    if (step.steadyBody) {
+      // The body moves as if the foot went straight to where it lands
+      // (DanceStep.steadyBody): the foot's share of the weight times how
+      // far its route is off that straight line comes off the body.
+      const end = movementEndpoint(routeStart, movementFrame, step.movement);
+      const chord = lerpPoint(routeStart, end, footProgress);
+      bodyArcs[step.partner] = addPoints(
+        bodyArcs[step.partner],
+        scalePoint(
+          subPoints(chord, positions[step.partner][step.foot]),
+          weights[step.partner][step.foot],
+        ),
+      );
+    }
     const bodyNow = lerpAngleDegrees(
       orientations[step.partner],
       step.orientation,
@@ -375,6 +398,11 @@ function foldPoseAtBeat(
       step.bodyOffset ?? { x: 0, y: 0 },
       progress,
     );
+    chestTurns[step.partner] = lerp(
+      chestTurns[step.partner],
+      step.chestTurn ?? 0,
+      progress,
+    );
     pitches[step.partner][step.foot] = footPitchAt(step, footProgress);
   }
 
@@ -407,6 +435,9 @@ function foldPoseAtBeat(
       Math.hypot(offset.x, offset.y) > 1e-12 ? { bodyOffset: offset } : {})(
       addPoints(bodyOffsets[partner], bodyArcs[partner]),
     ),
+    ...(Math.abs(chestTurns[partner]) > 1e-9
+      ? { chestTurn: chestTurns[partner] }
+      : {}),
   });
 
   return { lead: buildPartnerPose("lead"), follow: buildPartnerPose("follow") };

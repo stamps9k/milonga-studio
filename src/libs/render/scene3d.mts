@@ -202,7 +202,8 @@ export interface CameraPlacement {
 }
 
 /** The parts of a skeleton the camera needs: where each dancer's hips
- *  are and which way they face. */
+ *  are and which way their shoulders face (chestFacing in pose.mts), so
+ *  a view over a dancer's shoulder looks the way they look. */
 export interface CameraSubject {
   hips: Point3D;
   facing: number;

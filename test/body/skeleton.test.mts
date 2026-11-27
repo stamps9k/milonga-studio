@@ -586,3 +586,21 @@ test("solveSkeleton: her left hand slides back down his arm smoothly as her shou
     previous = hand;
   }
 });
+
+test("solvePartnerSkeleton: a chest turn turns the chest, shoulders and arms from the hips", () => {
+  const square = lead([-0.1, 0], [0.1, 0], 0.5);
+  const turned = { ...square, chestTurn: 90 };
+  const before = solvePartnerSkeleton(square, LEAD, "lead");
+  const after = solvePartnerSkeleton(turned, LEAD, "lead");
+  close(after.facing, 0);
+  close(after.hipFacing, before.hipFacing);
+  close(after.chestFacing, 90);
+  // The hips and legs stay where they were.
+  for (const joint of ["hips", "leftUpperLeg", "rightLowerLeg"] as const)
+    assert.ok(gap(after.joints[joint], before.joints[joint]) < 1e-9);
+  // The shoulder line now runs front to back: the right shoulder, out to
+  // the side when square, is behind the chest after a quarter turn right.
+  const across = sub(after.joints.rightUpperArm, after.joints.leftUpperArm);
+  assert.ok(Math.abs(across.x) < 1e-6 && across.y < -0.2);
+  assertBoneLengths(after);
+});

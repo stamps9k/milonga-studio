@@ -16,6 +16,7 @@ import {
 import { footprintsAtBeat, sequenceFootprints } from "../dance/footprints.mts";
 import type { Footprint } from "../dance/footprints.mts";
 import { headingToUnitVector } from "../dance/heading.mts";
+import { chestFacing } from "../dance/pose.mts";
 import { JOIN_FOOT_GAP_TOLERANCE } from "../dance/join.mts";
 import type { Partner } from "../dance/step.mts";
 import {
@@ -713,11 +714,11 @@ export class Renderer3D implements SceneRenderer {
       this.subjects = {
         lead: {
           hips: skeletons.lead.joints.hips,
-          facing: pose.lead.orientation,
+          facing: chestFacing(pose.lead),
         },
         follow: {
           hips: skeletons.follow.joints.hips,
-          facing: pose.follow.orientation,
+          facing: chestFacing(pose.follow),
         },
       };
       // The first pose of a sequence: start the camera on the couple

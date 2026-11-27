@@ -159,6 +159,14 @@
       "type": "boolean",
       "description": "true: the body travels round an arc during the step, its direction turning with the step's turn, instead of straight between where the weighted feet put it (a follow walking round the lead in a twist turn). Needs a step that turns and takes weight."
     },
+    "steadyBody": {
+      "type": "boolean",
+      "description": "true: the body travels as if the stepping foot went straight to where it lands, instead of swinging out with a curved path or the foot's passing by the standing foot. For a foot curving round the standing foot on a step that takes weight (the follow walking round the lead in a twist turn). Needs a step that takes weight."
+    },
+    "chest": {
+      "$ref": "#/definitions/turn",
+      "description": "How far the chest, shoulders and hold are turned from the hips at the end of the step, as a turn ({ \"right\": \"1/4\" }), at most a quarter either way. Changes steadily over the step and goes back to none on the next step that leaves it out. For one partner only, on a step that takes weight: the follow walking forward round the lead in a twist turn with her chest towards him."
+    },
     "swivel": {
       "enum": ["ball", "heel"],
       "description": "Where on the foot a turn on the floor pivots during this step: the step's own foot when it turns on the spot (\"in place\" or \"pivot\"), and the standing foot as it swivels with the body until it moves off. Default: about the middle of the foot."
@@ -236,6 +244,8 @@
             "cross": { "$ref": "#/definitions/cross" },
             "swivel": { "$ref": "#/definitions/swivel" },
             "bodyArc": { "$ref": "#/definitions/bodyArc" },
+            "steadyBody": { "$ref": "#/definitions/steadyBody" },
+            "chest": { "$ref": "#/definitions/chest" },
             "label": { "$ref": "#/definitions/label" }
           }
         }
@@ -355,7 +365,8 @@
         },
         "cross": { "$ref": "#/definitions/cross" },
         "swivel": { "$ref": "#/definitions/swivel" },
-        "bodyArc": { "$ref": "#/definitions/bodyArc" }
+        "bodyArc": { "$ref": "#/definitions/bodyArc" },
+        "steadyBody": { "$ref": "#/definitions/steadyBody" }
       }
     },
     "point": {

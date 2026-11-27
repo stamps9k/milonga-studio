@@ -109,7 +109,8 @@ export interface PartnerSkeleton {
    *  contra body movement (cbmTurn) where a leg crosses the body. */
   hipFacing: number;
   /** Compass heading the chest, shoulders and head face: the body's
-   *  facing, turned where the lead's upper body turns towards his partner
+   *  facing turned by the pose's chestTurn (chestFacing in pose.mts),
+   *  and further where the lead's upper body turns towards his partner
    *  (upperBodyTurn). The arms are solved in this frame. */
   chestFacing: number;
   /** How far the hips are below standing height plus the rise, because
@@ -571,41 +572,46 @@ export function solvePartnerSkeleton(
   const leftArm = arm("left");
   const rightArm = arm("right");
 
-  return {
-    joints: {
-      hips: pelvis,
-      spine: above(body.spineHeight),
-      chest: above(body.chestHeight),
-      neck,
-      head: above(body.headHeight),
-      leftUpperLeg,
-      leftLowerLeg: knee("left", leftUpperLeg),
-      leftFoot: feet.left.ankle,
-      leftToes: feet.left.ball,
-      rightUpperLeg,
-      rightLowerLeg: knee("right", rightUpperLeg),
-      rightFoot: feet.right.ankle,
-      rightToes: feet.right.ball,
-      leftShoulder: collar("left"),
-      leftUpperArm: leftArm.shoulder,
-      leftLowerArm: leftArm.elbow,
-      leftHand: leftArm.hand,
-      rightShoulder: collar("right"),
-      rightUpperArm: rightArm.shoulder,
-      rightLowerArm: rightArm.elbow,
-      rightHand: rightArm.hand,
+  // The chest and everything above it turned from the hips by the pose's
+  // chestTurn, about the vertical through the chest.
+  return turnUpperBody(
+    {
+      joints: {
+        hips: pelvis,
+        spine: above(body.spineHeight),
+        chest: above(body.chestHeight),
+        neck,
+        head: above(body.headHeight),
+        leftUpperLeg,
+        leftLowerLeg: knee("left", leftUpperLeg),
+        leftFoot: feet.left.ankle,
+        leftToes: feet.left.ball,
+        rightUpperLeg,
+        rightLowerLeg: knee("right", rightUpperLeg),
+        rightFoot: feet.right.ankle,
+        rightToes: feet.right.ball,
+        leftShoulder: collar("left"),
+        leftUpperArm: leftArm.shoulder,
+        leftLowerArm: leftArm.elbow,
+        leftHand: leftArm.hand,
+        rightShoulder: collar("right"),
+        rightUpperArm: rightArm.shoulder,
+        rightLowerArm: rightArm.elbow,
+        rightHand: rightArm.hand,
+      },
+      feet: { left: feet.left.ends, right: feet.right.ends },
+      facing: pose.orientation,
+      hipFacing: normalizeDegrees(hipFacing),
+      chestFacing: pose.orientation,
+      hipDrop: standing - hipZ,
+      legShortfall,
+      kneeSwing: { left: 0, right: 0 },
+      fingertips: { left: leftArm.fingertip, right: rightArm.fingertip },
+      palms: { left: leftArm.palm, right: rightArm.palm },
+      grips: { left: 0, right: 0 },
     },
-    feet: { left: feet.left.ends, right: feet.right.ends },
-    facing: pose.orientation,
-    hipFacing: normalizeDegrees(hipFacing),
-    chestFacing: pose.orientation,
-    hipDrop: standing - hipZ,
-    legShortfall,
-    kneeSwing: { left: 0, right: 0 },
-    fingertips: { left: leftArm.fingertip, right: rightArm.fingertip },
-    palms: { left: leftArm.palm, right: rightArm.palm },
-    grips: { left: 0, right: 0 },
-  };
+    pose.chestTurn ?? 0,
+  );
 }
 
 /**

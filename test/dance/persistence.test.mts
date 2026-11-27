@@ -104,6 +104,28 @@ test("persistence: validates movements, weights, poses and timing before rendere
       },
     ],
     [
+      "steadyBody",
+      (dance) => {
+        Object.assign(dance.sequence.entries[0].figure.steps[0], {
+          steadyBody: 1,
+        });
+      },
+    ],
+    [
+      "chestTurn",
+      (dance) => {
+        dance.sequence.entries[0].figure.steps[0].chestTurn = 120;
+      },
+    ],
+    [
+      "pose chestTurn",
+      (dance) => {
+        Object.assign(dance.sequence.entries[0].figure.startPose.follow, {
+          chestTurn: "quarter",
+        });
+      },
+    ],
+    [
       "airborne",
       (dance) => {
         dance.sequence.entries[0].figure.steps[0].contact = "air";
