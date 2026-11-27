@@ -217,6 +217,7 @@ export function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     air: row.air,
     cross: row.cross,
     swivel: row.swivel,
+    bodyArc: row.bodyArc,
   };
   const pathFor = (partner: Partner): CurvedPath | undefined =>
     typeof row.path === "object" ? row.path[partner] : row.path;
@@ -523,6 +524,11 @@ export function applyMove(
       `${where}: "swivel" says where a foot turns on the floor, and this step turns neither foot`,
     );
   }
+  if (move.bodyArc === true && (before === after || targetWeight === 0)) {
+    throw new FigureError(
+      `${where}: "bodyArc" bends the body's path with its turn, so it needs a step that turns and takes weight`,
+    );
+  }
   state.direction[OTHER[foot]] = swivelStandingFoot(
     state.direction[OTHER[foot]],
     before,
@@ -552,6 +558,7 @@ export function applyMove(
       ? { footDirection: normalizeDegrees(after + turnDegrees(move.pointing)) }
       : {}),
     ...(move.swivel !== undefined ? { swivel: move.swivel } : {}),
+    ...(move.bodyArc === true ? { bodyArc: true } : {}),
     rise: move.rise ?? 0,
     ...(move.bodyOffset
       ? {

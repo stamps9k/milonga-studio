@@ -139,6 +139,11 @@ function step(value: unknown, path: string): DanceStep {
     ...(row.swivel === undefined
       ? {}
       : { swivel: choice(row.swivel, ["ball", "heel"], `${path}.swivel`) }),
+    ...(row.bodyArc === undefined || row.bodyArc === false
+      ? {}
+      : row.bodyArc === true
+        ? { bodyArc: true }
+        : invalid(`${path}.bodyArc`)),
     ...(row.weightTiming === undefined
       ? {}
       : {

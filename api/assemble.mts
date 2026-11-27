@@ -193,6 +193,7 @@ interface DanceStepRow {
   orientation: number;
   foot_direction: number | null;
   swivel: SwivelPoint | null;
+  body_arc: number;
   rise: number;
   body_offset_x: number;
   body_offset_y: number;
@@ -205,7 +206,7 @@ interface DanceStepRow {
 
 const figureStmt = db.prepare("SELECT * FROM figures WHERE id = ?");
 const figureStepsStmt = db.prepare(
-  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, swivel, rise, rise_timing, footwork, beat, duration, label, body_offset_x, body_offset_y
+  `SELECT id, partner, foot, movement_id, contact, weight, weight_timing, orientation, foot_direction, swivel, body_arc, rise, rise_timing, footwork, beat, duration, label, body_offset_x, body_offset_y
 	 FROM dance_steps WHERE figure_id = ? ORDER BY step_index`,
 );
 
@@ -230,6 +231,7 @@ export function assembleFigure(figureId: number): Figure {
       ? { footDirection: step.foot_direction }
       : {}),
     ...(step.swivel !== null ? { swivel: step.swivel } : {}),
+    ...(step.body_arc === 1 ? { bodyArc: true } : {}),
     rise: step.rise,
     ...(step.body_offset_x !== 0 || step.body_offset_y !== 0
       ? { bodyOffset: { x: step.body_offset_x, y: step.body_offset_y } }

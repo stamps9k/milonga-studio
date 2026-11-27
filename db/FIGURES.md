@@ -200,6 +200,7 @@ just an action, or inside a partner object.
 | `"turn"`          | `{ "right": "1/8" }` (clockwise, natural) or `{ "left": "3/8" }` (anticlockwise, reverse). A plain number such as `0.125` also works.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `"pointing"`      | How much further round than the body the moving foot points when it lands, written like `turn` and measured from the body's facing after the step's turn. A chart's "3/8 between 1 and 2, body turns less" is `"turn": { "right": "1/4" }` (the body) with `"pointing": { "right": "1/8" }` (the foot the rest of the way). On a row it can be one each: `{ "follow": { "right": "1/8" } }`. Default: the way the body faces. See "Foot direction" below.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `"swivel"`        | `"ball"` or `"heel"`: where a foot turning on the floor pivots during the step, so the middle of the foot moves round that point. See "Foot direction" below. Default: about the middle of the foot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `"bodyArc": true` | The body travels round an arc during the step, its direction turning with the step's `turn`, instead of straight between where the weighted feet put it. See "Body path" below. Default: straight.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `"riseTiming"`    | `"late"`: the rise holds and changes at the end of the step, for a chart's "commence to rise at end of 1" or "lower at end of 3". Default `"even"`: it changes steadily across the step ("continue to rise on 2").                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -311,6 +312,27 @@ it:
     "turn": { "right": "5/16" },
     "swivel": "ball",
     "duration": 0.5
+  },
+  "beat": 4
+}
+```
+
+### Body path
+
+The body is where the weighted feet put it, so during a step it travels
+straight from where the last step left it to where this one puts it. For a
+dancer walking round the partner (the follow round the lead in a twist turn)
+that line cuts across the circle, close to or through the partner. With
+`"bodyArc": true` the body goes round an arc instead, its direction turning
+with the step's `turn`, and still starts and ends where it would anyway. It
+needs a step that turns and takes weight:
+
+```json
+{
+  "follow": {
+    "go": { "forward": 0.5, "right": 0.3 },
+    "turn": { "right": "3/8" },
+    "bodyArc": true
   },
   "beat": 4
 }

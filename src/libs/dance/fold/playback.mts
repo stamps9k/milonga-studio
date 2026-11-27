@@ -24,6 +24,7 @@ import {
   footPitchAt,
   risePhase,
   stepPhases,
+  bodyArcOffset,
   standingShare,
   standingSwivelShift,
   swivelShift,
@@ -154,6 +155,13 @@ function foldPoseAtBeat(
     (a, b) => a.beat - b.beat,
   );
   const passings = stepPassings(figure);
+  // How far each body is off the straight line between steps because a
+  // step takes it round an arc (DanceStep.bodyArc, bodyArcOffset); added
+  // to bodyOffset.
+  const bodyArcs: Record<Partner, Point2D> = {
+    lead: { x: 0, y: 0 },
+    follow: { x: 0, y: 0 },
+  };
   const activeFreeDirections: {
     partner: Partner;
     foot: Foot;
@@ -249,6 +257,31 @@ function foldPoseAtBeat(
     const footProgress = context.pivots.has(step)
       ? footPhase
       : easeFoot(footPhase);
+    if (step.bodyArc && !free && step.contact !== "air") {
+      // From where the weighted feet had the body to where they will
+      // have it, round the arc the body turns along, the weight's share
+      // of the way.
+      const start = positions[step.partner][step.foot];
+      const other = positions[step.partner][otherFoot];
+      const end = movementEndpoint(start, movementFrame, step.movement);
+      const before = weights[step.partner][step.foot];
+      const travel = {
+        x:
+          (step.weight - before) * (end.x - other.x) +
+          before * (end.x - start.x),
+        y:
+          (step.weight - before) * (end.y - other.y) +
+          before * (end.y - start.y),
+      };
+      bodyArcs[step.partner] = addPoints(
+        bodyArcs[step.partner],
+        bodyArcOffset(
+          travel,
+          angleBetweenDegrees(orientations[step.partner], step.orientation),
+          weightProgress,
+        ),
+      );
+    }
     positions[step.partner][step.foot] =
       step.contact === "air"
         ? airborneExcursionAt(
@@ -370,9 +403,10 @@ function foldPoseAtBeat(
     right: footState(partner, "right"),
     orientation: orientations[partner],
     rise: rises[partner],
-    ...(Math.hypot(bodyOffsets[partner].x, bodyOffsets[partner].y) > 1e-12
-      ? { bodyOffset: bodyOffsets[partner] }
-      : {}),
+    ...((offset) =>
+      Math.hypot(offset.x, offset.y) > 1e-12 ? { bodyOffset: offset } : {})(
+      addPoints(bodyOffsets[partner], bodyArcs[partner]),
+    ),
   });
 
   return { lead: buildPartnerPose("lead"), follow: buildPartnerPose("follow") };

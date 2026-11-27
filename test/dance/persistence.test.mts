@@ -96,6 +96,14 @@ test("persistence: validates movements, weights, poses and timing before rendere
       },
     ],
     [
+      "bodyArc",
+      (dance) => {
+        Object.assign(dance.sequence.entries[0].figure.steps[0], {
+          bodyArc: "yes",
+        });
+      },
+    ],
+    [
       "airborne",
       (dance) => {
         dance.sequence.entries[0].figure.steps[0].contact = "air";

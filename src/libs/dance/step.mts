@@ -134,6 +134,14 @@ export interface DanceStep {
    *  field existed. See swivelShift in fold.mts. */
   swivel?: SwivelPoint;
 
+  /** true when the body travels round an arc during this step, its
+   *  direction turning with the body's turn, instead of straight from
+   *  where the weighted feet leave it to where they put it (as a dancer
+   *  walking round a partner does). It starts and ends where it would
+   *  anyway. Left out, the body goes straight. See bodyArcOffset in
+   *  fold.mts. */
+  bodyArc?: boolean;
+
   /** Vertical displacement of the body at this step, relative to a neutral
    *  standing height, in metres. Structural for waltz-style rise and
    *  fall, left at 0 for flat styles like most tango/blues. */

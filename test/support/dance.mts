@@ -39,6 +39,7 @@ export function sampleDance(): Dance {
         duration: 1,
         footDirection: 5,
         swivel: "ball",
+        bodyArc: true,
         footwork: "HT",
         riseTiming: "late",
         weightTiming: "late",

@@ -45,6 +45,7 @@ export {
   standingShare,
   standingSwivelShift,
   turnsOnTheSpot,
+  bodyArcOffset,
 } from "./fold/timing.mts";
 export type { EntrySpan, ActiveStepInfo } from "./fold/playback.mts";
 export {
