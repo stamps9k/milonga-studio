@@ -23,7 +23,13 @@ import {
   positionsOf,
   straightEndpoint,
 } from "./paths.mts";
-import { swivelStandingFoot } from "./timing.mts";
+import {
+  standingShare,
+  standingSwivelShift,
+  swivelShift,
+  swivelStandingFoot,
+  turnsOnTheSpot,
+} from "./timing.mts";
 
 /**
  * How close a travelling foot comes to the standing foot as it passes
@@ -271,6 +277,17 @@ export function stepPassings(
   // directions), for keeping the passing foot's outline off the
   // standing foot's.
   const directionsBefore = new Map<DanceStep, Record<Foot, number>>();
+  // How far a standing foot moved as it swivelled about its ball or heel
+  // during a step (DanceStep.swivel), counted once that step is over.
+  const swivelled: {
+    partner: Partner;
+    foot: Foot;
+    end: number;
+    shift: Point2D;
+    /** Where the step comes in `ordered`: the fold below has already
+     *  added the shift to the feet of every step after it. */
+    order: number;
+  }[] = [];
   {
     const positions: Record<Partner, Record<Foot, Point2D>> = {
       lead: { ...positionsOf(figure.startPose.lead) },
@@ -290,7 +307,7 @@ export function stepPassings(
         right: footHeading(figure.startPose.follow, "right"),
       },
     };
-    for (const step of ordered) {
+    for (const [order, step] of ordered.entries()) {
       const free = isFreeFootFollow(step, figure.steps);
       const frame = free
         ? bodyHeadingBefore(step, figure.steps, figure.startPose)
@@ -298,19 +315,50 @@ export function stepPassings(
       orientationBefore.set(step, frame);
       directionsBefore.set(step, { ...directions[step.partner] });
       const otherFoot: Foot = step.foot === "left" ? "right" : "left";
-      if (!free)
+      if (!free) {
+        const shift = standingSwivelShift(
+          step.swivel,
+          directions[step.partner][otherFoot],
+          orientations[step.partner],
+          step.orientation,
+          standingShare(step, figure.steps),
+        );
+        if (shift.x !== 0 || shift.y !== 0) {
+          swivelled.push({
+            partner: step.partner,
+            foot: otherFoot,
+            end: endOf(step),
+            shift,
+            order,
+          });
+          positions[step.partner][otherFoot] = addPoints(
+            positions[step.partner][otherFoot],
+            shift,
+          );
+        }
         directions[step.partner][otherFoot] = swivelStandingFoot(
           directions[step.partner][otherFoot],
           orientations[step.partner],
           step.orientation,
         );
-      directions[step.partner][step.foot] =
-        step.footDirection ?? step.orientation;
+      }
+      const pointing = step.footDirection ?? step.orientation;
+      const turnShift = turnsOnTheSpot(step)
+        ? swivelShift(
+            step.swivel,
+            directions[step.partner][step.foot],
+            pointing,
+          )
+        : { x: 0, y: 0 };
+      directions[step.partner][step.foot] = pointing;
       if (step.contact !== "air") {
-        positions[step.partner][step.foot] = movementEndpoint(
-          positions[step.partner][step.foot],
-          frame,
-          step.movement,
+        positions[step.partner][step.foot] = addPoints(
+          movementEndpoint(
+            positions[step.partner][step.foot],
+            frame,
+            step.movement,
+          ),
+          turnShift,
         );
       }
       restAfter.set(step, positions[step.partner][step.foot]);
@@ -321,11 +369,22 @@ export function stepPassings(
   // finished by then.
   const restAt = (partner: Partner, foot: Foot, beat: number): Point2D => {
     let position = figure.startPose[partner][foot].position;
-    for (const step of ordered) {
+    let since = -1;
+    for (const [order, step] of ordered.entries()) {
       if (step.partner !== partner || step.foot !== foot) continue;
       if (endOf(step) > beat + 1e-9) break;
       position = restAfter.get(step)!;
+      since = order;
     }
+    // Plus any swivel about the ball or heel it has finished since.
+    for (const turn of swivelled)
+      if (
+        turn.partner === partner &&
+        turn.foot === foot &&
+        turn.order > since &&
+        turn.end <= beat + 1e-9
+      )
+        position = addPoints(position, turn.shift);
     return position;
   };
 

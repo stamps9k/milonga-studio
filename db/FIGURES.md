@@ -199,6 +199,7 @@ just an action, or inside a partner object.
 | `"by"`            | Distance in metres.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `"turn"`          | `{ "right": "1/8" }` (clockwise, natural) or `{ "left": "3/8" }` (anticlockwise, reverse). A plain number such as `0.125` also works.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `"pointing"`      | How much further round than the body the moving foot points when it lands, written like `turn` and measured from the body's facing after the step's turn. A chart's "3/8 between 1 and 2, body turns less" is `"turn": { "right": "1/4" }` (the body) with `"pointing": { "right": "1/8" }` (the foot the rest of the way). On a row it can be one each: `{ "follow": { "right": "1/8" } }`. Default: the way the body faces. See "Foot direction" below.                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `"swivel"`        | `"ball"` or `"heel"`: where a foot turning on the floor pivots during the step, so the middle of the foot moves round that point. See "Foot direction" below. Default: about the middle of the foot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `"foot"`          | `"L"` or `"R"`. Usually left out; see below. With `both`, it's the lead's foot.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `"rise"`          | Rise at the end of the step, in metres (e.g. `0.05`). Default 0.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `"riseTiming"`    | `"late"`: the rise holds and changes at the end of the step, for a chart's "commence to rise at end of 1" or "lower at end of 3". Default `"even"`: it changes steadily across the step ("continue to rise on 2").                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -291,6 +292,29 @@ The other foot follows the body. While the body turns towards the way it
 points it stays put (the body catches up, a chart's "body completes the
 turn"); once the body faces the way it points, or turns away from it, it
 swivels with the body.
+
+A foot turning on the floor turns about the middle of its footprint unless
+the step says `"swivel"`: `"ball"` or `"heel"`. Then that point stays still
+and the middle of the foot moves round it (about 6 cm in front of the middle
+for the ball, 9 cm behind it for the heel). It applies to the step's own foot
+when the step turns it on the spot (`"in place"` or `"pivot"`), and to the
+standing foot as it swivels with the body during the step, until that foot
+moves off on a step of its own. A later step is measured from where the foot
+ended up. A twist on the ball of the right foot, the left foot unwinding with
+it:
+
+```json
+{
+  "lead": {
+    "go": "in place",
+    "foot": "R",
+    "turn": { "right": "5/16" },
+    "swivel": "ball",
+    "duration": 0.5
+  },
+  "beat": 4
+}
+```
 
 ### Which foot
 
