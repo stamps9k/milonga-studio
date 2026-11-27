@@ -5,6 +5,7 @@
 
 import { isFreeFootFollow, bodyHeadingBefore } from "../overlap.mts";
 import { addPoints, rotatePoint } from "../heading.mts";
+import { footHeading } from "../pose.mts";
 import type { Point2D, Pose } from "../pose.mts";
 import type { FloorTransform } from "../sequence.mts";
 import type { DanceStep, Figure, Foot, Partner } from "../step.mts";
@@ -15,6 +16,13 @@ import {
   PARTNERS,
   movementEndpoint,
 } from "./paths.mts";
+import {
+  standingShare,
+  standingSwivelShift,
+  swivelShift,
+  swivelStandingFoot,
+  turnsOnTheSpot,
+} from "./timing.mts";
 
 export type FootTrails = Record<Partner, Record<Foot, Point2D[]>>;
 
@@ -58,6 +66,19 @@ function localFootTrails(figure: Figure): FootTrails {
     follow: figure.startPose.follow.orientation,
   };
 
+  // Which way each foot points (as in poseAtBeat), for the feet that
+  // turn about their ball or heel (DanceStep.swivel) and so move.
+  const directions: Record<Partner, Record<Foot, number>> = {
+    lead: {
+      left: footHeading(figure.startPose.lead, "left"),
+      right: footHeading(figure.startPose.lead, "right"),
+    },
+    follow: {
+      left: footHeading(figure.startPose.follow, "left"),
+      right: footHeading(figure.startPose.follow, "right"),
+    },
+  };
+
   const trails = emptyTrails(figure.startPose);
   const passings = stepPassings(figure);
 
@@ -70,6 +91,37 @@ function localFootTrails(figure: Figure): FootTrails {
     const frame = free
       ? bodyHeadingBefore(step, figure.steps, figure.startPose)
       : orientationBefore[step.partner];
+    // The standing foot swivels with the body, and moves while it's down
+    // if it turns about its ball or heel.
+    if (!free) {
+      const otherFoot: Foot = step.foot === "left" ? "right" : "left";
+      const shift = standingSwivelShift(
+        step.swivel,
+        directions[step.partner][otherFoot],
+        orientationBefore[step.partner],
+        step.orientation,
+        standingShare(step, figure.steps),
+      );
+      if (shift.x !== 0 || shift.y !== 0) {
+        positions[step.partner][otherFoot] = addPoints(
+          positions[step.partner][otherFoot],
+          shift,
+        );
+        trails[step.partner][otherFoot].push(
+          positions[step.partner][otherFoot],
+        );
+      }
+      directions[step.partner][otherFoot] = swivelStandingFoot(
+        directions[step.partner][otherFoot],
+        orientationBefore[step.partner],
+        step.orientation,
+      );
+    }
+    const pointing = step.footDirection ?? step.orientation;
+    const turnShift = turnsOnTheSpot(step)
+      ? swivelShift(step.swivel, directions[step.partner][step.foot], pointing)
+      : { x: 0, y: 0 };
+    directions[step.partner][step.foot] = pointing;
     // The step's `orientation` is the partner's frame heading as of the
     // end of this step, regardless of which foot moved -- both feet of
     // a partner share one orientation (see PartnerPose). That holds for
@@ -80,7 +132,10 @@ function localFootTrails(figure: Figure): FootTrails {
     }
 
     const start = positions[step.partner][step.foot];
-    const end = movementEndpoint(start, frame, step.movement);
+    const end = addPoints(
+      movementEndpoint(start, frame, step.movement),
+      turnShift,
+    );
 
     // An arc, or a step that curves past the standing foot
     // (passingPoint), is drawn as a curve, not its chord: a few points

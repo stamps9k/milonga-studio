@@ -15,6 +15,7 @@ import {
   scalePoint,
   subPoints,
 } from "../heading.mts";
+import { swivelShift, swivelStandingFoot } from "../fold.mts";
 import type { Point2D } from "../pose.mts";
 import type { DanceStep, Foot, Movement, Partner } from "../step.mts";
 import { DIRECTION_DEGREES, FigureError } from "./definition.mts";
@@ -189,6 +190,10 @@ export interface PartnerState {
   position: Record<Foot, Point2D>;
   weight: Record<Foot, number>;
   orientation: number;
+  /** Which way each foot points, as poseAtBeat has it (footHeading),
+   *  for the feet that turn about their ball or heel (`swivel`) and so
+   *  move. */
+  direction: Record<Foot, number>;
 }
 
 /** A partner's resolved part of a row before timing is attached. */
@@ -211,6 +216,7 @@ export function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     weight: row.weight,
     air: row.air,
     cross: row.cross,
+    swivel: row.swivel,
   };
   const pathFor = (partner: Partner): CurvedPath | undefined =>
     typeof row.path === "object" ? row.path[partner] : row.path;
@@ -500,6 +506,29 @@ export function applyMove(
       scalePoint(headingToUnitVector(direction), distance),
     );
   }
+  // Which way the feet point after the step (as in poseAtBeat): the
+  // stepping foot where the step points it, the other swivelled with the
+  // body (swivelStandingFoot). A foot turned on the spot about its ball
+  // or heel moves its middle (swivelShift); the standing foot's own
+  // swivel about it is settled by defineFigure, which knows when that
+  // foot next moves (see settleSwivel there).
+  const pointing = normalizeDegrees(after + turnDegrees(move.pointing));
+  if ((move.go === "in place" || move.go === "pivot") && !air) {
+    state.position[foot] = addPoints(
+      state.position[foot],
+      swivelShift(move.swivel, state.direction[foot], pointing),
+    );
+  } else if (move.swivel !== undefined && before === after) {
+    throw new FigureError(
+      `${where}: "swivel" says where a foot turns on the floor, and this step turns neither foot`,
+    );
+  }
+  state.direction[OTHER[foot]] = swivelStandingFoot(
+    state.direction[OTHER[foot]],
+    before,
+    after,
+  );
+  state.direction[foot] = pointing;
   state.weight[foot] = targetWeight;
   state.weight[OTHER[foot]] = 1 - targetWeight;
   state.orientation = after;
@@ -522,6 +551,7 @@ export function applyMove(
     ...(turnDegrees(move.pointing) !== 0
       ? { footDirection: normalizeDegrees(after + turnDegrees(move.pointing)) }
       : {}),
+    ...(move.swivel !== undefined ? { swivel: move.swivel } : {}),
     rise: move.rise ?? 0,
     ...(move.bodyOffset
       ? {

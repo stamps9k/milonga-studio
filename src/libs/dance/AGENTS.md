@@ -298,6 +298,18 @@ the owner before building more on top of them.
   turns less" is `turn` 1/4 plus `pointing` 1/8. Turned-out feet, and a
   foot pointing differently from the step's facing at a join, aren't
   checked.
+- A foot turning on the floor turns about the middle of its footprint,
+  which keeps its position, unless the step gives a swivel point
+  (`DanceStep.swivel`, provisional): `"ball"` (6 cm in front of the middle)
+  or `"heel"` (9 cm behind it, `SWIVEL_POINT_AHEAD`). Then that point stays
+  still and the position moves round it (`swivelShift`): the step's own foot
+  when it turns on the spot (a pivot, "in place"), and the standing foot as
+  `swivelStandingFoot` turns it, until that foot sets off on a step of its
+  own (`standingShare`). The middle stays the default because the catalogue
+  was fitted with it; physically most swivels are on the ball. Every place
+  that folds foot positions applies it the same way: playback, the trails,
+  the passing routes and `defineFigure`'s own tracking of where the feet
+  are, so later steps are measured from where the foot ended up.
 - `assessJoin` applies explicit stationary support transfers before checking
   the first travelling step. A contra-check recovery replaces weight on RF/LF
   before moving LF/RF; using only boundary weights falsely rejected it. Airborne

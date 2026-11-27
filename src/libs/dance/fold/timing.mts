@@ -4,8 +4,14 @@
  * foot's pitch, foot easing and how the standing foot swivels.
  */
 
-import { angleBetweenDegrees, normalizeDegrees } from "../heading.mts";
-import type { DanceStep, Figure } from "../step.mts";
+import {
+  angleBetweenDegrees,
+  headingToUnitVector,
+  lerpAngleDegrees,
+  normalizeDegrees,
+} from "../heading.mts";
+import type { Point2D } from "../pose.mts";
+import type { DanceStep, Figure, SwivelPoint } from "../step.mts";
 
 /** How many beats one full playthrough of a figure takes: the latest
  *  point any step finishes at (beat is 1-indexed, so a step's own local
@@ -170,4 +176,95 @@ export function swivelStandingFoot(
       ? Math.min(Math.max(wanted, 0), offset)
       : Math.max(Math.min(wanted, 0), offset);
   return normalizeDegrees(bodyAfter + kept);
+}
+
+/**
+ * How far in front of the middle of a footprint each swivel point is, in
+ * metres (the heel's is behind it). A footprint is FOOTPRINT_LENGTH
+ * (26 cm) long, centred on the foot's position; the ball is about 7 cm
+ * behind the tip of the toes, as in the body proportions
+ * (src/libs/body/proportions.mts), and a turn on the heel pivots about
+ * 4 cm in from its back. Provisional.
+ */
+export const SWIVEL_POINT_AHEAD: Record<SwivelPoint, number> = {
+  ball: 0.06,
+  heel: -0.09,
+};
+
+/**
+ * How far the middle of a foot (its position) moves as the foot, on the
+ * floor, turns from pointing `before` to pointing `after` (compass
+ * headings) about the point `about` (DanceStep.swivel). The pivot P lies
+ * SWIVEL_POINT_AHEAD along the foot from its middle and stays put, so the
+ * middle goes from P - k·before to P - k·after. Nothing moves when no
+ * swivel point is given: the foot turns about its middle.
+ */
+export function swivelShift(
+  about: SwivelPoint | undefined,
+  before: number,
+  after: number,
+): Point2D {
+  if (about === undefined) return { x: 0, y: 0 };
+  const ahead = SWIVEL_POINT_AHEAD[about];
+  const from = headingToUnitVector(before);
+  const to = headingToUnitVector(after);
+  return { x: ahead * (from.x - to.x), y: ahead * (from.y - to.y) };
+}
+
+/**
+ * How much of a step's time its standing foot spends on the floor, as a
+ * share from 0 to 1: all of it, unless the same partner's next step on
+ * that foot sets off before this one ends (a free foot moving off while
+ * the body is still turning on the other), when it is the share up to
+ * then. The standing foot swivels about the step's swivel point only
+ * while it is on the floor; once it moves, its own step carries it.
+ */
+export function standingShare(step: DanceStep, steps: DanceStep[]): number {
+  const start = step.beat - 1;
+  const end = start + step.duration;
+  let share = 1;
+  for (const other of steps) {
+    if (other.partner !== step.partner || other.foot === step.foot) continue;
+    const otherStart = other.beat - 1;
+    if (otherStart >= start - 1e-9 && otherStart < end - 1e-9)
+      share = Math.min(
+        share,
+        Math.max(0, (otherStart - start) / step.duration),
+      );
+  }
+  return share;
+}
+
+/**
+ * How far a standing foot has moved by `share` of a step (0 to 1, never
+ * past standingShare) because it swivels with the body about `about`
+ * (the step's swivel point): from pointing `directionBefore` to where
+ * swivelStandingFoot has it with the body turned that share of the way
+ * from `bodyBefore` to `bodyAfter` (the body turns evenly through the
+ * step).
+ */
+export function standingSwivelShift(
+  about: SwivelPoint | undefined,
+  directionBefore: number,
+  bodyBefore: number,
+  bodyAfter: number,
+  share: number,
+): Point2D {
+  if (about === undefined) return { x: 0, y: 0 };
+  const directionNow = swivelStandingFoot(
+    directionBefore,
+    bodyBefore,
+    lerpAngleDegrees(bodyBefore, bodyAfter, share),
+  );
+  return swivelShift(about, directionBefore, directionNow);
+}
+
+/** Whether a step turns its own foot on the spot (a pivot, or "in
+ *  place"): on the floor, without travelling. */
+export function turnsOnTheSpot(step: DanceStep): boolean {
+  return (
+    step.contact !== "air" &&
+    step.movement.type === "straight" &&
+    step.movement.distance === 0
+  );
 }

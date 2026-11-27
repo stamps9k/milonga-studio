@@ -8,7 +8,11 @@ import {
   isFreeFootFollow,
   bodyHeadingBefore,
 } from "../overlap.mts";
-import { figureDurationBeats, poseAtBeat } from "../fold.mts";
+import {
+  figureDurationBeats,
+  poseAtBeat,
+  standingSwivelShift,
+} from "../fold.mts";
 import {
   addPoints,
   angleBetweenDegrees,
@@ -17,6 +21,7 @@ import {
   scalePoint,
   subPoints,
 } from "../heading.mts";
+import { footHeading } from "../pose.mts";
 import type { Point2D } from "../pose.mts";
 import type {
   DanceStep,
@@ -152,6 +157,10 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         right: startPose.lead.right.weight,
       },
       orientation: startPose.lead.orientation,
+      direction: {
+        left: footHeading(startPose.lead, "left"),
+        right: footHeading(startPose.lead, "right"),
+      },
     },
     follow: {
       position: {
@@ -163,6 +172,10 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
         right: startPose.follow.right.weight,
       },
       orientation: startPose.follow.orientation,
+      direction: {
+        left: footHeading(startPose.follow, "left"),
+        right: footHeading(startPose.follow, "right"),
+      },
     },
   };
 
@@ -240,6 +253,46 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     /** Written with `path: "auto"`: routed by routeAutoPaths. */
     auto: boolean;
   }[] = [];
+
+  // A standing foot turning about its ball or heel (a row's `swivel`)
+  // moves while the body turns over it, for as long as it stays on the
+  // floor: to the end of the step, or until a later row sets that foot
+  // moving first (a free foot leaving during a twist). So its move waits
+  // here until the next row of the same partner says which, as playback
+  // works it out (standingShare in fold.mts).
+  const pendingSwivel: Partial<
+    Record<
+      Partner,
+      {
+        step: Omit<DanceStep, "id" | "beat" | "duration">;
+        foot: Foot;
+        direction: number;
+        body: number;
+        start: number;
+        end: number | undefined;
+      }
+    >
+  > = {};
+  const settleSwivel = (partner: Partner, at: number, moving?: Foot) => {
+    const pending = pendingSwivel[partner];
+    if (!pending) return;
+    const ended = pending.end === undefined || at >= pending.end - 1e-9;
+    if (!ended && moving !== pending.foot) return;
+    const share = ended
+      ? 1
+      : Math.max(0, (at - pending.start) / (pending.end! - pending.start));
+    state[partner].position[pending.foot] = addPoints(
+      state[partner].position[pending.foot],
+      standingSwivelShift(
+        pending.step.swivel,
+        pending.direction,
+        pending.body,
+        pending.step.orientation,
+        share,
+      ),
+    );
+    delete pendingSwivel[partner];
+  };
 
   rows.forEach((row, index) => {
     const where = `${name}, step ${index + 1}`;
@@ -434,8 +487,10 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
             e.length !== undefined &&
             e.start + e.length > start + 1e-9,
         );
+      settleSwivel(partner, start, foot);
       const savedFacing = state[partner].orientation,
-        savedWeight = { ...state[partner].weight };
+        savedWeight = { ...state[partner].weight },
+        savedDirection = { ...state[partner].direction };
       const step = applyMove(
         partner,
         partnerMove,
@@ -448,6 +503,19 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
       if (followsSupport) {
         state[partner].orientation = savedFacing;
         state[partner].weight = savedWeight;
+        // A free foot following another step doesn't turn the body, so
+        // the standing foot doesn't swivel for it.
+        state[partner].direction[OTHER[foot]] = savedDirection[OTHER[foot]];
+      } else if (step.swivel !== undefined) {
+        const duration = partnerMove.duration ?? length;
+        pendingSwivel[partner] = {
+          step,
+          foot: OTHER[foot],
+          direction: savedDirection[OTHER[foot]],
+          body: savedFacing,
+          start,
+          end: duration === undefined ? undefined : start + duration,
+        };
       }
       if (partnerMove !== move && !label) {
         // Describe the step in the dancer's own terms, as written (the

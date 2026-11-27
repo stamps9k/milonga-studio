@@ -165,6 +165,7 @@ export function parseFigureDefinition(
     "path",
     "pathSetOff",
     "cross",
+    "swivel",
   ] as const;
   function checkMoveOptions(
     path: string,
@@ -239,6 +240,7 @@ export function parseFigureDefinition(
       checkNumber(`${path}pathSetOff.follow`, object.pathSetOff.follow);
     } else checkNumber(`${path}pathSetOff`, object.pathSetOff);
     checkBoolean(`${path}cross`, object.cross);
+    checkOneOf(`${path}swivel`, object.swivel, ["ball", "heel"]);
   }
 
   function checkPartner(path: string, v: unknown) {

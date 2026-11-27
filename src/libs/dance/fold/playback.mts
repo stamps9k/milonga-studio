@@ -7,6 +7,7 @@
 import { isFreeFootFollow, bodyHeadingBefore } from "../overlap.mts";
 import { applyTransform } from "../floor.mts";
 import {
+  addPoints,
   angleBetweenDegrees,
   lerp,
   lerpAngleDegrees,
@@ -23,7 +24,11 @@ import {
   footPitchAt,
   risePhase,
   stepPhases,
+  standingShare,
+  standingSwivelShift,
+  swivelShift,
   swivelStandingFoot,
+  turnsOnTheSpot,
 } from "./timing.mts";
 import type { PoseOptions } from "./timing.mts";
 
@@ -186,11 +191,34 @@ function foldPoseAtBeat(
       }
       weights[step.partner][step.foot] = step.weight;
       weights[step.partner][otherFoot] = 1 - step.weight;
+      // A foot turning on the floor about its ball or heel (step.swivel)
+      // moves its middle: the standing foot for as long as it stays down
+      // (standingShare), and the step's own foot when it turns on the
+      // spot.
+      positions[step.partner][otherFoot] = addPoints(
+        positions[step.partner][otherFoot],
+        standingSwivelShift(
+          step.swivel,
+          directions[step.partner][otherFoot],
+          orientations[step.partner],
+          step.orientation,
+          standingShare(step, figure.steps),
+        ),
+      );
       directions[step.partner][otherFoot] = swivelStandingFoot(
         directions[step.partner][otherFoot],
         orientations[step.partner],
         step.orientation,
       );
+      if (turnsOnTheSpot(step))
+        positions[step.partner][step.foot] = addPoints(
+          positions[step.partner][step.foot],
+          swivelShift(
+            step.swivel,
+            directions[step.partner][step.foot],
+            step.footDirection ?? step.orientation,
+          ),
+        );
       directions[step.partner][step.foot] =
         step.footDirection ?? step.orientation;
       orientations[step.partner] = step.orientation;
@@ -271,6 +299,16 @@ function foldPoseAtBeat(
       step.orientation,
       progress,
     );
+    positions[step.partner][otherFoot] = addPoints(
+      positions[step.partner][otherFoot],
+      standingSwivelShift(
+        step.swivel,
+        directions[step.partner][otherFoot],
+        orientations[step.partner],
+        step.orientation,
+        Math.min(progress, standingShare(step, figure.steps)),
+      ),
+    );
     directions[step.partner][otherFoot] = swivelStandingFoot(
       directions[step.partner][otherFoot],
       orientations[step.partner],
@@ -278,11 +316,21 @@ function foldPoseAtBeat(
     );
     // The stepping foot turns as it travels, arriving pointed when it
     // lands.
-    directions[step.partner][step.foot] = lerpAngleDegrees(
+    const directionNow = lerpAngleDegrees(
       directions[step.partner][step.foot],
       step.footDirection ?? step.orientation,
       footProgress,
     );
+    if (turnsOnTheSpot(step))
+      positions[step.partner][step.foot] = addPoints(
+        positions[step.partner][step.foot],
+        swivelShift(
+          step.swivel,
+          directions[step.partner][step.foot],
+          directionNow,
+        ),
+      );
+    directions[step.partner][step.foot] = directionNow;
     orientations[step.partner] = bodyNow;
     rises[step.partner] = lerp(
       rises[step.partner],

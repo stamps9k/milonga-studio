@@ -40,6 +40,11 @@ export {
   stepPhases,
   footEase,
   swivelStandingFoot,
+  SWIVEL_POINT_AHEAD,
+  swivelShift,
+  standingShare,
+  standingSwivelShift,
+  turnsOnTheSpot,
 } from "./fold/timing.mts";
 export type { EntrySpan, ActiveStepInfo } from "./fold/playback.mts";
 export {

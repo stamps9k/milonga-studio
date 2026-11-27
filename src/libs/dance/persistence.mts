@@ -136,6 +136,9 @@ function step(value: unknown, path: string): DanceStep {
     ...(row.footDirection === undefined
       ? {}
       : { footDirection: angle(row.footDirection, `${path}.footDirection`) }),
+    ...(row.swivel === undefined
+      ? {}
+      : { swivel: choice(row.swivel, ["ball", "heel"], `${path}.swivel`) }),
     ...(row.weightTiming === undefined
       ? {}
       : {

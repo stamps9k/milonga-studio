@@ -25,6 +25,10 @@ export type Foot = "left" | "right";
  *  floor trail. */
 export type Contact = "floor" | "air";
 
+/** The point of the foot a turn on the floor pivots about (see
+ *  DanceStep.swivel). */
+export type SwivelPoint = "ball" | "heel";
+
 /**
  * When, within a step, the weight moves onto the stepping foot:
  * - "even": the weight moves across the whole step, at the same rate as
@@ -120,6 +124,15 @@ export interface DanceStep {
    *  the other foot turns is worked out in fold.mts
    *  (swivelStandingFoot). */
   footDirection?: number;
+
+  /** Where on the foot a foot turning on the floor pivots during this
+   *  step: the ball or the heel. It applies to the step's own foot when
+   *  the step turns it on the spot (a pivot, or "in place"), and to the
+   *  standing foot as it swivels with the body during the step, until
+   *  that foot sets off on a step of its own. Left out, a foot turns
+   *  about the middle of its footprint, as every step did before this
+   *  field existed. See swivelShift in fold.mts. */
+  swivel?: SwivelPoint;
 
   /** Vertical displacement of the body at this step, relative to a neutral
    *  standing height, in metres. Structural for waltz-style rise and

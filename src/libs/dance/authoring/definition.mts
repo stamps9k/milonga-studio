@@ -10,6 +10,7 @@ import type {
   DanceStep,
   Partner,
   RiseTiming,
+  SwivelPoint,
   TimeSignature,
 } from "../step.mts";
 import type { ShortFoot, StanceName } from "./stances.mts";
@@ -163,6 +164,15 @@ export interface MoveOptions {
    *  towards it, and otherwise swivels with the body
    *  (swivelStandingFoot in fold.mts). Owner's request, 2026-11-17. */
   pointing?: Turn;
+  /** Where on the foot a turn on the floor pivots during this step:
+   *  "ball" or "heel" (DanceStep.swivel). It turns the step's own foot
+   *  about that point when the step turns it on the spot ("in place" or
+   *  "pivot"), and the standing foot as it swivels with the body, until
+   *  that foot moves off on a step of its own. Default: about the middle
+   *  of the foot, which keeps its position. A twist turn on the ball of
+   *  the right foot: `{ "go": "in place", "foot": "R", "turn": ...,
+   *  "swivel": "ball" }`. */
+  swivel?: SwivelPoint;
   /** Rise at the end of the step, in metres above normal standing
    *  height (waltz/foxtrot rise and fall). Default 0. */
   rise?: number;
