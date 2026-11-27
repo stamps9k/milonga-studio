@@ -52,6 +52,10 @@ frontend and a small Express + SQLite API.
   it and fails if a leg can't reach its foot or the hips sink too far.
   `balance.mts` adds pure lateral support/loaded-leg diagnostics, with
   provisional limits enforced by dense catalogue tests (no playback clamping).
+  `armRange.mts` does the same for the arms, in each dancer's chest frame:
+  elbows bent no tighter than 30°, upper arms no more than 45° behind the
+  chest, no hand behind the back or across past the other shoulder
+  (`test/body/armRange.test.mts`, every figure, no exemptions).
   `legContact.mts` keeps the partners' legs from passing through each
   other: where they would, a knee swings sideways round its hip-ankle line
   (hips and feet stay put), and `test/body/legContact.test.mts` checks every
