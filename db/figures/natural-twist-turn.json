@@ -1,0 +1,222 @@
+{
+  "name": "Natural Twist Turn",
+  "style": "tango",
+  "time": "2/4",
+  "slow": 1,
+  "start": "tango promenade",
+  "notes": "The book Natural Twist Turn (owner's request): the man crosses behind and twists 5/8 over 5-6 while the lady walks round him, her steps and facings within 5 degrees of the chart on 3-5 (LOD, DW, Wall), RF outside him in CBMP on 5. Owner-approved deviation: on 6 she turns about 1/32 more than 3/8 during the step and swivels that much less than 1/4. Provisional: her chest turning up to about 40 degrees towards him (the chart gives no chest angle), and the split of his 5/8 (1/4 then 5/16).",
+  "steps": [
+    {
+      "beat": 1,
+      "lead": {
+        "go": {
+          "forward": 0.2983990616607231,
+          "right": -0.29839906166072305
+        },
+        "label": "to side"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.08412418504203802,
+          "right": 0.2616359412042324
+        },
+        "label": "to side"
+      }
+    },
+    {
+      "beat": 2,
+      "lead": {
+        "go": {
+          "forward": 0.6718483758531404,
+          "right": -0.8130615792887368
+        },
+        "cross": true,
+        "label": "forward and across in CBMP"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.8131727983645295,
+          "right": 0.6717514421272204
+        },
+        "pointing": {
+          "right": "1/8"
+        },
+        "cross": true,
+        "label": "forward and across in CBMP"
+      }
+    },
+    {
+      "beat": 2.5,
+      "hold": "closed, follow turned 1/8 right",
+      "lead": {
+        "go": {
+          "forward": 0.6134493141924173,
+          "right": -0.3146625176280137
+        },
+        "turn": {
+          "right": "1/4"
+        },
+        "path": "around the standing foot",
+        "label": "to side",
+        "steadyBody": true
+      },
+      "follow": {
+        "go": {
+          "forward": 0.16787120248967569,
+          "right": 0.3742276857098745
+        },
+        "turn": {
+          "right": "1/8"
+        },
+        "label": "forward",
+        "path": "around the back",
+        "steadyBody": true
+      }
+    },
+    {
+      "beat": 3,
+      "hold": "closed, follow turned 1/8 right",
+      "lead": {
+        "go": {
+          "forward": 0.16970562748477128,
+          "right": -0.5745584412271572
+        },
+        "turn": {
+          "right": "3/16"
+        },
+        "pointing": {
+          "left": "1/16"
+        },
+        "weight": 0.5,
+        "cross": true,
+        "path": "around the back",
+        "label": "crosses behind, split weight"
+      },
+      "follow": {
+        "go": {
+          "forward": 0.26114308992123486,
+          "right": -0.2881380056462868
+        },
+        "turn": {
+          "right": 0.11287555820587285
+        },
+        "chest": {
+          "right": 0.019275553351210225
+        },
+        "label": "forward",
+        "bodyArc": true,
+        "steadyBody": true
+      }
+    },
+    {
+      "beat": 4,
+      "lead": {
+        "go": "in place",
+        "foot": "R",
+        "weight": 0.75,
+        "turn": {
+          "right": "1/4"
+        },
+        "label": "twist",
+        "swivel": "ball",
+        "cross": true
+      },
+      "follow": {
+        "go": {
+          "forward": 0.2608299769771811,
+          "right": -0.5277107415738114
+        },
+        "turn": {
+          "right": 0.13496454034834957
+        },
+        "chest": {
+          "right": 0.1093275512361224
+        },
+        "label": "forward in CBMP, outside partner",
+        "path": "around the back",
+        "bodyArc": true,
+        "cross": true,
+        "steadyBody": true
+      }
+    },
+    {
+      "beat": 4.5,
+      "lead": {
+        "go": "in place",
+        "foot": "R",
+        "turn": {
+          "right": "5/16"
+        },
+        "weight": 1,
+        "duration": 0.5,
+        "label": "twist, ending on the right foot",
+        "swivel": "ball",
+        "cross": true
+      },
+      "follow": {
+        "go": {
+          "forward": 0.7710200215359142,
+          "right": 0.08761439651552429
+        },
+        "turn": {
+          "right": 0.40884226750148656
+        },
+        "chest": {
+          "right": 0.03946835393475881
+        },
+        "duration": 0.3,
+        "label": "forward",
+        "path": "around the standing foot",
+        "bodyArc": true,
+        "steadyBody": true
+      }
+    },
+    {
+      "beat": 4.8,
+      "follow": {
+        "go": "pivot",
+        "foot": "L",
+        "turn": {
+          "right": 0.21831763394429105
+        },
+        "duration": 0.2,
+        "label": "swivel into promenade"
+      }
+    },
+    {
+      "beat": 4.8,
+      "follow": {
+        "go": {
+          "forward": -0.19700721064196683,
+          "right": 0.2876231712675057
+        },
+        "foot": "R",
+        "weight": false,
+        "duration": 0.2,
+        "label": "into promenade"
+      }
+    },
+    {
+      "beat": 4.8481,
+      "lead": {
+        "go": {
+          "forward": 0.3372028807139674,
+          "right": -0.044534484030239796
+        },
+        "foot": "L",
+        "weight": false,
+        "duration": 0.15189999999999998,
+        "label": "into promenade"
+      }
+    }
+  ],
+  "expectBeats": 4,
+  "expectEnd": {
+    "stance": "tango promenade",
+    "moved": {
+      "forward": 0.3839949493661166,
+      "right": -1.2338376618407358
+    },
+    "leadStandingOn": "R"
+  }
+}
