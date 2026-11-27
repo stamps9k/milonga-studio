@@ -155,6 +155,10 @@
         "right": { "type": "number" }
       }
     },
+    "bodyArc": {
+      "type": "boolean",
+      "description": "true: the body travels round an arc during the step, its direction turning with the step's turn, instead of straight between where the weighted feet put it (a follow walking round the lead in a twist turn). Needs a step that turns and takes weight."
+    },
     "swivel": {
       "enum": ["ball", "heel"],
       "description": "Where on the foot a turn on the floor pivots during this step: the step's own foot when it turns on the spot (\"in place\" or \"pivot\"), and the standing foot as it swivels with the body until it moves off. Default: about the middle of the foot."
@@ -231,6 +235,7 @@
             "pathSetOff": { "$ref": "#/definitions/pathSetOff" },
             "cross": { "$ref": "#/definitions/cross" },
             "swivel": { "$ref": "#/definitions/swivel" },
+            "bodyArc": { "$ref": "#/definitions/bodyArc" },
             "label": { "$ref": "#/definitions/label" }
           }
         }
@@ -349,7 +354,8 @@
           ]
         },
         "cross": { "$ref": "#/definitions/cross" },
-        "swivel": { "$ref": "#/definitions/swivel" }
+        "swivel": { "$ref": "#/definitions/swivel" },
+        "bodyArc": { "$ref": "#/definitions/bodyArc" }
       }
     },
     "point": {

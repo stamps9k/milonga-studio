@@ -268,3 +268,44 @@ export function turnsOnTheSpot(step: DanceStep): boolean {
     step.movement.distance === 0
   );
 }
+
+/**
+ * How far a dancer's body is off the straight line from where a step
+ * starts it (B0) to where it ends it (B1), `share` of the way along (0 to
+ * 1), when the step asks for the body to travel round an arc
+ * (DanceStep.bodyArc) while it turns `turn` degrees (clockwise
+ * positive): `travel` is B1 - B0.
+ *
+ * Walking round a partner, the body goes round, as a walker turning a
+ * corner does, instead of cutting straight across: a circular arc from
+ * B0 to B1 whose direction turns with the body, through `turn` over the
+ * whole way, so turning right it sets off left of the straight line and
+ * bulges to that side, with the centre of the turn on the right. The
+ * offset is that arc's point less the straight line's point at the same
+ * share; it is nothing at both ends, so the body still starts and ends
+ * the step exactly where the weighted feet put it. In
+ * the complex plane (x, y as real and imaginary parts) the arc is
+ * B0 + travel · (e^{iφs} - 1) / (e^{iφ} - 1), with φ the turn in
+ * radians, anticlockwise positive (so a turn to the right is negative).
+ */
+export function bodyArcOffset(
+  travel: Point2D,
+  turn: number,
+  share: number,
+): Point2D {
+  if (share <= 0 || share >= 1) return { x: 0, y: 0 };
+  const phi = (-turn * Math.PI) / 180;
+  const endX = Math.cos(phi) - 1,
+    endY = Math.sin(phi);
+  const endSize = endX * endX + endY * endY;
+  if (Math.abs(phi) < 1e-9 || endSize < 1e-12) return { x: 0, y: 0 };
+  const nowX = Math.cos(phi * share) - 1,
+    nowY = Math.sin(phi * share);
+  // g = now / end, as complex numbers; the offset is travel · (g - share).
+  const gX = (nowX * endX + nowY * endY) / endSize - share;
+  const gY = (nowY * endX - nowX * endY) / endSize;
+  return {
+    x: travel.x * gX - travel.y * gY,
+    y: travel.x * gY + travel.y * gX,
+  };
+}

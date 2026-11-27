@@ -310,6 +310,16 @@ the owner before building more on top of them.
   that folds foot positions applies it the same way: playback, the trails,
   the passing routes and `defineFigure`'s own tracking of where the feet
   are, so later steps are measured from where the foot ended up.
+- A body travels straight between where the weighted feet put it at the
+  start and end of a step, unless the step says `bodyArc` (provisional):
+  then it goes round a circular arc whose direction turns with the step's
+  turn (`bodyArcOffset`, added to the pose's `bodyOffset` in playback), as
+  a dancer walking round the partner does. The ends are unchanged, so
+  feet, holds at row ends and joins are too. It is opt-in because the
+  catalogue was fitted with straight bodies and a step's turn alone
+  doesn't say how much of it is travel round a curve rather than a pivot
+  over the foot: applied to every turning step, half-turn pivots like the
+  Weave's swung the body far off its feet.
 - `assessJoin` applies explicit stationary support transfers before checking
   the first travelling step. A contra-check recovery replaces weight on RF/LF
   before moving LF/RF; using only boundary weights falsely rejected it. Airborne

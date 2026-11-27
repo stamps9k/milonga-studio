@@ -155,6 +155,7 @@ CREATE TABLE dance_steps (
 	orientation REAL    NOT NULL, -- degrees, absolute frame heading at end of step
 	foot_direction REAL, -- degrees, which way the stepping foot points at the end; NULL = orientation (DanceStep.footDirection)
 	swivel      TEXT CHECK (swivel IN ('ball', 'heel')), -- where a foot turning on the floor pivots (DanceStep.swivel); NULL = the middle of the foot
+	body_arc    INTEGER NOT NULL DEFAULT 0 CHECK (body_arc IN (0, 1)), -- 1: the body travels round an arc with the step's turn (DanceStep.bodyArc)
 	rise        REAL    NOT NULL,
 	body_offset_x REAL NOT NULL DEFAULT 0,
 	body_offset_y REAL NOT NULL DEFAULT 0,

@@ -173,6 +173,13 @@ export interface MoveOptions {
    *  the right foot: `{ "go": "in place", "foot": "R", "turn": ...,
    *  "swivel": "ball" }`. */
   swivel?: SwivelPoint;
+  /** true: the body travels round an arc during this step, its
+   *  direction turning with the step's turn (DanceStep.bodyArc), instead
+   *  of straight from where the weighted feet leave it to where they put
+   *  it. For a dancer walking round the partner, as the follow round the
+   *  lead in a twist turn. Needs a step that turns and takes weight.
+   *  Default: straight. */
+  bodyArc?: boolean;
   /** Rise at the end of the step, in metres above normal standing
    *  height (waltz/foxtrot rise and fall). Default 0. */
   rise?: number;
