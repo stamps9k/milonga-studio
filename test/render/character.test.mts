@@ -237,3 +237,19 @@ test("CharacterRig: a model without the expected bones is refused with its name"
     /no bone called "pelvis"/,
   );
 });
+
+test("CharacterRig: the top of the spine turns with the skeleton's chest", () => {
+  const pose = stancePose("closed", { lead: "right", follow: "left" });
+  const skeleton = solveSkeleton(pose).lead;
+  const shoulders = (chestFacing: number) => {
+    const rig = new CharacterRig(testModel(), DEFAULT_PROPORTIONS.lead);
+    rig.pose({ ...skeleton, chestFacing });
+    return at(rig, "upperarm_r").sub(at(rig, "upperarm_l"));
+  };
+  // Seen from above, the shoulder line turns 30 degrees clockwise.
+  const square = shoulders(skeleton.facing);
+  const turned = shoulders(skeleton.facing + 30);
+  const heading = (v: THREE.Vector3) => (Math.atan2(v.x, -v.z) * 180) / Math.PI;
+  const difference = ((heading(turned) - heading(square) + 540) % 360) - 180;
+  assert.ok(Math.abs(difference - 30) < 1e-6, `turned ${difference} degrees`);
+});

@@ -18,7 +18,9 @@ import { toThree } from "./scene3d.mts";
  * with knees and elbows worked out again for the model's own bone
  * lengths so its feet land exactly on our ankles and its hands on our
  * wrists. Spine, neck and head keep the model's rest pose, turned with
- * the body (our skeleton's torso is upright too).
+ * the body (our skeleton's torso is upright too), except that the top
+ * of the spine turns with the skeleton's chest (chestFacing), carrying
+ * the shoulders, neck and head with it.
  *
  * This file has no WebGL: it works on Three.js bones (plain objects), so
  * it is tested under node:test with a hand-built rig.
@@ -45,6 +47,9 @@ export const CHARACTER_MODELS: Record<Partner, { url: string; name: string }> =
  */
 export const MODEL_BONES = {
   pelvis: "pelvis",
+  /** The top of the spine, below the neck and collarbones: turned where
+   *  the skeleton's chest turns from the body's facing. */
+  chest: "spine_03",
   left: {
     thigh: "thigh_l",
     calf: "calf_l",
@@ -206,6 +211,7 @@ export class CharacterRig {
   /** Add this to the scene. */
   readonly object = new THREE.Group();
   private readonly pelvis: THREE.Object3D;
+  private readonly chest: THREE.Object3D;
   private readonly limbs: Record<Foot, LimbBones>;
   private readonly fingers: Record<Foot, Record<Finger, THREE.Object3D[]>>;
   private readonly thumbs: Record<Foot, THREE.Object3D[]>;
@@ -220,6 +226,7 @@ export class CharacterRig {
   constructor(model: THREE.Object3D, body: BodyProportions) {
     this.object.add(model);
     this.pelvis = bone(model, MODEL_BONES.pelvis);
+    this.chest = bone(model, MODEL_BONES.chest);
     const limb = (side: Foot): LimbBones => {
       const names = MODEL_BONES[side];
       return {
@@ -257,6 +264,7 @@ export class CharacterRig {
     this.thumbs = { left: thumb("left"), right: thumb("right") };
     for (const object of [
       this.pelvis,
+      this.chest,
       ...Object.values(this.limbs.left),
       ...Object.values(this.limbs.right),
       ...Object.values(this.fingers.left).flat(),
@@ -321,9 +329,23 @@ export class CharacterRig {
     this.object.position.copy(offset);
     this.object.updateWorldMatrix(true, true);
 
+    // The upper body's own turn: compass headings turn clockwise seen
+    // from above, which is a negative turn about Three.js's up axis.
+    const chestTurn =
+      ((((skeleton.chestFacing - skeleton.facing) % 360) + 540) % 360) - 180;
+    if (chestTurn !== 0) {
+      turnWorld(
+        this.chest,
+        new THREE.Quaternion().setFromAxisAngle(
+          new THREE.Vector3(0, 1, 0),
+          (-chestTurn * Math.PI) / 180,
+        ),
+      );
+    }
+
     const { joints, feet } = skeleton;
     const forward = headingVector(skeleton.facing);
-    const right = headingVector(skeleton.facing + 90);
+    const right = headingVector(skeleton.chestFacing + 90);
     for (const side of ["left", "right"] as const) {
       const l = this.limbs[side];
       const lengths = this.lengths[side];
