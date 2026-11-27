@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
 import {
   FigureError,
@@ -11,6 +12,7 @@ import {
 } from "../../src/libs/dance/authoring.mts";
 import type {
   FigureDefinition,
+  PartnerMove,
   StepRow,
 } from "../../src/libs/dance/authoring.mts";
 import type { Pose } from "../../src/libs/dance/pose.mts";
@@ -1610,6 +1612,116 @@ test("hold: closed with the follow turned 1/8 right is explicit and uses the ord
         checks,
       ),
     /after step 2.*partners aren't in hold/,
+  );
+});
+
+test("hold: a transition lies between the holds either side of it, within one beat", () => {
+  // The book Progressive Link, with her last step split: she steps onto
+  // her promenade spot still facing as in closed hold (the transition),
+  // then swivels 1/4 right into promenade within the same beat.
+  const link = JSON.parse(
+    readFileSync(
+      new URL(
+        "../../db/figures/walks-and-progressive-link.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ) as FigureDefinition;
+  const checks: Partial<FigureDefinition> = {
+    style: "tango",
+    time: "2/4",
+    slow: 1,
+    skipChecks: ["crossed feet", "own feet", "partner spacing"],
+  };
+  // In beats (the mix with the split step below needs them throughout).
+  const walks = link.steps.slice(0, 3).map((row, index): StepRow => {
+    const timed: StepRow = { ...row, beat: [1, 2, 3][index] };
+    delete timed.length;
+    return timed;
+  });
+  const last = link.steps[3] as StepRow & { follow: PartnerMove };
+  // Her split step takes the first half of the last quick and the
+  // swivel the second, so both end within the same beat; his step has a
+  // row of its own, as it lasts the whole quick.
+  const his: StepRow = {
+    beat: 3.5,
+    lead: { ...(last.lead as PartnerMove), duration: 0.5 },
+  };
+  const step = (follow: PartnerMove, hold?: StepRow["hold"]): StepRow => ({
+    beat: 3.5,
+    follow: { ...follow, duration: 0.25 },
+    ...(hold ? { hold } : {}),
+  });
+  const noTurn: PartnerMove = { ...(last.follow as PartnerMove) };
+  delete noTurn.turn;
+  const swivel = (turn: PartnerMove["turn"]): StepRow => ({
+    beat: 3.75,
+    follow: { go: "pivot", turn, duration: 0.25 },
+  });
+
+  assert.doesNotThrow(() =>
+    figure(
+      [...walks, his, step(noTurn, "transition"), swivel({ right: "1/4" })],
+      checks,
+    ),
+  );
+  // Unmarked, the moment before the swivel is in neither hold.
+  assert.throws(
+    () =>
+      figure([...walks, his, step(noTurn), swivel({ right: "1/4" })], checks),
+    /after step 5.*partners aren't in hold/,
+  );
+  // A transition must lead into a hold before its beat ends.
+  assert.throws(
+    () =>
+      figure(
+        [
+          ...walks,
+          step(noTurn, "transition"),
+          { ...swivel({ right: "1/4" }), beat: 4 },
+        ],
+        checks,
+      ),
+    /marked as a transition, but no row ending later in the same beat/,
+  );
+  // Facing the wrong way round: turned 1/2 right, then back 1/4 into
+  // promenade, is outside the turn from closed hold to promenade.
+  assert.throws(
+    () =>
+      figure(
+        [
+          ...walks,
+          his,
+          step({ ...noTurn, turn: { right: "1/2" } }, "transition"),
+          swivel({ left: "1/4" }),
+        ],
+        checks,
+      ),
+    /aren't between closed hold and promenade.*facing is 90° outside the turn/,
+  );
+  // Out of place: he holds back his step until she has arrived, so at
+  // the transition she is 21 cm off the line between the holds.
+  assert.throws(
+    () =>
+      figure(
+        [
+          ...walks.slice(0, 2),
+          {
+            ...walks[2],
+            lead: { ...(walks[2].lead as PartnerMove), duration: 0.5 },
+            follow: { ...(walks[2].follow as PartnerMove), duration: 0.5 },
+          },
+          step(noTurn, "transition"),
+          swivel({ right: "1/4" }),
+          {
+            beat: 3.75,
+            lead: { ...(last.lead as PartnerMove), duration: 0.25 },
+          },
+        ],
+        checks,
+      ),
+    /aren't between closed hold and promenade: the follow is 0\.21 from the line/,
   );
 });
 

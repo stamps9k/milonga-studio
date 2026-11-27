@@ -13,7 +13,6 @@ import {
   poseAtBeat,
 } from "../fold.mts";
 import {
-  addPoints,
   headingToUnitVector,
   normalizeDegrees,
   rotatePoint,
@@ -84,7 +83,9 @@ export const HOLD_FACING_TOLERANCE = 30;
  * The "hold" check: at the end of every row, once all of its steps have
  * finished, the partners must be in a recognised hold position. Unmarked
  * rows use holdPositions; an explicit row hold selects its own reference
- * with the same tolerances, without granting it to other rows. The model has no arms, so this stands in for them:
+ * with the same tolerances, without granting it to other rows, and a
+ * transition row is checked as lying between the holds either side of it
+ * (see below). The model has no arms, so this stands in for them:
  * it catches a figure whose separately written steps leave one partner
  * out of reach of the other mid-figure. Mirrored (`both`) steps keep the
  * hold by construction, so in practice it checks `lead`/`follow` rows.
@@ -104,76 +105,175 @@ export function checkHold(
 ): void {
   const positions = holdPositions(hold);
   const { offset, distance } = HOLD_SHAPES[hold];
-  for (const [row, beat] of [...rowEnds].sort((a, b) => a[0] - b[0])) {
+  type Reference = (typeof positions)[number];
+  /** Her body and facing relative to his after a row: `at` in his frame
+   *  (including any carried turn), `facing` hers minus his. */
+  const relative = (row: number, beat: number) => {
     const pose = poseAtBeat(figure, beat);
     const lead = bodyPosition(pose.lead);
     const follow = bodyPosition(pose.follow);
-    const facing = normalizeDegrees(
-      pose.follow.orientation - pose.lead.orientation,
+    return {
+      pose,
+      at: rotatePoint(
+        subPoints(follow, lead),
+        -(pose.lead.orientation + (carriedTurn[row] ?? 0)),
+      ),
+      facing: normalizeDegrees(pose.follow.orientation - pose.lead.orientation),
+    };
+  };
+  /** Where a hold puts her in his frame. */
+  const spot = (reference: Reference) =>
+    rotatePoint(reference.at, reference.frame);
+  /** The holds a row is checked against: its named hold alone, else
+   *  closed hold and promenade (plus contact promenade for a shaped body).
+   *  An explicitly shaped body may keep close promenade contact while the
+   *  supporting feet open a passing channel: this provisional 27 cm centre
+   *  separation accounts for hip widths. */
+  const referencesFor = (named: StepRow["hold"], pose: Pose): Reference[] =>
+    named === "opposed promenade"
+      ? [
+          {
+            name: "opposed promenade",
+            facing: 180,
+            frame: 0,
+            at: { x: 0.35, y: 0.1 },
+          },
+        ]
+      : named === "closed, follow turned 1/8 right"
+        ? [{ ...positions[0], name: named, facing: 225 }]
+        : pose.lead.bodyOffset || pose.follow.bodyOffset
+          ? [
+              ...positions,
+              {
+                name: "contact promenade",
+                facing: 270,
+                frame: 45,
+                at: { x: offset, y: distance - 0.13 },
+              },
+            ]
+          : positions;
+  /** Smallest angle between two facings, 0-180. */
+  const apart = (a: number, b: number) =>
+    Math.abs(normalizeDegrees(a - b + 180) - 180);
+
+  const rows = [...rowEnds].sort((a, b) => a[0] - b[0]);
+  const inBeat = (beat: number) => Math.ceil(beat - 1e-9);
+  /** The first row checked in hold that ends after a transition and
+   *  within its beat. */
+  const nextHeld = (beat: number) =>
+    rows.find(
+      ([other, end]) =>
+        rowHolds[other] !== "transition" &&
+        end > beat + 1e-9 &&
+        end <= inBeat(beat) + 1e-9,
     );
-    // A row that names its hold (StepRow.hold) is checked against that
-    // hold alone, with the ordinary distance and facing tolerances, so
-    // closed hold no longer satisfies it. An explicitly shaped body may
-    // keep close promenade contact while the supporting feet open a
-    // passing channel: this provisional 27 cm centre separation accounts
-    // for hip widths. Unshaped figures retain their existing hold checks.
-    const named = rowHolds[row];
-    const holds =
-      named === "opposed promenade"
-        ? [
-            {
-              name: "opposed promenade",
-              facing: 180,
-              frame: 0,
-              at: { x: 0.35, y: 0.1 },
-            },
-          ]
-        : named === "closed, follow turned 1/8 right"
-          ? [{ ...positions[0], name: named, facing: 225 }]
-          : pose.lead.bodyOffset || pose.follow.bodyOffset
-            ? [
-                ...positions,
-                {
-                  name: "contact promenade",
-                  facing: 270,
-                  frame: 45,
-                  at: { x: offset, y: distance - 0.13 },
-                },
-              ]
-            : positions;
-    const misses = holds.map((hold) => {
-      // Smallest angle between her facing and the hold's, 0-180.
-      const turnedBy = Math.abs(
-        normalizeDegrees(facing - hold.facing + 180) - 180,
+  for (const [row, beat] of rows) {
+    if (rowHolds[row] === "transition" && !nextHeld(beat)) {
+      throw new FigureError(
+        `${name}: after step ${row + 1} (beat ${Number((beat + 1).toFixed(3))}) is marked as a transition, but no row ending later in the same beat is checked in hold; a transition must lead into a hold before the beat ends`,
       );
-      // Before a turning close the feet are already placed for the
-      // whole turn while the bodies are still on their way round
-      // (carriedTurn in defineFigure), so the hold to check is the one
-      // the turn finishes in.
-      const expected = addPoints(
-        lead,
-        rotatePoint(
-          hold.at,
-          pose.lead.orientation + carriedTurn[row] + hold.frame,
-        ),
-      );
-      const off = subPoints(follow, expected);
-      return { hold, turnedBy, distance: Math.hypot(off.x, off.y) };
+    }
+  }
+  // The hold each checked row ends in (the nearest that passes), so a
+  // transition can be checked against the holds either side of it.
+  const ended = new Map<number, Reference>();
+  const start = relative(rows[0]?.[0] ?? 0, 0);
+  const startHold = referencesFor(undefined, start.pose)
+    .map((reference) => ({
+      reference,
+      off: Math.hypot(
+        start.at.x - spot(reference).x,
+        start.at.y - spot(reference).y,
+      ),
+      turnedBy: apart(start.facing, reference.facing),
+    }))
+    .sort((a, b) => a.turnedBy - b.turnedBy || a.off - b.off)[0]?.reference;
+  for (const [row, beat] of rows) {
+    if (rowHolds[row] === "transition") continue;
+    const { pose, at, facing } = relative(row, beat);
+    // Before a turning close the feet are already placed for the whole
+    // turn while the bodies are still on their way round (carriedTurn in
+    // defineFigure), so the hold to check is the one the turn finishes in.
+    const misses = referencesFor(rowHolds[row], pose).map((reference) => {
+      const expected = spot(reference);
+      return {
+        reference,
+        turnedBy: apart(facing, reference.facing),
+        distance: Math.hypot(at.x - expected.x, at.y - expected.y),
+      };
     });
-    if (
-      misses.some(
+    const passing = misses
+      .filter(
         ({ turnedBy, distance }) =>
-          turnedBy <= HOLD_FACING_TOLERANCE && distance <= HOLD_TOLERANCE,
+          turnedBy <= HOLD_FACING_TOLERANCE + 1e-9 &&
+          distance <= HOLD_TOLERANCE + 1e-9,
       )
-    ) {
+      .sort((a, b) => a.distance - b.distance);
+    if (passing.length > 0) {
+      ended.set(row, passing[0].reference);
       continue;
     }
     const nearest = misses.reduce((best, miss) =>
       miss.turnedBy < best.turnedBy ? miss : best,
     );
     throw new FigureError(
-      `${name}: after step ${row + 1} (beat ${Number((beat + 1).toFixed(3))}) the partners aren't in hold: the nearest is ${nearest.hold.name}, but the follow is ${nearest.distance.toFixed(2)} from where it puts her (at most ${HOLD_TOLERANCE}) and her facing is ${nearest.turnedBy.toFixed(0)}° off (at most ${HOLD_FACING_TOLERANCE}°)`,
+      `${name}: after step ${row + 1} (beat ${Number((beat + 1).toFixed(3))}) the partners aren't in hold: the nearest is ${nearest.reference.name}, but the follow is ${nearest.distance.toFixed(2)} from where it puts her (at most ${HOLD_TOLERANCE}) and her facing is ${nearest.turnedBy.toFixed(0)}° off (at most ${HOLD_FACING_TOLERANCE}°)`,
     );
+  }
+
+  // A transition row (`"hold": "transition"`) is a moment between two
+  // holds within one beat, such as stepping onto the promenade spot just
+  // before swivelling into promenade. Its end is checked against the holds
+  // either side of it: her body within the usual tolerance of the straight
+  // line between where those holds put her, and her facing within the
+  // usual tolerance of the shorter turn between their facings. A row ending
+  // later in the same beat must be checked in hold, so every beat still
+  // ends in a recognised hold.
+  for (const [row, beat] of rows) {
+    if (rowHolds[row] !== "transition") continue;
+    const at = `after step ${row + 1} (beat ${Number((beat + 1).toFixed(3))})`;
+    const next = nextHeld(beat);
+    if (!next) continue;
+    const before = rows
+      .filter(([other, end]) => ended.has(other) && end < beat - 1e-9)
+      .at(-1);
+    const from = before ? ended.get(before[0]) : startHold;
+    const to = ended.get(next[0]);
+    if (!from || !to) continue;
+    const here = relative(row, beat);
+    const a = spot(from);
+    const b = spot(to);
+    const ab = subPoints(b, a);
+    const along = Math.max(
+      0,
+      Math.min(
+        1,
+        ((here.at.x - a.x) * ab.x + (here.at.y - a.y) * ab.y) /
+          Math.max(ab.x * ab.x + ab.y * ab.y, 1e-12),
+      ),
+    );
+    const off = Math.hypot(
+      here.at.x - (a.x + along * ab.x),
+      here.at.y - (a.y + along * ab.y),
+    );
+    // Her facing measured from the earlier hold's, along the shorter turn
+    // to the later hold's: it must lie on that turn, give or take the
+    // usual tolerance.
+    const turn = normalizeDegrees(to.facing - from.facing + 180) - 180;
+    const turned = normalizeDegrees(here.facing - from.facing + 180) - 180;
+    const onTurn =
+      turned >= Math.min(0, turn) - 1e-9 && turned <= Math.max(0, turn) + 1e-9;
+    const outside = onTurn
+      ? 0
+      : Math.min(
+          apart(here.facing, from.facing),
+          apart(here.facing, to.facing),
+        );
+    if (off > HOLD_TOLERANCE + 1e-9 || outside > HOLD_FACING_TOLERANCE + 1e-9) {
+      throw new FigureError(
+        `${name}: ${at} the partners aren't between ${from.name} and ${to.name}: the follow is ${off.toFixed(2)} from the line between where they put her (at most ${HOLD_TOLERANCE}) and her facing is ${outside.toFixed(0)}° outside the turn between them (at most ${HOLD_FACING_TOLERANCE}°)`,
+      );
+    }
   }
 }
 

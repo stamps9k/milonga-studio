@@ -124,11 +124,20 @@ export const TURN_CENTRES: readonly TurnCentre[] = [
  *   backs diagonal centre while she faces down the line of dance, then he
  *   backs the line of dance while she faces diagonal wall. The ordinary
  *   30° facing tolerance would refuse that.
+ * - "transition": a moment between two holds within one beat, such as
+ *   stepping onto the promenade spot just before swivelling into
+ *   promenade. Instead of a hold of its own, it must lie between the holds
+ *   checked at the rows either side of it: her body within the usual
+ *   tolerance of the line between where they put her, her facing within
+ *   the usual tolerance of the shorter turn between theirs. A row ending
+ *   later in the same beat must be checked in hold.
  */
-export type RowHold = "opposed promenade" | "closed, follow turned 1/8 right";
+export type RowHold =
+  "opposed promenade" | "closed, follow turned 1/8 right" | "transition";
 export const ROW_HOLDS: readonly RowHold[] = [
   "opposed promenade",
   "closed, follow turned 1/8 right",
+  "transition",
 ];
 
 /** Options that can be given for both partners on a row, or per

@@ -395,6 +395,13 @@ the owner before building more on top of them.
   `"closed, follow turned 1/8 right"` keeps closed hold's position with her
   facing 1/8 right of square (provisional: the book's Natural Twist Turn
   charts steps 3 and 4 as "Closed" with her 45° off square).
+  `"transition"` has no hold of its own: it marks a moment between two
+  holds within one beat (stepping onto the promenade spot before
+  swivelling). Its end must lie between the holds checked at the rows
+  either side of it: her body within 20 cm of the line between where they
+  put her, her facing within 30° of the shorter turn between theirs. A row
+  ending later in the same beat must be checked in hold, so every beat
+  still ends in a recognised hold.
 - `defineFigure` checks the whole movement of a figure (`checkFeet`,
   sampled every sixteenth of a beat): in each dancer's frame the left
   foot stays left of the right (the owner's rule, 2026-11-16) unless a
