@@ -79,7 +79,8 @@ frontend and a small Express + SQLite API.
   `PartnerSkeleton.chestFacing`), so his right arm needn't swing far
   behind him. Her left hand rests further up his arm, over his shoulder if
   need be, wherever its usual place would be behind her or fold her elbow
-  tighter than 45°.
+  tighter than 45°; how far it slides grows with that shortfall, so it
+  comes back down smoothly as the usual place clears.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;

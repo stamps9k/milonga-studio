@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { stancePose } from "../../src/libs/dance/authoring.mts";
+import { holdForStyle, stancePose } from "../../src/libs/dance/authoring.mts";
 import { applyTransform } from "../../src/libs/dance/floor.mts";
 import type { PartnerPose } from "../../src/libs/dance/pose.mts";
 import { DEFAULT_PROPORTIONS } from "../../src/libs/body/proportions.mts";
@@ -551,4 +551,38 @@ test("solveSkeleton: in closed hold his upper body faces the way he does", () =>
   );
   close(couple.lead.chestFacing, couple.lead.facing);
   close(couple.follow.chestFacing, couple.follow.facing);
+});
+
+test("solveSkeleton: her left hand slides back down his arm smoothly as her shoulder moves clear of it", () => {
+  // Tango promenade, with the follow moved 2 mm at a time forward and to
+  // the left of the lead's facing, 25 cm in all. Her left shoulder starts
+  // too near her hand's usual place on his right upper arm, so the hand
+  // rests further up towards his shoulder, and moves clear of it on the
+  // way: the hand must come back down a little at a time, not snap back
+  // once the usual place is far enough away.
+  const hold = holdForStyle("tango");
+  const step = 0.002;
+  let previous: Point3D | undefined;
+  for (let moved = 0; moved <= 0.25 + 1e-9; moved += step) {
+    const pose = stancePose(
+      "tango promenade",
+      { lead: "right", follow: "left" },
+      "tango",
+    );
+    for (const foot of ["left", "right"] as const) {
+      const { x, y } = pose.follow[foot].position;
+      pose.follow[foot].position = {
+        x: x - moved * Math.SQRT1_2,
+        y: y + moved * Math.SQRT1_2,
+      };
+    }
+    const { follow } = solveSkeleton(pose, DEFAULT_PROPORTIONS, hold);
+    const hand = sub(follow.joints.leftHand, follow.joints.chest);
+    if (previous)
+      assert.ok(
+        distance(hand, previous) < 0.01,
+        `her left hand moves ${distance(hand, previous).toFixed(3)} m after ${moved.toFixed(3)} m`,
+      );
+    previous = hand;
+  }
 });

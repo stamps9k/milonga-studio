@@ -919,6 +919,23 @@ const HAND_AHEAD_OF_SHOULDER = 0.05;
 const HER_LEFT_MIN_ELBOW = 45;
 const ONTO_HIS_BACK = 0.2;
 
+/**
+ * How far up his arm her hand may slide, in lengths of his upper arm per
+ * metre that her hand at its usual place falls short of the reach
+ * HER_LEFT_MIN_ELBOW needs: 1 cm short allows 0.3 of his upper arm. The
+ * hand slides to the nearest place up his arm where her elbow keeps that
+ * bend, or this far, whichever is less. The places too near her shoulder
+ * form a stretch of his arm; as her shoulder moves along his arm, that
+ * stretch can shrink to nothing just above the usual place while its
+ * upper end is still far up his arm, and a hand held at the upper end
+ * would snap back down the moment the usual place came clear. With the
+ * slide tied to the shortfall, the hand comes back down as the shortfall
+ * falls to nothing, while her elbow folds a few degrees tighter than
+ * HER_LEFT_MIN_ELBOW (about 44° at the tightest in the catalogue).
+ * Provisional.
+ */
+const SLIDE_PER_SHORTFALL = 30;
+
 /** The way fingers point when a hand lies along a body: from the point
  *  `from` metres along `path` (a polyline, here up his arm and over his
  *  shoulder) to the point a hand's length further on, so the fingers
@@ -1187,7 +1204,11 @@ function connectHold(
         else high = mid;
       }
     }
-    rest = low;
+    // Never further up than SLIDE_PER_SHORTFALL makes of how much too
+    // near the usual place is (HER_LEFT_MIN_ELBOW).
+    const shortfall =
+      least - distance(restAt(along), follow.joints.leftUpperArm);
+    rest = Math.max(low, along - SLIDE_PER_SHORTFALL * shortfall);
   }
   const onHisArm = restAt(rest);
   // Her fingers point on up his arm from where the hand rests, bending
