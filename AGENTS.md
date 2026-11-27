@@ -70,7 +70,11 @@ frontend and a small Express + SQLite API.
   pelvises together (`test/body/cbm.test.mts`). `shaping.mts` tilts the
   upper bodies apart from the hips wherever the partners' shoulders come
   closer than 20 cm (promenade), so the hips stay together and the V opens
-  at the top.
+  at the top. Where the follow comes level with the lead's right side, his
+  chest and shoulders turn towards her (`upperBodyTurn`, up to 45°;
+  `PartnerSkeleton.chestFacing`), so his right arm needn't swing far
+  behind him, and her left hand slides up his arm rather than reaching
+  back.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;

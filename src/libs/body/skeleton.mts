@@ -40,8 +40,10 @@ import type { Point3D } from "./vector3.mts";
  *   would pass through the partner's (slideKnees, in solveSkeleton);
  * - the spine, neck and head stack straight up from the hips, except
  *   that where the partners' shoulders come close (promenade) the upper
- *   bodies tilt apart (openUpperBodies, in solveSkeleton); no sway or
- *   CBM yet, since the model can't describe them;
+ *   bodies tilt apart (openUpperBodies, in solveSkeleton), and where the
+ *   follow comes level with the lead's right side his upper body turns
+ *   towards her (upperBodyTurn, in solveSkeleton); no sway yet, since
+ *   the model can't describe it;
  * - the arms take hold of the partner (connectHold, in solveSkeleton):
  *   the joined hands meet out beyond the couple, the lead's right hand
  *   is on the follow's left shoulder blade, his arm wrapping round her
@@ -103,9 +105,12 @@ export interface PartnerSkeleton {
   /** Compass heading the body faces (the model's orientation). */
   facing: number;
   /** Compass heading the pelvis faces: the body's facing turned by
-   *  contra body movement (cbmTurn) where a leg crosses the body. The
-   *  chest, shoulders and arms keep the body's facing. */
+   *  contra body movement (cbmTurn) where a leg crosses the body. */
   hipFacing: number;
+  /** Compass heading the chest, shoulders and head face: the body's
+   *  facing, turned where the lead's upper body turns towards his partner
+   *  (upperBodyTurn). The arms are solved in this frame. */
+  chestFacing: number;
   /** How far the hips are below standing height plus the rise, because
    *  the feet are too far apart for straight legs: 0 with the feet under
    *  the body, about 0.1 in a long stride. */
@@ -592,6 +597,7 @@ export function solvePartnerSkeleton(
     feet: { left: feet.left.ends, right: feet.right.ends },
     facing: pose.orientation,
     hipFacing: normalizeDegrees(hipFacing),
+    chestFacing: pose.orientation,
     hipDrop: standing - hipZ,
     legShortfall,
     kneeSwing: { left: 0, right: 0 },
@@ -814,7 +820,7 @@ function reachFor(
     shoulder,
     wrist,
     body,
-    skeleton.facing,
+    skeleton.chestFacing,
     side,
     elbowTowards && { towards: elbowTowards, amount: holding },
   );
@@ -842,6 +848,147 @@ function reachFor(
   };
 }
 
+/** Where the lead's right hand holds: the follow's left shoulder blade
+ *  (HoldPlacement's blade distances, in her chest's frame). */
+function herBlade(follow: PartnerSkeleton, place: HoldPlacement): Point3D {
+  const herForward = headingVector(follow.chestFacing);
+  const herRight = headingVector(follow.chestFacing + 90);
+  return add(
+    follow.joints.leftUpperArm,
+    add(
+      scale(herForward, -place.bladeBehind),
+      add(
+        scale(herRight, place.bladeIn),
+        scale(vec(0, 0, 1), -place.bladeDown),
+      ),
+    ),
+  );
+}
+
+/**
+ * The lead's upper body turning towards the follow, from the chest up.
+ *
+ * His right hand holds her left shoulder blade. Where she comes level
+ * with his right side or passes behind it (count 2 of the Open Natural
+ * Turn, the Weave and the Promenade Walk and Close, as she turns out of
+ * promenade), that blade is behind his right shoulder, and an upper body
+ * kept square to his feet would have to swing the upper arm far back
+ * behind it, up to about 80 degrees. A dancer turns the upper body to
+ * the right with her instead, keeping her in front of the frame.
+ *
+ * So his chest, shoulders, head and arms turn right about the vertical
+ * through his chest, the smallest turn that brings her blade level with
+ * his right shoulder joint along the way his chest faces
+ * (BLADE_BEHIND_SHOULDER), up to MAX_UPPER_BODY_TURN. The hips and legs
+ * stay as the dance model put them; the twist is in the spine between
+ * them. With her in front, as in closed hold and most of promenade,
+ * nothing turns. Provisional.
+ */
+export const MAX_UPPER_BODY_TURN = 45;
+/** How far behind his right shoulder joint her blade may be before his
+ *  upper body turns, in metres along his chest's facing. Provisional:
+ *  level with it keeps the upper arm within about 45 degrees behind the
+ *  body. */
+const BLADE_BEHIND_SHOULDER = -0.05;
+
+/**
+ * How far in front of her left shoulder joint, along the way her chest
+ * faces, the follow's left hand must rest on the lead's upper arm, in
+ * metres. Her hand usually rests part way down his upper arm
+ * (HoldPlacement.upperArmAlong); where that is behind her, because she
+ * is level with his right side and his upper arm reaches back round her
+ * (as after his upper body turns, upperBodyTurn), reaching it would
+ * swing her upper arm about 60 degrees behind her body. Her hand slides
+ * up his arm towards his shoulder instead, as far as needed. Provisional.
+ */
+const HAND_AHEAD_OF_SHOULDER = 0.05;
+
+/** The joints that turn with the upper body: the chest and everything
+ *  above it. */
+const TURNING: readonly JointName[] = [
+  "chest",
+  "neck",
+  "head",
+  "leftShoulder",
+  "rightShoulder",
+  "leftUpperArm",
+  "rightUpperArm",
+  "leftLowerArm",
+  "rightLowerArm",
+  "leftHand",
+  "rightHand",
+];
+
+/** `v` turned clockwise (as compass headings turn) about the vertical by
+ *  `degrees`. */
+function turnedClockwise(v: Point3D, degrees: number): Point3D {
+  const r = (degrees * Math.PI) / 180;
+  const c = Math.cos(r),
+    s = Math.sin(r);
+  return vec(v.x * c + v.y * s, -v.x * s + v.y * c, v.z);
+}
+
+/** The skeleton with its chest and everything above it turned clockwise
+ *  by `degrees` about the vertical through the chest. */
+function turnUpperBody(
+  skeleton: PartnerSkeleton,
+  degrees: number,
+): PartnerSkeleton {
+  if (degrees === 0) return skeleton;
+  const axis = skeleton.joints.chest;
+  const about = (point: Point3D) =>
+    add(axis, turnedClockwise(sub(point, axis), degrees));
+  const joints = { ...skeleton.joints };
+  for (const name of TURNING) joints[name] = about(joints[name]);
+  return {
+    ...skeleton,
+    joints,
+    chestFacing: normalizeDegrees(skeleton.chestFacing + degrees),
+    fingertips: {
+      left: about(skeleton.fingertips.left),
+      right: about(skeleton.fingertips.right),
+    },
+    palms: {
+      left: turnedClockwise(skeleton.palms.left, degrees),
+      right: turnedClockwise(skeleton.palms.right, degrees),
+    },
+  };
+}
+
+/** How far, in degrees clockwise, the lead's upper body turns towards
+ *  the follow (see MAX_UPPER_BODY_TURN): the smallest turn that brings
+ *  her blade no further back than BLADE_BEHIND_SHOULDER, found to a
+ *  hundredth of a degree, or the most it may turn. */
+function upperBodyTurn(
+  lead: PartnerSkeleton,
+  follow: PartnerSkeleton,
+  place: HoldPlacement,
+): number {
+  const blade = herBlade(follow, place);
+  const axis = lead.joints.chest;
+  const shoulder = sub(lead.joints.rightUpperArm, axis);
+  const ahead = (degrees: number) =>
+    dot(
+      sub(blade, add(axis, turnedClockwise(shoulder, degrees))),
+      headingVector(lead.chestFacing + degrees),
+    ) + BLADE_BEHIND_SHOULDER;
+  if (ahead(0) >= 0) return 0;
+  let low = 0;
+  for (let degrees = 1; degrees <= MAX_UPPER_BODY_TURN; degrees++) {
+    if (ahead(degrees) >= 0) {
+      let high = degrees;
+      while (high - low > 0.01) {
+        const mid = (low + high) / 2;
+        if (ahead(mid) >= 0) high = mid;
+        else low = mid;
+      }
+      return high;
+    }
+    low = degrees;
+  }
+  return MAX_UPPER_BODY_TURN;
+}
+
 /**
  * Takes hold: points each dancer's arms at the partner, from where both
  * bodies are now. Because the hold points move with the bodies, the hold
@@ -865,7 +1012,7 @@ function connectHold(
   const between = scale(add(hisShoulder, herShoulder), 0.5);
   const outward =
     normalize(vec(between.x - middle.x, between.y - middle.y, 0)) ??
-    scale(headingVector(lead.facing + 90), -1);
+    scale(headingVector(lead.chestFacing + 90), -1);
   const placed = {
     ...add(between, scale(outward, place.joinedOut)),
     z: follow.joints.head.z + place.joinedAboveHead,
@@ -899,15 +1046,9 @@ function connectHold(
     add(joined, scale(normalize(sub(shoulder, joined)) ?? UP, PALM));
 
   // His right hand on her left shoulder blade.
-  const herForward = headingVector(follow.facing);
-  const herRight = headingVector(follow.facing + 90);
-  const blade = add(
-    follow.joints.leftUpperArm,
-    add(
-      scale(herForward, -place.bladeBehind),
-      add(scale(herRight, place.bladeIn), scale(UP, -place.bladeDown)),
-    ),
-  );
+  const herForward = headingVector(follow.chestFacing);
+  const herRight = headingVector(follow.chestFacing + 90);
+  const blade = herBlade(follow, place);
 
   // How each hand is held:
   // - The joined hands (his left, her right) clasp, palm to palm: his
@@ -942,7 +1083,7 @@ function connectHold(
   );
   // His right elbow goes out beside her left armpit, so the upper arm
   // wraps round her side under her arm (place.arms).
-  const herLeft = headingVector(follow.facing - 90);
+  const herLeft = headingVector(follow.chestFacing - 90);
   const besideHerArmpit = add(
     follow.joints.leftUpperArm,
     add(
@@ -962,13 +1103,23 @@ function connectHold(
   // Her left hand on his right upper arm, where his arm now is: on top
   // of it, or in tango under it, behind the arm with the fingers along
   // its back towards his shoulder and the palm down.
-  const hisBack = scale(headingVector(him.facing), -1);
+  const hisBack = scale(headingVector(him.chestFacing), -1);
+  // Up his arm towards his shoulder where the usual place would be
+  // behind her (HAND_AHEAD_OF_SHOULDER).
+  const aheadOfHer = (point: Point3D) =>
+    dot(sub(point, follow.joints.leftUpperArm), herForward) -
+    HAND_AHEAD_OF_SHOULDER;
+  const atShoulder = aheadOfHer(him.joints.rightUpperArm);
+  const atElbow = aheadOfHer(him.joints.rightLowerArm);
+  const usual = atShoulder + (atElbow - atShoulder) * place.upperArmAlong;
+  const along =
+    usual >= 0
+      ? place.upperArmAlong
+      : atShoulder > 0
+        ? atShoulder / (atShoulder - atElbow)
+        : 0;
   const onHisArm = add(
-    lerp3(
-      him.joints.rightUpperArm,
-      him.joints.rightLowerArm,
-      place.upperArmAlong,
-    ),
+    lerp3(him.joints.rightUpperArm, him.joints.rightLowerArm, along),
     add(scale(UP, place.upperArmAbove), scale(hisBack, place.underArm)),
   );
   const upHisArm =
@@ -978,7 +1129,7 @@ function connectHold(
       ? add(upHisArm, scale(hisBack, 0.5))
       : add(
           upHisArm,
-          scale(sub(headingVector(him.facing + 90), UP), OVER_HIS_ARM),
+          scale(sub(headingVector(him.chestFacing + 90), UP), OVER_HIS_ARM),
         );
   let her = reachFor(
     follow,
@@ -1021,8 +1172,10 @@ function pelvisGap(couple: CoupleSkeleton): number {
 
 /** Both dancers' skeletons at one instant (for example a Pose from
  *  sequencePoseAtBeat), with the knees sliding past each other where
- *  the legs meet (slideKnees), in hold (connectHold), shaped for the
- *  given hold: ballroom tango's has its own arms and knee flex. */
+ *  the legs meet (slideKnees), the upper bodies opened apart
+ *  (openUpperBodies) and his turned towards her (upperBodyTurn), in hold
+ *  (connectHold), shaped for the given hold: ballroom tango's has its
+ *  own arms and knee flex. */
 export function solveSkeleton(
   pose: Pose,
   bodies: Record<Partner, BodyProportions> = DEFAULT_PROPORTIONS,
@@ -1061,5 +1214,9 @@ export function solveSkeleton(
   }
   const legs = slideKnees(couple, legContactFor(hold));
   const opened = openUpperBodies(legs);
-  return connectHold(opened.lead, opened.follow, bodies, hold);
+  const lead = turnUpperBody(
+    opened.lead,
+    upperBodyTurn(opened.lead, opened.follow, HOLD_PLACEMENT[hold]),
+  );
+  return connectHold(lead, opened.follow, bodies, hold);
 }

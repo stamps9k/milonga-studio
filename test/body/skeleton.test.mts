@@ -506,3 +506,53 @@ test("solvePartnerSkeleton: a landing foot's pitch tips it toes up (heel lead) o
     close(raised.z - down.z, Math.sin((20 * Math.PI) / 180) * 0.26, 0.04);
   }
 });
+
+test("solveSkeleton: his upper body turns right as she passes level with his right side", () => {
+  // In the Open Natural Turn she turns out of promenade past his right
+  // side on count 2; her left shoulder blade, where his right hand
+  // rests, is then behind his right shoulder unless his upper body
+  // turns towards her.
+  const found = loadFigures().find(
+    (figure) => figure.name === "Open Natural Turn",
+  );
+  assert.ok(found);
+  const figure = {
+    ...found,
+    id: "ont",
+    steps: found.steps.map((step, index) => ({ ...step, id: String(index) })),
+  };
+  const turnOf = (beat: number) => {
+    const { lead } = solveSkeleton(poseAtBeat(figure, beat));
+    return ((lead.chestFacing - lead.facing + 540) % 360) - 180;
+  };
+  // At the start, in promenade with her in front of his frame: no turn.
+  close(turnOf(0), 0);
+  // At count 2: a turn to the right (clockwise), within the limit.
+  const turned = turnOf(1);
+  assert.ok(turned > 10 && turned <= 45, `turned ${turned}`);
+  const { lead, follow } = solveSkeleton(poseAtBeat(figure, 1));
+  // The shoulder line turns with it.
+  const across = sub(lead.joints.rightUpperArm, lead.joints.leftUpperArm);
+  close(
+    (Math.atan2(-across.y, across.x) * 180) / Math.PI,
+    ((lead.chestFacing + 540) % 360) - 180,
+    1e-6,
+  );
+  // Her blade is no longer behind his right shoulder.
+  const forward = {
+    x: Math.sin((lead.chestFacing * Math.PI) / 180),
+    y: Math.cos((lead.chestFacing * Math.PI) / 180),
+  };
+  const toHand = sub(lead.joints.rightHand, lead.joints.rightUpperArm);
+  assert.ok(toHand.x * forward.x + toHand.y * forward.y > -0.05);
+  // The follow's upper body keeps her facing.
+  close(follow.chestFacing, follow.facing);
+});
+
+test("solveSkeleton: in closed hold his upper body faces the way he does", () => {
+  const couple = solveSkeleton(
+    stancePose("closed", { lead: "right", follow: "left" }),
+  );
+  close(couple.lead.chestFacing, couple.lead.facing);
+  close(couple.follow.chestFacing, couple.follow.facing);
+});

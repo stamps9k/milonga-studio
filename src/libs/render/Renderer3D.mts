@@ -189,11 +189,12 @@ class Mannequin {
     });
 
     // The head sits on top of the neck rod (whose end is the base of the
-    // skull), its centre 10 cm up. The nose points the way the body
-    // faces, as in the 2D view.
+    // skull), its centre 10 cm up. The nose points the way the chest
+    // faces: the body's facing, as in the 2D view, unless the upper body
+    // has turned.
     const headCentre = vector({ ...joints.head, z: joints.head.z + 0.1 });
     this.head.position.copy(headCentre);
-    const facing = headingToUnitVector(skeleton.facing);
+    const facing = headingToUnitVector(skeleton.chestFacing);
     const forward = vector({ x: facing.x, y: facing.y, z: 0 });
     this.nose.position.copy(headCentre).addScaledVector(forward, 0.1);
     this.nose.quaternion.setFromUnitVectors(UP, forward);
