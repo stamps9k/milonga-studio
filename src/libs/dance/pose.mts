@@ -40,9 +40,14 @@ export interface FootState {
 export interface PartnerPose {
   left: FootState;
   right: FootState;
-  /** Frame/torso heading, in degrees — same convention as
-   *  DanceStep.orientation. */
+  /** Heading of the hips and feet, in degrees — same convention as
+   *  DanceStep.orientation. The upper body faces this way too unless
+   *  chestTurn turns it (see chestFacing). */
   orientation: number;
+  /** How far the chest, shoulders and hold are turned from
+   *  `orientation`, in degrees clockwise (DanceStep.chestTurn). Left out
+   *  when the upper body faces the way the hips do. */
+  chestTurn?: number;
   /** Vertical displacement, matching DanceStep.rise. */
   rise: number;
   /** Horizontal pelvis displacement from the weighted feet, in metres in
@@ -52,6 +57,13 @@ export interface PartnerPose {
 
 /** Fully resolved state of both partners at one instant. */
 export type Pose = Record<Partner, PartnerPose>;
+
+/** Which way the chest, shoulders and hold face: the body's facing,
+ *  turned by any chestTurn. The hold is taken in this frame. */
+export function chestFacing(partner: PartnerPose): number {
+  const turned = partner.orientation + (partner.chestTurn ?? 0);
+  return ((turned % 360) + 360) % 360;
+}
 
 /** Which way a foot points: its own direction, or the body's facing
  *  when it has none. */

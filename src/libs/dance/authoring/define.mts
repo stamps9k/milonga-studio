@@ -633,6 +633,16 @@ export function defineFigure(definition: FigureDefinition): AuthoredFigure {
     endPose: startPose,
   };
   const endPose = poseAtBeat(figure, figureDurationBeats(figure));
+  // Every figure starts from a stance with the upper bodies square to the
+  // hips, so one that ended with a chest turned ("chest") would jump at
+  // every join.
+  for (const partner of ["lead", "follow"] as const) {
+    if (endPose[partner].chestTurn !== undefined) {
+      throw new FigureError(
+        `${name}: the ${partner}'s chest is still turned ${Number(endPose[partner].chestTurn.toFixed(3))}° from the hips at the end; the last step that moves the body must leave "chest" out, so the figure ends square like the stance the next figure starts from`,
+      );
+    }
+  }
 
   checkFeet(
     name,

@@ -320,6 +320,24 @@ the owner before building more on top of them.
   doesn't say how much of it is travel round a curve rather than a pivot
   over the foot: applied to every turning step, half-turn pivots like the
   Weave's swung the body far off its feet.
+- The body is the weighted average of the feet, so a weighted step's foot
+  curving round the standing foot (or passing it) pulls the body out with
+  it, by its share of the weight. A step that says `steadyBody`
+  (provisional) moves the body as if the foot went straight to where it
+  lands (added to `bodyOffset` in playback), because a real foot carries
+  little weight until it lands. It is opt-in because the catalogue was
+  fitted with bodies that follow the feet: applied to every step, 16 tests
+  across about eight figures failed, mostly by small margins.
+- Each dancer has one facing for the hips and feet (`orientation`); a step's
+  `chestTurn` (provisional, at most 90° either way, `MAX_CHEST_TURN`) turns
+  the chest, shoulders and hold from it, changing steadily over the step and
+  back to square over the next step that leaves it out, like `bodyOffset`.
+  `chestFacing` is the upper body's facing, and the hold check, the body
+  solver, the 2D pictograph and the 3D shoulder cameras use it; the feet
+  checks keep the hips' facing. A figure must end square, since every stance
+  is, so joins never meet a turned chest. For the follow walking forward
+  round the lead in a twist turn with her chest towards him (90°, from the
+  owner's reference video; the book gives no hip-to-chest angle).
 - `assessJoin` applies explicit stationary support transfers before checking
   the first travelling step. A contra-check recovery replaces weight on RF/LF
   before moving LF/RF; using only boundary weights falsely rejected it. Airborne

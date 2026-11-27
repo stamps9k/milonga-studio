@@ -180,6 +180,23 @@ export interface MoveOptions {
    *  lead in a twist turn. Needs a step that turns and takes weight.
    *  Default: straight. */
   bodyArc?: boolean;
+  /** true: the body travels as if the foot went straight to where it
+   *  lands (DanceStep.steadyBody), instead of swinging out with a curved
+   *  `path` or the foot's passing by the standing foot. For a foot that
+   *  must curve round the standing foot on a step taking weight, as the
+   *  follow walking round the lead in a twist turn. Needs a step that
+   *  takes weight. Default: the body follows the weighted feet. */
+  steadyBody?: boolean;
+  /** How far the chest, shoulders and hold are turned from the hips at
+   *  the end of this step (DanceStep.chestTurn): `{ "right": "1/4" }`
+   *  turns them a quarter clockwise of the way the hips and the step
+   *  face. The turn changes steadily over the step and goes back to
+   *  none on the next step that leaves it out. For a dancer whose upper
+   *  body stays with the partner while the hips and feet travel another
+   *  way, as the follow walking forward round the lead in a twist turn
+   *  with her chest towards him. At most a quarter turn either way.
+   *  Only on a step that takes weight; default: none. */
+  chest?: Turn;
   /** Rise at the end of the step, in metres above normal standing
    *  height (waltz/foxtrot rise and fall). Default 0. */
   rise?: number;
@@ -255,7 +272,7 @@ export interface PartnerMove extends MoveOptions {
  */
 export interface StepRow extends Omit<
   MoveOptions,
-  "label" | "pointing" | "footwork" | "pathSetOff" | "path"
+  "label" | "pointing" | "footwork" | "pathSetOff" | "path" | "chest"
 > {
   /** See MoveOptions.footwork. On a row, either one for each partner it
    *  applies to, or one each: a mirrored forward step is usually a heel

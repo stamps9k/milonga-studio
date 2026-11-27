@@ -101,6 +101,12 @@ function turnFraction(amount: TurnAmount): number {
   return numerator / denominator;
 }
 
+/** The furthest a step may turn the chest from the hips ("chest"), in
+ *  degrees either way: a quarter turn, about as far as a dancer's spine
+ *  twists with the hips and feet facing along the line of travel and the
+ *  shoulders square to a partner beside them. Provisional. */
+export const MAX_CHEST_TURN = 90;
+
 export function turnDegrees(turn: Turn | undefined): number {
   if (turn === undefined) return 0;
   return "right" in turn
@@ -218,6 +224,7 @@ export function movesOfRow(row: StepRow, where: string): ResolvedMove[] {
     cross: row.cross,
     swivel: row.swivel,
     bodyArc: row.bodyArc,
+    steadyBody: row.steadyBody,
   };
   const pathFor = (partner: Partner): CurvedPath | undefined =>
     typeof row.path === "object" ? row.path[partner] : row.path;
@@ -529,6 +536,22 @@ export function applyMove(
       `${where}: "bodyArc" bends the body's path with its turn, so it needs a step that turns and takes weight`,
     );
   }
+  if (move.steadyBody === true && (targetWeight === 0 || air)) {
+    throw new FigureError(
+      `${where}: "steadyBody" keeps the body off the foot's route on a step that moves it, so it needs a step that takes weight`,
+    );
+  }
+  const chestTurn = turnDegrees(move.chest);
+  if (move.chest !== undefined && (targetWeight === 0 || air)) {
+    throw new FigureError(
+      `${where}: "chest" turns the upper body from the hips over a step that moves the body, so it needs a step that takes weight`,
+    );
+  }
+  if (Math.abs(chestTurn) > MAX_CHEST_TURN + 1e-9) {
+    throw new FigureError(
+      `${where}: "chest" turns the upper body ${Math.abs(chestTurn)}° from the hips; at most ${MAX_CHEST_TURN}° either way`,
+    );
+  }
   state.direction[OTHER[foot]] = swivelStandingFoot(
     state.direction[OTHER[foot]],
     before,
@@ -559,6 +582,8 @@ export function applyMove(
       : {}),
     ...(move.swivel !== undefined ? { swivel: move.swivel } : {}),
     ...(move.bodyArc === true ? { bodyArc: true } : {}),
+    ...(chestTurn !== 0 ? { chestTurn } : {}),
+    ...(move.steadyBody === true ? { steadyBody: true } : {}),
     rise: move.rise ?? 0,
     ...(move.bodyOffset
       ? {

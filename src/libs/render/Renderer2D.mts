@@ -5,7 +5,7 @@ import {
   headingToUnitVector,
   scalePoint,
 } from "../dance/heading.mts";
-import { footHeading } from "../dance/pose.mts";
+import { chestFacing, footHeading } from "../dance/pose.mts";
 import type { Pose } from "../dance/pose.mts";
 import type { Partner } from "../dance/step.mts";
 import { bodyPosition, isStandingFoot } from "../dance/weight.mts";
@@ -333,7 +333,7 @@ export class Renderer2D implements SceneRenderer {
 }
 
 /** One dancer's pictograph (figureShapes.mts BODY) over their weight,
- *  turned to their facing. */
+ *  turned the way their shoulders face (chestFacing). */
 function dancer(pose: Pose, partner: Partner, strokeWidth: number) {
   const partnerPose = pose[partner];
   const color = PARTNER_COLOR[partner];
@@ -342,7 +342,7 @@ function dancer(pose: Pose, partner: Partner, strokeWidth: number) {
     {
       transform: placeAt(
         toScreen(bodyPosition(partnerPose)),
-        partnerPose.orientation,
+        chestFacing(partnerPose),
       ),
       stroke: color,
       "stroke-width": strokeWidth,

@@ -40,6 +40,8 @@ export function sampleDance(): Dance {
         footDirection: 5,
         swivel: "ball",
         bodyArc: true,
+        steadyBody: true,
+        chestTurn: 45,
         footwork: "HT",
         riseTiming: "late",
         weightTiming: "late",

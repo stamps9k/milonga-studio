@@ -18,7 +18,7 @@ import {
   rotatePoint,
   subPoints,
 } from "../heading.mts";
-import { footHeading } from "../pose.mts";
+import { chestFacing, footHeading } from "../pose.mts";
 import type { Point2D, Pose } from "../pose.mts";
 import type { Figure, Foot, Partner } from "../step.mts";
 import { bodyPosition } from "../weight.mts";
@@ -93,6 +93,9 @@ export const HOLD_FACING_TOLERANCE = 30;
  * finishes in (`carriedTurn`, one entry per row, in degrees).
  * Compare bodyPosition, including any authored pelvis offset, rather than
  * the feet: supporting feet can open a channel while the hips stay close.
+ * Facings are the upper bodies' (chestFacing), since the hold is taken
+ * with the arms and shoulders: a dancer whose hips turn away along the
+ * line of travel ("chest") keeps the hold with the chest.
  * Added 2026-11-17 (owner's request); body shaping added 2026-11-18.
  */
 export function checkHold(
@@ -106,8 +109,9 @@ export function checkHold(
   const positions = holdPositions(hold);
   const { offset, distance } = HOLD_SHAPES[hold];
   type Reference = (typeof positions)[number];
-  /** Her body and facing relative to his after a row: `at` in his frame
-   *  (including any carried turn), `facing` hers minus his. */
+  /** Her body and facing relative to his after a row: `at` in his
+   *  upper body's frame (including any carried turn), `facing` her upper
+   *  body's facing minus his. */
   const relative = (row: number, beat: number) => {
     const pose = poseAtBeat(figure, beat);
     const lead = bodyPosition(pose.lead);
@@ -116,9 +120,11 @@ export function checkHold(
       pose,
       at: rotatePoint(
         subPoints(follow, lead),
-        -(pose.lead.orientation + (carriedTurn[row] ?? 0)),
+        -(chestFacing(pose.lead) + (carriedTurn[row] ?? 0)),
       ),
-      facing: normalizeDegrees(pose.follow.orientation - pose.lead.orientation),
+      facing: normalizeDegrees(
+        chestFacing(pose.follow) - chestFacing(pose.lead),
+      ),
     };
   };
   /** Where a hold puts her in his frame. */

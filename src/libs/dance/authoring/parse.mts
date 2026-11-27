@@ -167,6 +167,7 @@ export function parseFigureDefinition(
     "cross",
     "swivel",
     "bodyArc",
+    "steadyBody",
   ] as const;
   function checkMoveOptions(
     path: string,
@@ -243,6 +244,7 @@ export function parseFigureDefinition(
     checkBoolean(`${path}cross`, object.cross);
     checkOneOf(`${path}swivel`, object.swivel, ["ball", "heel"]);
     checkBoolean(`${path}bodyArc`, object.bodyArc);
+    checkBoolean(`${path}steadyBody`, object.steadyBody);
   }
 
   function checkPartner(path: string, v: unknown) {
@@ -250,10 +252,12 @@ export function parseFigureDefinition(
     if (isObject(v) && !("go" in v) && ("forward" in v || "right" in v)) {
       checkOffset(path, v);
     } else if (isObject(v)) {
-      checkKeys(path, v, ["go", ...MOVE_OPTIONS, "label"]);
+      // "chest" is one partner's own: a row has no shared upper body.
+      checkKeys(path, v, ["go", ...MOVE_OPTIONS, "chest", "label"]);
       if (v.go === undefined) problem(`${path}.go`, "is required");
       else checkAction(`${path}.go`, v.go);
       checkMoveOptions(`${path}.`, v);
+      checkTurn(`${path}.chest`, v.chest);
       checkString(`${path}.label`, v.label);
     } else {
       checkAction(path, v);
