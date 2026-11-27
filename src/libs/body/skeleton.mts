@@ -10,6 +10,7 @@ import { DEFAULT_PROPORTIONS } from "./proportions.mts";
 import type { BodyProportions } from "./proportions.mts";
 import {
   add,
+  distance,
   dot,
   headingVector,
   normalize,
@@ -903,6 +904,49 @@ const BLADE_BEHIND_SHOULDER = -0.05;
  */
 const HAND_AHEAD_OF_SHOULDER = 0.05;
 
+/**
+ * The tightest the follow's left elbow bends, in degrees between upper
+ * arm and forearm, with her hand resting on the lead's arm. His right
+ * shoulder is only about 25 cm from her left in closed hold, and less in
+ * promenade, so her hand at its usual place part way down his upper arm
+ * (HoldPlacement.upperArmAlong) can fold her arm almost shut. Where it
+ * would, her hand rests further up his arm, towards his shoulder, so her
+ * elbow keeps this bend and her arm lies along the top of his. Where even
+ * his shoulder is too near hers, as she passes level with his right side
+ * (count 2 of the Weave), the hand goes on over his shoulder onto the top
+ * of his back, up to ONTO_HIS_BACK behind it. Provisional.
+ */
+const HER_LEFT_MIN_ELBOW = 45;
+const ONTO_HIS_BACK = 0.2;
+
+/** The way fingers point when a hand lies along a body: from the point
+ *  `from` metres along `path` (a polyline, here up his arm and over his
+ *  shoulder) to the point a hand's length further on, so the fingers
+ *  follow the path round a bend. Past the path's end, the last
+ *  segment's direction. */
+function fingersAlong(
+  path: Point3D[],
+  from: number,
+  handLength: number,
+): Point3D {
+  const at = (arc: number): Point3D => {
+    let left = arc;
+    for (let i = 0; i + 1 < path.length; i++) {
+      const piece = distance(path[i], path[i + 1]);
+      if (left <= piece || i + 2 === path.length) {
+        return lerp3(path[i], path[i + 1], piece > 1e-9 ? left / piece : 0);
+      }
+      left -= piece;
+    }
+    return path[path.length - 1];
+  };
+  return (
+    normalize(sub(at(from + handLength), at(from))) ??
+    normalize(sub(path[path.length - 1], path[path.length - 2])) ??
+    vec(0, 0, 1)
+  );
+}
+
 /** The joints that turn with the upper body: the chest and everything
  *  above it. */
 const TURNING: readonly JointName[] = [
@@ -1118,12 +1162,48 @@ function connectHold(
       : atShoulder > 0
         ? atShoulder / (atShoulder - atElbow)
         : 0;
-  const onHisArm = add(
-    lerp3(him.joints.rightUpperArm, him.joints.rightLowerArm, along),
-    add(scale(UP, place.upperArmAbove), scale(hisBack, place.underArm)),
+  // No nearer her own shoulder than a natural bend of her elbow allows
+  // (HER_LEFT_MIN_ELBOW): further up his arm, and past his shoulder onto
+  // the top of his back (ONTO_HIS_BACK) where even his shoulder is too
+  // near hers.
+  const restAt = (t: number) =>
+    add(
+      t >= 0
+        ? lerp3(him.joints.rightUpperArm, him.joints.rightLowerArm, t)
+        : add(him.joints.rightUpperArm, scale(hisBack, -t * ONTO_HIS_BACK)),
+      add(scale(UP, place.upperArmAbove), scale(hisBack, place.underArm)),
+    );
+  const least = reachAtElbow(bodies.follow, HER_LEFT_MIN_ELBOW);
+  const farEnough = (t: number) =>
+    distance(restAt(t), follow.joints.leftUpperArm) >= least;
+  let rest = along;
+  if (!farEnough(rest)) {
+    let low = -1,
+      high = rest;
+    if (farEnough(low)) {
+      for (let i = 0; i < 30; i++) {
+        const mid = (low + high) / 2;
+        if (farEnough(mid)) low = mid;
+        else high = mid;
+      }
+    }
+    rest = low;
+  }
+  const onHisArm = restAt(rest);
+  // Her fingers point on up his arm from where the hand rests, bending
+  // over the cap of his shoulder towards his neck where the hand is
+  // within a hand's length of it (fingersAlong).
+  const upHisArm = fingersAlong(
+    [
+      him.joints.rightLowerArm,
+      him.joints.rightUpperArm,
+      him.joints.rightShoulder,
+      him.joints.neck,
+    ],
+    (1 - Math.max(0, rest)) *
+      distance(him.joints.rightLowerArm, him.joints.rightUpperArm),
+    bodies.follow.hand,
   );
-  const upHisArm =
-    normalize(sub(him.joints.rightUpperArm, him.joints.rightLowerArm)) ?? UP;
   const overHisArm =
     place.underArm > 0
       ? add(upHisArm, scale(hisBack, 0.5))

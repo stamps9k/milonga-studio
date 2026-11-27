@@ -16,6 +16,7 @@ import type { Point3D } from "../../src/libs/body/vector3.mts";
 import { loadFigures } from "../../db/figures/index.mts";
 import { figureDurationBeats, poseAtBeat } from "../../src/libs/dance/fold.mts";
 import { distance, sub } from "../../src/libs/body/vector3.mts";
+import { segmentDistance } from "../../src/libs/body/legContact.mts";
 
 const LEAD = DEFAULT_PROPORTIONS.lead;
 
@@ -273,32 +274,27 @@ for (const stance of [
     // His right hand is on her back, just behind and below her left
     // shoulder; hers is on his right upper arm.
     assert.ok(gap(him.joints.rightHand, her.joints.leftUpperArm) < 0.2);
-    // Her wrist is part-way down his upper arm (about 20 cm from his
-    // shoulder), so her hand can lie along it up to his shoulder.
+    // Her wrist is on his upper arm, at most about 20 cm from his
+    // shoulder, nearer it where his shoulder is close to hers.
     assert.ok(gap(her.joints.leftHand, him.joints.rightUpperArm) < 0.25);
-    // Her fingertips rest on his upper arm at the shoulder: within 6 cm
-    // of the line from his shoulder to his elbow (the arm's surface, not
-    // out in the air beside it).
-    const shoulder = him.joints.rightUpperArm;
-    const along = sub(him.joints.rightLowerArm, shoulder);
-    const toTip = sub(her.fingertips.left, shoulder);
-    const length2 = along.x ** 2 + along.y ** 2 + along.z ** 2;
-    const t = Math.min(
-      1,
-      Math.max(
-        0,
-        (toTip.x * along.x + toTip.y * along.y + toTip.z * along.z) / length2,
+    // Her fingertips rest on him, within 6 cm of the line of his upper
+    // arm or of his shoulder (collar to shoulder joint): on its surface,
+    // not out in the air beside it.
+    const onHim = Math.min(
+      segmentDistance(
+        her.fingertips.left,
+        her.fingertips.left,
+        him.joints.rightUpperArm,
+        him.joints.rightLowerArm,
+      ),
+      segmentDistance(
+        her.fingertips.left,
+        her.fingertips.left,
+        him.joints.rightShoulder,
+        him.joints.rightUpperArm,
       ),
     );
-    const nearest = {
-      x: shoulder.x + along.x * t,
-      y: shoulder.y + along.y * t,
-      z: shoulder.z + along.z * t,
-    };
-    assert.ok(
-      gap(her.fingertips.left, nearest) < 0.06,
-      `her fingertips ${gap(her.fingertips.left, nearest)} m off his arm`,
-    );
+    assert.ok(onHim < 0.06, `her fingertips ${onHim} m off his arm`);
     // The joined hands are out beyond the line between his left shoulder
     // and her right one, away from the middle of the couple (to his left
     // in closed hold, ahead in the open side of the V in promenade).
