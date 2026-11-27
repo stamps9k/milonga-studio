@@ -73,8 +73,9 @@ frontend and a small Express + SQLite API.
   at the top. Where the follow comes level with the lead's right side, his
   chest and shoulders turn towards her (`upperBodyTurn`, up to 45°;
   `PartnerSkeleton.chestFacing`), so his right arm needn't swing far
-  behind him, and her left hand slides up his arm rather than reaching
-  back.
+  behind him. Her left hand rests further up his arm, over his shoulder if
+  need be, wherever its usual place would be behind her or fold her elbow
+  tighter than 45°.
 - `src/libs/api/` is the frontend's read-only API client; server dances are
   presets. Personal saves never write to the server. `useDanceLibrary` owns
   named IndexedDB saves, preset/file loading and unsaved-work protection;
